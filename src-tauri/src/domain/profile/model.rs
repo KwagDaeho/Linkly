@@ -14,6 +14,28 @@ fn default_long_press_ms() -> u64 {
     450
 }
 
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InputDeviceSettings {
+    #[serde(default)]
+    pub individual_link_enabled: bool,
+    #[serde(default)]
+    pub display_name: Option<String>,
+    #[serde(default)]
+    pub hidden: bool,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct DeviceTriggerOverride {
+    #[serde(default)]
+    pub button_mappings: Option<Vec<ButtonMappingEntry>>,
+    #[serde(default)]
+    pub custom_mappings: Option<Vec<CustomMappingEntry>>,
+    #[serde(default)]
+    pub long_press_ms: Option<u64>,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Profile {
@@ -37,6 +59,10 @@ pub struct Profile {
     /// Hold duration before long-press fires (ms).
     #[serde(default = "default_long_press_ms")]
     pub long_press_ms: u64,
+    #[serde(default)]
+    pub input_device_settings: HashMap<String, InputDeviceSettings>,
+    #[serde(default)]
+    pub device_trigger_overrides: HashMap<String, DeviceTriggerOverride>,
 }
 
 impl Profile {
@@ -68,6 +94,8 @@ impl Default for Profile {
             enabled: true,
             start_minimized: false,
             long_press_ms: default_long_press_ms(),
+            input_device_settings: HashMap::new(),
+            device_trigger_overrides: HashMap::new(),
         }
     }
 }

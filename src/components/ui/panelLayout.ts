@@ -16,6 +16,11 @@ export const footerSpaceBottomPx = 120;
 /** Section tab pill, panel track, and label color (keep in sync). */
 export const tabTransitionMs = 520;
 export const tabTransitionEase = "cubic-bezier(0.4, 0, 0.2, 1)";
+/** List reorder (MacroStepList). */
+export const listReorderTransition =
+  "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)";
+const reorderEase = "cubic-bezier(0.22, 1, 0.36, 1)";
+export const tabPillNudgeTransition = `left 260ms ${reorderEase}, top 260ms ${reorderEase}, width 260ms ${reorderEase}, height 260ms ${reorderEase}`;
 
 /** Segmented controls (section tabs, header theme/lang, font scale) — not toggle switches. */
 export const chromeSegmentRadiusPx = 8;
@@ -25,8 +30,11 @@ export const chromeSegmentPaddingPx = 3;
 export const chromeSegmentIconRem = 1.25;
 /** Vertical padding per side on header theme/lang segment buttons. */
 export const chromeSegmentButtonPadYRem = 0.36;
-/** Info / Link tab column width at 100% root — bar is not full shell width. */
-export const sectionTabColumnWidthRem = 6.75;
+/** Primary section tab column widths (trigger, mouse, system, devices). */
+export const sectionTabColumnWidthsRem = [5.5, 5.5, 5.75, 7.75] as const;
+/** @deprecated use sectionTabColumnWidthsRem */
+export const sectionTabColumnWidthRem = 5.5;
+export const sectionTabDevicesFontRem = 1.0625;
 /** Primary section tab (Info / Link) typography & inset. */
 export const sectionTabFontRem = 1;
 export const sectionTabPadYRem = 0.72;

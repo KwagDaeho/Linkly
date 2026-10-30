@@ -14,6 +14,8 @@ export const screen = style({
   display: "grid",
   placeItems: "center",
   padding: 24,
+  userSelect: "none",
+  WebkitUserSelect: "none",
 });
 
 export const stack = style({
@@ -41,4 +43,11 @@ export const loadingTag = style({
   fontWeight: 650,
   letterSpacing: "0.08em",
   color: "var(--muted)",
+});
+
+export const actions = style({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  gap: 10,
 });

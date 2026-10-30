@@ -92,4 +92,20 @@ export type Profile = {
   startMinimized?: boolean;
   /** Hold duration before long-press fires (ms). */
   longPressMs?: number;
+  /** Per-device UI meta (key = `${vendorId}-${productId}`). */
+  inputDeviceSettings?: Record<string, InputDeviceSettings>;
+  /** Per-device trigger overrides when individual link is enabled. */
+  deviceTriggerOverrides?: Record<string, DeviceTriggerOverride>;
+};
+
+export type InputDeviceSettings = {
+  individualLinkEnabled?: boolean;
+  displayName?: string;
+  hidden?: boolean;
+};
+
+export type DeviceTriggerOverride = {
+  buttonMappings?: ButtonMappingEntry[];
+  customMappings?: CustomMappingEntry[];
+  longPressMs?: number;
 };

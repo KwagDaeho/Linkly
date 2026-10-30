@@ -1,6 +1,8 @@
 import { createContext, useContext, useState } from "react";
 import { useKeyCapture } from "@/hooks/capture/useKeyCapture";
 import { useProfileCtx } from "@/hooks/profile";
+import { useTriggerScope } from "@/hooks/trigger/TriggerScopeContext";
+import { useTriggerScopeMutations } from "@/hooks/trigger/useTriggerScopeMutations";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
 import type {
   ActionSlot,
@@ -21,8 +23,11 @@ export const useEditor = (): EditorContextValue => {
 };
 
 export const useEditorState = (): EditorContextValue => {
-  const { profile, ballScroll, buttonMappings, customMappings, catalogSelection } =
+  const { profile, ballScroll, catalogSelection: profileCatalog } =
     useProfileCtx();
+  const scope = useTriggerScope();
+  const { buttonMappings, customMappings, catalogSelection } =
+    useTriggerScopeMutations(scope);
   const [editor, setEditor] = useState<EditorMode | null>(null);
   useKeyCapture(
     editor,
@@ -62,10 +67,7 @@ export const useEditorState = (): EditorContextValue => {
     slot: ActionSlot,
     value: string,
   ) => {
-    catalogSelection.selectButton(buttonId, slot, value, setEditor);
-  };
-  const selectCustom = (entryId: string, slot: ActionSlot, value: string) => {
-    catalogSelection.selectCustom(entryId, slot, value, setEditor);
+    profileCatalog.selectButton(buttonId, slot, value, setEditor);
   };
   const selectButtonMapping = (
     entryId: string,
@@ -80,7 +82,8 @@ export const useEditorState = (): EditorContextValue => {
     catalogSelection: {
       selectButton,
       selectButtonMapping,
-      selectCustom,
+      selectCustom: (entryId, slot, value) =>
+        catalogSelection.selectCustom(entryId, slot, value, setEditor),
     },
   };
 };

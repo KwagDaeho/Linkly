@@ -1,11 +1,31 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 
+import { MAIN_TABS } from "@/constants/tabs";
 import { usePrefs } from "@/hooks";
 import type { TabId } from "@/types";
 import { cx } from "@/utils/cx";
 
 import * as styles from "./AppShell.css";
+import { hoverTabFromPointer } from "./tabBarPointer";
 import { useTabPill } from "./useTabPill";
+
+const tabLabel = (
+  tab: TabId,
+  i18n: ReturnType<typeof usePrefs>["i18n"],
+): string => {
+  switch (tab) {
+    case "trigger":
+      return i18n.tabTrigger;
+    case "mouse":
+      return i18n.tabMouse;
+    case "system":
+      return i18n.tabSystem;
+    case "devices":
+      return i18n.tabDevices;
+    default:
+      return tab;
+  }
+};
 
 interface TabBarProps {
   tab: TabId;
@@ -17,12 +37,26 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
   const tabListRef = useRef<HTMLElement>(null);
   const [hoverTab, setHoverTab] = useState<TabId | null>(null);
 
+  useEffect(() => {
+    setHoverTab(null);
+  }, [tab]);
+
   const { pillStyle, pillNudging } = useTabPill({
     tab,
     hoverTab,
     listRef: tabListRef,
-    labels: [i18n.tabInfo, i18n.tabCustom] as const,
   });
+
+  const clearHover = () => setHoverTab(null);
+
+  const syncHoverFromPointer = (event: ReactPointerEvent<HTMLElement>) => {
+    const nav = tabListRef.current;
+    if (nav === null) {
+      return;
+    }
+    const next = hoverTabFromPointer(nav, event.clientX, event.clientY);
+    setHoverTab(next);
+  };
 
   return (
     <nav
@@ -30,6 +64,8 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
       className={styles.tabs}
       aria-label="Sections"
       role="tablist"
+      onPointerLeave={clearHover}
+      onPointerMove={syncHoverFromPointer}
     >
       <span
         className={styles.tabPill}
@@ -37,32 +73,28 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
         data-nudge={pillNudging ? "true" : undefined}
         aria-hidden
       />
-      <button
-        type="button"
-        role="tab"
-        data-tab-item=""
-        aria-selected={tab === "info"}
-        aria-controls="tabpanel-info"
-        className={cx(styles.tab, tab === "info" && styles.tabActive)}
-        onClick={() => onTab("info")}
-        onPointerEnter={() => setHoverTab("info")}
-        onPointerLeave={() => setHoverTab(null)}
-      >
-        {i18n.tabInfo}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        data-tab-item=""
-        aria-selected={tab === "custom"}
-        aria-controls="tabpanel-custom"
-        className={cx(styles.tab, tab === "custom" && styles.tabActive)}
-        onClick={() => onTab("custom")}
-        onPointerEnter={() => setHoverTab("custom")}
-        onPointerLeave={() => setHoverTab(null)}
-      >
-        {i18n.tabCustom}
-      </button>
+      {MAIN_TABS.map((id) => (
+        <button
+          key={id}
+          type="button"
+          role="tab"
+          data-tab-item=""
+          aria-selected={tab === id}
+          aria-controls={`tabpanel-${id}`}
+          className={cx(
+            styles.tab,
+            id === "devices" && styles.tabDevices,
+            tab === id && styles.tabActive,
+          )}
+          onClick={() => {
+            clearHover();
+            onTab(id);
+          }}
+          onPointerEnter={() => setHoverTab(id)}
+        >
+          {tabLabel(id, i18n)}
+        </button>
+      ))}
     </nav>
   );
 };

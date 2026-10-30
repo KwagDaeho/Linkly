@@ -4,7 +4,13 @@ import { ContactFooter } from "@/components/info";
 import { AppHeader, BootScreen, OverlayScrollbar } from "@/components/layout";
 import { TabBar } from "./TabBar";
 import { TabSwipePanels } from "./TabSwipePanels";
-import { CustomTab, InfoTab } from "@/components/tabs";
+import {
+  DevicesTab,
+  MouseTab,
+  SystemTab,
+  TriggerTab,
+} from "@/components/tabs";
+import { TriggerScopeProvider } from "@/hooks/trigger/TriggerScopeContext";
 import { useProfileCtx } from "@/hooks";
 import type { TabId } from "@/types";
 
@@ -12,9 +18,8 @@ import * as styles from "./AppShell.css";
 
 export const AppShell = () => {
   const { profile } = useProfileCtx();
-  const [tab, setTab] = useState<TabId>("info");
+  const [tab, setTab] = useState<TabId>("trigger");
 
-  /** Same #root scroll offset across tabs (not per-tab saved positions). */
   const setTabKeepScroll = (next: TabId) => {
     if (next === tab) {
       return;
@@ -43,7 +48,7 @@ export const AppShell = () => {
     );
   }
   return (
-    <>
+    <TriggerScopeProvider scope={{ kind: "common" }}>
       <OverlayScrollbar contentKey={tab} />
       <main className={styles.shell}>
         <AppHeader />
@@ -52,8 +57,10 @@ export const AppShell = () => {
 
         <TabSwipePanels
           active={tab}
-          info={<InfoTab />}
-          link={<CustomTab />}
+          trigger={<TriggerTab />}
+          mouse={<MouseTab />}
+          system={<SystemTab />}
+          devices={<DevicesTab />}
         />
 
         <div className={styles.footerLead}>
@@ -61,6 +68,6 @@ export const AppShell = () => {
         </div>
         <EditorHost />
       </main>
-    </>
+    </TriggerScopeProvider>
   );
 };

@@ -2,9 +2,10 @@ use parking_lot::Mutex;
 use std::sync::LazyLock;
 
 use crate::domain::device::ButtonId;
+use crate::domain::device::DeviceIdentityKey;
 use crate::domain::profile::{
-    activator_options_same, Activator, ButtonMappingEntry, MouseClickButton,
-    Profile,
+    activator_options_same, effective_button_mappings, Activator, ButtonMappingEntry,
+    MouseClickButton, Profile,
 };
 use crate::domain::remap;
 
@@ -25,13 +26,14 @@ fn entries_changed(prev: &[ButtonMappingEntry], next: &[ButtonMappingEntry]) -> 
     })
 }
 
-pub fn sync_from_profile(profile: &Profile) -> bool {
+pub fn sync_from_profile(
+    profile: &Profile,
+    trigger_device: Option<DeviceIdentityKey>,
+) -> bool {
     let next = if profile.enabled {
-        profile
-            .button_mappings
-            .iter()
+        effective_button_mappings(profile, trigger_device)
+            .into_iter()
             .filter(|entry| entry.is_valid())
-            .cloned()
             .collect()
     } else {
         Vec::new()

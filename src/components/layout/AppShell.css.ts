@@ -6,7 +6,8 @@ import {
   chromeSegmentPaddingPx,
   chromeSegmentPillRadiusPx,
   footerSpaceAboveBorderPx,
-  sectionTabColumnWidthRem,
+  sectionTabColumnWidthsRem,
+  sectionTabDevicesFontRem,
   sectionTabFontRem,
   sectionTabPadXRem,
   sectionTabPadYRem,
@@ -14,6 +15,7 @@ import {
   shellSideInsetPx,
   tabTransitionEase,
   tabTransitionMs,
+  tabPillNudgeTransition,
 } from "@/components/ui/panelLayout";
 import { staticSection } from "@/components/ui/sectionTitle.css";
 
@@ -55,13 +57,15 @@ export const tabs = style({
   display: "grid",
   width: "fit-content",
   maxWidth: "100%",
-  gridTemplateColumns: `repeat(2, ${sectionTabColumnWidthRem}rem)`,
+  gridTemplateColumns: sectionTabColumnWidthsRem.map((w) => `${w}rem`).join(" "),
   alignItems: "stretch",
   gap: chromeSegmentPaddingPx,
   padding: chromeSegmentPaddingPx,
   border: "1px solid var(--line)",
   borderRadius: 8,
   background: "var(--panel)",
+  userSelect: "none",
+  WebkitUserSelect: "none",
 });
 
 /** Slides under the active tab button. */
@@ -74,8 +78,7 @@ export const tabPill = style({
   transition: `left ${tabTransitionMs}ms ${tabTransitionEase}, top ${tabTransitionMs}ms ${tabTransitionEase}, width ${tabTransitionMs}ms ${tabTransitionEase}, height ${tabTransitionMs}ms ${tabTransitionEase}`,
   selectors: {
     '&[data-nudge="true"]': {
-      transition:
-        "left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease",
+      transition: tabPillNudgeTransition,
     },
   },
   "@media": {
@@ -101,9 +104,12 @@ export const tab = style({
   color: "var(--muted)",
   fontWeight: 700,
   fontSize: `${sectionTabFontRem}rem`,
+  whiteSpace: "nowrap",
   cursor: "pointer",
   WebkitAppearance: "none",
   appearance: "none",
+  userSelect: "none",
+  WebkitUserSelect: "none",
   transition: `color ${tabTransitionMs}ms ${tabTransitionEase}`,
   "@media": {
     "(prefers-reduced-motion: reduce)": {
@@ -114,4 +120,9 @@ export const tab = style({
 
 export const tabActive = style({
   color: "var(--accent-ink)",
+});
+
+export const tabDevices = style({
+  fontSize: `${sectionTabDevicesFontRem}rem`,
+  letterSpacing: "-0.02em",
 });

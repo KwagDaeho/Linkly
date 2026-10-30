@@ -17,6 +17,8 @@ export type {
   ComboActivator,
   CustomMappingEntry,
   ButtonMappingEntry,
+  DeviceTriggerOverride,
+  InputDeviceSettings,
   ProfileState,
   ProfileLifecycle,
   ProfileLoader,

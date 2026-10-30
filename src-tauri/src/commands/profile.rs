@@ -17,8 +17,8 @@ pub fn save_profile(state: State<'_, AppState>, profile: Profile) -> Result<(), 
     profile_store::save_profile(&profile)?;
     state.engine.set_profile(profile.clone());
     ball_scroll::sync_from_profile(&profile);
-    custom_mapping::sync_from_profile(&profile);
-    button_mapping::sync_from_profile(&profile);
+    custom_mapping::sync_from_profile(&profile, None);
+    button_mapping::sync_from_profile(&profile, None);
     if watch::needs_os_event_watch(&profile) {
         crate::platform::capture::ensure_watch_tap();
     }

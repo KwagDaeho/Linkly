@@ -42,6 +42,8 @@ export const title = style({
   lineHeight: 1.2,
   letterSpacing: "-0.09em",
   color: "var(--accent)",
+  userSelect: "none",
+  WebkitUserSelect: "none",
 });
 
 export const heroTop = style({

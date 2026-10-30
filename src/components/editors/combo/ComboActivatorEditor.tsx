@@ -6,7 +6,7 @@ import {
   stopHoldListening,
 } from "@/domain/capture";
 import { usePrefs } from "@/hooks/prefs";
-import { useProfileCtx } from "@/hooks/profile";
+import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { useEditor } from "@/hooks/editor";
 import type { ComboEditorState } from "@/types";
 
@@ -19,7 +19,7 @@ interface ComboActivatorEditorProps {
 
 export const ComboActivatorEditor = (props: ComboActivatorEditorProps) => {
   const { lang, i18n } = usePrefs();
-  const { customMappings } = useProfileCtx();
+  const { customMappings } = useScopedTriggerApi();
   const { setEditor } = useEditor();
   const editor = props.editor;
   const startLabel = i18n.captureStartTrigger;

@@ -1,6 +1,7 @@
 import { buttonMappingDraftEditor } from "@/domain/editors";
-import { buttonMappingsOf } from "@/domain/profile";
+import { scopedButtonMappingsOf } from "@/domain/profile/triggerScope";
 import { useEditor } from "@/hooks/editor";
+import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { Button, Muted, Panel } from "@/components/ui";
 import { ButtonMappingRow } from "./ButtonMappingRow";
@@ -10,11 +11,12 @@ import * as styles from "../custom/CustomButtonMappingPanel.css";
 export const ButtonMappingPanel = () => {
   const { i18n } = usePrefs();
   const { profile } = useProfileCtx();
+  const { scope } = useScopedTriggerApi();
   const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
-  const entries = buttonMappingsOf(profile);
+  const entries = scopedButtonMappingsOf(profile, scope);
   return (
     <Panel variant="plain">
       <div className={styles.toolbar}>

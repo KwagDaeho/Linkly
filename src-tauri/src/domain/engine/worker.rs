@@ -88,9 +88,10 @@ pub(crate) fn run(
         }
 
         let profile_snap = profile.lock().clone();
+        let trigger_device = device_info.as_ref().map(device_identity_key);
         ball_scroll::sync_from_profile(&profile_snap);
-        custom_mapping::sync_from_profile(&profile_snap);
-        if button_mapping::sync_from_profile(&profile_snap) {
+        custom_mapping::sync_from_profile(&profile_snap, trigger_device);
+        if button_mapping::sync_from_profile(&profile_snap, trigger_device) {
             button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
         }
         if watch::needs_os_event_watch(&profile_snap) {
@@ -154,9 +155,10 @@ pub(crate) fn run(
         let mut last_input_scan = Instant::now();
         while running.load(Ordering::SeqCst) {
             let profile_snap = profile.lock().clone();
+            let trigger_device = Some(device_identity_key(&info));
             ball_scroll::sync_from_profile(&profile_snap);
-            custom_mapping::sync_from_profile(&profile_snap);
-            if button_mapping::sync_from_profile(&profile_snap) {
+            custom_mapping::sync_from_profile(&profile_snap, trigger_device);
+            if button_mapping::sync_from_profile(&profile_snap, trigger_device) {
                 button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
             }
             if watch::needs_os_event_watch(&profile_snap) {

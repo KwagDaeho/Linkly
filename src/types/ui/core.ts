@@ -74,5 +74,5 @@ export type EditorMode =
       confirmed: string[];
     };
 
-export type TabId = "info" | "custom";
+export type TabId = "trigger" | "mouse" | "system" | "devices";
 export type Theme = "light" | "dark";

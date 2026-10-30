@@ -24,5 +24,6 @@ export const useProfileState = (): ProfileState => {
     pointer,
     ballScroll,
     catalogSelection,
+    mutateProfile,
   };
 };

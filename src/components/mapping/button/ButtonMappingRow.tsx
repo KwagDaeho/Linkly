@@ -3,7 +3,8 @@ import { buttonMappingActivatorEditorFromEntry } from "@/domain/editors";
 import { asBinding } from "@/domain/profile";
 import { activatorToCaptureToken } from "@/domain/keys/mouseKeyToken";
 import { buttonMappingActivatorValid } from "@/domain/profile";
-import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
+import { usePrefs, useEditor } from "@/hooks";
+import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { Button } from "@/components/ui";
 import { MappingTriggerButton } from "../MappingTriggerButton";
 import type { ButtonId, ButtonMappingEntry } from "@/types";
@@ -22,7 +23,7 @@ const hugeButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
 
 export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
   const { lang, i18n } = usePrefs();
-  const { buttonMappings } = useProfileCtx();
+  const { buttonMappings } = useScopedTriggerApi();
   const { catalogSelection, setEditor } = useEditor();
   const entry = props.entry;
   const binding = asBinding(entry);

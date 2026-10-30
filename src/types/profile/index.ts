@@ -9,6 +9,8 @@ export type {
   ComboActivator,
   CustomMappingEntry,
   ButtonMappingEntry,
+  DeviceTriggerOverride,
+  InputDeviceSettings,
 } from "./model";
 export type {
   ProfileState,

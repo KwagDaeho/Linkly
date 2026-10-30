@@ -6,7 +6,10 @@ use parking_lot::Mutex;
 
 use crate::domain::chord_token::{button_id_for_capture_token, is_hardware_capture_token};
 use crate::domain::device::{ButtonId, ButtonState};
-use crate::domain::profile::{Activator, ComboActivator, CustomMappingEntry, Profile};
+use crate::domain::device::DeviceIdentityKey;
+use crate::domain::profile::{
+    effective_custom_mappings, Activator, ComboActivator, CustomMappingEntry, Profile,
+};
 
 pub(crate) const MODIFIER_ORDER: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
 
@@ -67,13 +70,11 @@ pub(crate) fn live_modifiers() -> HashSet<String> {
     mods
 }
 
-pub fn sync_from_profile(profile: &Profile) {
+pub fn sync_from_profile(profile: &Profile, trigger_device: Option<DeviceIdentityKey>) {
     let next = if profile.enabled {
-        profile
-            .custom_mappings
-            .iter()
+        effective_custom_mappings(profile, trigger_device)
+            .into_iter()
             .filter(|e| e.activator.is_valid())
-            .cloned()
             .collect()
     } else {
         Vec::new()

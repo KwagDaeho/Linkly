@@ -96,6 +96,11 @@ globalStyle("#root, #root *", {
   WebkitUserSelect: "none",
 });
 
+globalStyle("button, [role='tab'], .boot-brand, .boot-tag", {
+  userSelect: "none",
+  WebkitUserSelect: "none",
+});
+
 globalStyle(
   '#root input, #root textarea, #root select, #root [contenteditable="true"]',
   {

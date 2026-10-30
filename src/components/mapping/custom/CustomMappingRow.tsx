@@ -3,7 +3,8 @@ import { asBinding, hugeButtonFromComboTrigger } from "@/domain/profile";
 import { comboActivatorToSnapshot } from "@/domain/capture";
 import { comboEditorStateFromEntry } from "@/domain/editors";
 import { comboIsValid } from "@/domain/profile";
-import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
+import { usePrefs, useEditor } from "@/hooks";
+import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { Button } from "@/components/ui";
 import { MappingTriggerButton } from "../MappingTriggerButton";
 import type { CustomMappingEntry } from "@/types";
@@ -15,7 +16,7 @@ interface CustomMappingRowProps {
 
 export const CustomMappingRow = (props: CustomMappingRowProps) => {
   const { lang, i18n } = usePrefs();
-  const { customMappings } = useProfileCtx();
+  const { customMappings } = useScopedTriggerApi();
   const { catalogSelection, setEditor } = useEditor();
   const entry = props.entry;
   const binding = asBinding(entry);

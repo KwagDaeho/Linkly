@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Linkly</title>
     <style>
-      html, body, #root { margin: 0; min-height: 100%; background: #f3eef6; color: #1f1a22; font-family: "Avenir Next", "Gill Sans", sans-serif; }
+      html, body, #root { margin: 0; min-height: 100%; background: #f3eef6; color: #1f1a22; font-family: "Avenir Next", "Gill Sans", sans-serif; user-select: none; -webkit-user-select: none; }
       html[data-theme="dark"], html[data-theme="dark"] body, html[data-theme="dark"] #root { background: #161218; color: #f3eaf6; }
       /* Static shell until React mounts — same layout as BootScreen (no legacy copy). */
       .boot-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
@@ -22,6 +22,21 @@
         letter-spacing: -0.09em;
         color: #c07bc4;
       }
+      .boot-actions { display: none; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
+      .boot-actions.is-visible { display: flex; }
+      .boot-actions button {
+        font: inherit;
+        font-size: 0.88rem;
+        font-weight: 650;
+        padding: 8px 14px;
+        border-radius: 8px;
+        border: 1px solid #c07bc4;
+        background: transparent;
+        color: #c07bc4;
+        cursor: pointer;
+      }
+      .boot-actions button:focus-visible { outline: 2px solid #c07bc4; outline-offset: 2px; }
+      html[data-theme="dark"] .boot-actions button { border-color: #d89adc; color: #d89adc; }
     </style>
     <script>
       (function () {
@@ -41,9 +56,34 @@
         <div class="boot-stack">
           <h1 class="boot-brand">Linkly</h1>
           <p class="boot-tag">[ Loading ]</p>
+          <div class="boot-actions" id="boot-fallback-actions" aria-live="polite">
+            <button type="button" id="boot-reload">Reload UI</button>
+            <button type="button" id="boot-hard-reload">Hard reload</button>
+          </div>
         </div>
       </main>
     </div>
+    <script>
+      (function () {
+        var actions = document.getElementById("boot-fallback-actions");
+        var reload = document.getElementById("boot-reload");
+        var hard = document.getElementById("boot-hard-reload");
+        var show = function () {
+          if (actions) actions.classList.add("is-visible");
+        };
+        window.setTimeout(show, 6000);
+        if (reload) reload.addEventListener("click", function () { location.reload(); });
+        if (hard) {
+          hard.addEventListener("click", function () {
+            if (location.search.indexOf("boot=") >= 0) {
+              location.reload();
+              return;
+            }
+            location.href = location.pathname + "?boot=" + Date.now() + location.hash;
+          });
+        }
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -121,4 +121,5 @@ export type ProfileState = {
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
   catalogSelection: ProfileCatalogMutations;
+  mutateProfile: ProfileMutateFn;
 };

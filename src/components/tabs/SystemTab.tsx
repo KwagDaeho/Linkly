@@ -1,16 +1,16 @@
 import {
-  ConnectedInputDevices,
   EventViewerLauncher,
   GeneralSettings,
   PermissionPanel,
 } from "@/components/info";
-import { Accordion, SectionHeading } from "@/components/ui";
+import { SectionHeading } from "@/components/ui";
 import { usePrefs, useSession } from "@/hooks";
-import { accordionStateId } from "@/services/accordionState";
 
 import * as sectionStyles from "@/components/ui/sectionTitle.css";
+import { Accordion } from "@/components/ui";
+import { accordionStateId } from "@/services/accordionState";
 
-export const InfoTab = () => {
+export const SystemTab = () => {
   const { i18n } = usePrefs();
   const { trusted } = useSession();
 
@@ -28,19 +28,11 @@ export const InfoTab = () => {
           <EventViewerLauncher />
         </div>
       </section>
-      <Accordion
-        label={i18n.inputDevicesTitle}
-        headingLevel={2}
-        defaultOpen
-        stateKey={accordionStateId.infoInputDevices}
-      >
-        <ConnectedInputDevices />
-      </Accordion>
       {!trusted && (
         <Accordion
           label={i18n.accessibilityTitle}
           defaultOpen
-          stateKey={accordionStateId.infoAccessibility}
+          stateKey={accordionStateId.systemAccessibility}
         >
           <PermissionPanel />
         </Accordion>

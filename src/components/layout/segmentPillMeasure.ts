@@ -41,6 +41,28 @@ export const readSegmentButtonPair = (
   };
 };
 
+export const pillStyleForTabButton = (
+  list: HTMLElement,
+  button: HTMLElement,
+): CSSProperties | null => {
+  const listRect = list.getBoundingClientRect();
+  const buttonRect = button.getBoundingClientRect();
+  const cs = getComputedStyle(list);
+  const padTop = parseFloat(cs.paddingTop);
+  const padBottom = parseFloat(cs.paddingBottom);
+  const trackHeight = list.clientHeight - padTop - padBottom;
+  if (trackHeight <= 0) {
+    return null;
+  }
+  return {
+    left: buttonRect.left - listRect.left,
+    top: padTop,
+    width: buttonRect.width,
+    height: trackHeight,
+    opacity: 1,
+  };
+};
+
 export const pillStyleForProgress = (
   pair: SegmentButtonPair,
   progress: number,
@@ -55,4 +77,32 @@ export const pillStyleForProgress = (
     height: trackHeight,
     opacity: 1,
   };
+};
+
+export const pillStyleForMultiProgress = (
+  list: HTMLElement,
+  buttons: HTMLElement[],
+  progress: number,
+): CSSProperties | null => {
+  if (buttons.length === 0) {
+    return null;
+  }
+  const maxIndex = buttons.length - 1;
+  const t = clamp(progress, 0, maxIndex);
+  const startIndex = Math.floor(t);
+  const endIndex = Math.min(startIndex + 1, maxIndex);
+  const start = buttons[startIndex];
+  const end = buttons[endIndex];
+  if (start === undefined || end === undefined) {
+    return null;
+  }
+  if (startIndex === endIndex) {
+    return pillStyleForTabButton(list, start);
+  }
+  const pair = readSegmentButtonPair(list, start, end);
+  if (pair === null) {
+    return null;
+  }
+  const local = startIndex === endIndex ? 0 : t - startIndex;
+  return pillStyleForProgress(pair, local);
 };

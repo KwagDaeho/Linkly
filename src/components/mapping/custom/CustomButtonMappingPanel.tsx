@@ -1,5 +1,6 @@
 import { comboDraftEditorFromNewEntry } from "@/domain/editors";
-import { customMappingsOf } from "@/domain/profile";
+import { scopedCustomMappingsOf } from "@/domain/profile/triggerScope";
+import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { useEditor } from "@/hooks/editor";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { Button, Muted, Panel } from "@/components/ui";
@@ -10,11 +11,12 @@ import * as styles from "./CustomButtonMappingPanel.css";
 export const CustomButtonMappingPanel = () => {
   const { i18n } = usePrefs();
   const { profile } = useProfileCtx();
+  const { scope } = useScopedTriggerApi();
   const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
-  const entries = customMappingsOf(profile);
+  const entries = scopedCustomMappingsOf(profile, scope);
   return (
     <Panel variant="plain">
       <div className={styles.toolbar}>

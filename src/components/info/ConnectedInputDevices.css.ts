@@ -1,5 +1,44 @@
 import { style } from "@vanilla-extract/css";
 
+const rowGrid = {
+  display: "grid",
+  gridTemplateColumns: "8px minmax(0, 1fr) 3.25rem",
+  columnGap: 10,
+  alignItems: "center",
+} as const;
+
+export const table = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+});
+
+export const headerRow = style([
+  rowGrid,
+  {
+    padding: "0 10px 2px",
+  },
+]);
+
+export const headerSpacer = style({
+  width: 8,
+});
+
+export const headerDevice = style({
+  minWidth: 0,
+});
+
+export const headerLink = style({
+  justifySelf: "center",
+  textAlign: "center",
+  fontSize: "0.72rem",
+  fontWeight: 650,
+  letterSpacing: "0.02em",
+  color: "var(--muted)",
+  lineHeight: 1.2,
+  whiteSpace: "nowrap",
+});
+
 export const list = style({
   listStyle: "none",
   margin: 0,
@@ -9,15 +48,17 @@ export const list = style({
   gap: 8,
 });
 
-export const item = style({
-  display: "flex",
-  alignItems: "flex-start",
-  gap: 10,
-  padding: "8px 10px",
-  borderRadius: "var(--radius)",
-  border: "1px solid var(--line)",
-  background: "var(--panel)",
-});
+export const item = style([
+  rowGrid,
+  {
+    padding: "8px 10px",
+    borderRadius: "var(--radius)",
+    border: "1px solid var(--line)",
+    background: "var(--panel)",
+    alignItems: "flex-start",
+    willChange: "transform",
+  },
+]);
 
 export const dot = style({
   width: 8,
@@ -38,6 +79,12 @@ export const meta = style({
   flexDirection: "column",
   gap: 2,
   minWidth: 0,
+});
+
+export const actions = style({
+  justifySelf: "center",
+  alignSelf: "center",
+  paddingTop: 2,
 });
 
 export const name = style({

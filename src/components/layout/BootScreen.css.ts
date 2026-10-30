@@ -2,7 +2,12 @@ import { style } from "@vanilla-extract/css";
 
 import { shellSideInsetPx } from "@/components/ui/panelLayout";
 
+import { title } from "./AppHeader.css";
+
 const shellHorizontalInset = shellSideInsetPx * 2;
+
+/** Header logo is 84px; boot screen uses 1.5×. */
+const BOOT_LOGO_FONT_PX = 84 * 1.5;
 
 export const screen = style({
   minHeight: "100vh",
@@ -22,6 +27,13 @@ export const stack = style({
   maxWidth: "none",
   padding: "12px 0 20px",
 });
+
+export const bootMark = style([
+  title,
+  {
+    fontSize: `${BOOT_LOGO_FONT_PX}px`,
+  },
+]);
 
 export const loadingTag = style({
   margin: 0,

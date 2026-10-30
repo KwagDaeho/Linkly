@@ -89,9 +89,18 @@ export const summary = style({
 });
 
 export const windowRoot = style({
-  padding: 12,
+  padding: 16,
   minHeight: "100vh",
   boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+});
+
+export const windowPanel = style({
+  flex: 1,
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,
 });
 
 export const windowHead = style({
@@ -136,6 +145,8 @@ export const memoInput = style({
 export const logTall = style([
   log,
   {
-    maxHeight: "min(70vh, 480px)",
+    flex: 1,
+    minHeight: 360,
+    maxHeight: "none",
   },
 ]);

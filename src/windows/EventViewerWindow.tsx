@@ -53,7 +53,7 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
 
   return (
     <main className={styles.windowRoot}>
-      <Panel variant="plain">
+      <Panel variant="plain" className={styles.windowPanel}>
         <div className={styles.windowHead}>
           <div className={styles.windowActions}>
             <Button variant="ghost" onClick={clear}>

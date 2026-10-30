@@ -11,10 +11,10 @@ export const BootScreen = () => {
   return (
     <main className={styles.screen}>
       <div className={styles.stack}>
+        <AppBrandMark className={styles.bootMark} />
         <p className={styles.loadingTag}>
           {bootError ? i18n.bootFailedTag : i18n.bootLoadingTag}
         </p>
-        <AppBrandMark />
         {bootError ? <pre className={probeStyles.probe}>{bootError}</pre> : null}
       </div>
     </main>

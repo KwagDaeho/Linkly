@@ -5,9 +5,9 @@ export const AppBrandTitle = () => {
 };
 
 /** Same typography as header logo (non-heading). */
-export const AppBrandMark = () => {
+export const AppBrandMark = ({ className }: { className?: string }) => {
   return (
-    <span className={styles.title} aria-hidden="true">
+    <span className={className ?? styles.title} aria-hidden="true">
       Linkly
     </span>
   );

@@ -53,13 +53,6 @@ export const tabs = style({
   border: "1px solid var(--line)",
   borderRadius: 8,
   background: "var(--panel)",
-  touchAction: "pan-y",
-  cursor: "grab",
-  selectors: {
-    "&[data-tab-drag='true']": {
-      cursor: "grabbing",
-    },
-  },
 });
 
 /** Slides under the active tab button. */
@@ -70,11 +63,6 @@ export const tabPill = style({
   background: "var(--accent)",
   pointerEvents: "none",
   transition: `left ${tabTransitionMs}ms ${tabTransitionEase}, top ${tabTransitionMs}ms ${tabTransitionEase}, width ${tabTransitionMs}ms ${tabTransitionEase}, height ${tabTransitionMs}ms ${tabTransitionEase}`,
-  selectors: {
-    "&[data-dragging='true']": {
-      transition: "none",
-    },
-  },
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       transition: "none",

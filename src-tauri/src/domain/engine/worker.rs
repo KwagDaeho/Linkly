@@ -28,7 +28,7 @@ use crate::domain::remap;
 use crate::persistence::input_device_store;
 use crate::platform::hid::{
     build_input_device_statuses, collect_input_snapshot, find_huge, open_huge_device,
-    scan_input_snapshot,
+    patch_wireless_huge_connected_status, scan_input_snapshot,
 };
 use crate::platform::{capture, inject, permissions, suppress};
 
@@ -75,7 +75,12 @@ pub(crate) fn run(
             let mut known = known_input_devices.lock();
             let (mut statuses, dirty) =
                 build_input_device_statuses(&mut known, &snapshot, profile_target);
-            apply_wireless_huge_rf_presence(&mut statuses, device_info.as_ref(), &huge_rf_last_input);
+            apply_wireless_huge_connected(
+                &api,
+                &mut statuses,
+                profile_enabled,
+                &huge_rf_last_input,
+            );
             *input_devices.lock() = statuses;
             if dirty {
                 let _ = input_device_store::save_known(&known);
@@ -676,41 +681,24 @@ fn sync_input_device_registry(
     };
     let mut known = known_input_devices.lock();
     let (mut statuses, dirty) = build_input_device_statuses(&mut known, &snapshot, profile_target);
-    apply_wireless_huge_rf_presence(&mut statuses, device_info.as_ref(), huge_rf_last_input);
+    apply_wireless_huge_connected(
+        api,
+        &mut statuses,
+        profile_enabled,
+        huge_rf_last_input,
+    );
     *input_devices.lock() = statuses;
     if dirty {
         let _ = input_device_store::save_known(&known);
     }
 }
 
-const WIRELESS_HUGE_RF_STALE: Duration = Duration::from_secs(45);
 
-fn apply_wireless_huge_rf_presence(
+fn apply_wireless_huge_connected(
+    api: &HidApi,
     statuses: &mut [InputDeviceStatus],
-    device_info: Option<&DeviceInfo>,
+    profile_enabled: bool,
     huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
 ) {
-    let Some(info) = device_info else {
-        return;
-    };
-    if !is_wireless_huge(info.vendor_id, info.product_id) {
-        return;
-    }
-    let recent = huge_rf_last_input
-        .lock()
-        .map(|t| t.elapsed() < WIRELESS_HUGE_RF_STALE)
-        .unwrap_or(false);
-    if !recent {
-        return;
-    }
-    let key = device_identity_key(info);
-    for row in statuses.iter_mut() {
-        if (row.vendor_id, row.product_id) != key {
-            continue;
-        }
-        row.connected = true;
-        if row.active_transport.is_none() {
-            row.active_transport = Some(row.transport);
-        }
-    }
+    patch_wireless_huge_connected_status(api, statuses, huge_rf_last_input.as_ref(), profile_enabled);
 }

@@ -26,7 +26,7 @@ fn hid_node_online(d: &hidapi::DeviceInfo) -> bool {
 /// Pointer / HUGE collections: must open successfully (filters powered-off ghosts in hidapi).
 fn hid_device_responds(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     if is_huge(d.vendor_id(), d.product_id()) && is_wireless_huge(d.vendor_id(), d.product_id()) {
-        return wireless_huge_ball_linked(api, d);
+        return wireless_huge_dongle_attached(api, d);
     }
     let is_pointer = d.usage_page() == 0x01 && d.usage() == 0x02;
     if !is_pointer && !is_huge(d.vendor_id(), d.product_id()) {
@@ -41,8 +41,21 @@ fn hid_device_responds(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     }
 }
 
-/// Dongle stays on USB when the ball power switch is off; RF link shows up as HID input reports.
-fn wireless_huge_ball_linked(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+fn wireless_huge_dongle_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+    if !hid_node_online(d) {
+        return false;
+    }
+    match d.open_device(api) {
+        Ok(handle) => {
+            drop(handle);
+            true
+        }
+        Err(_) => false,
+    }
+}
+
+/// Best-effort RF link (ball powered on). Idle may yield no reports; do not use for dongle presence.
+pub fn probe_wireless_huge_ball_rf(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     let Ok(handle) = d.open_device(api) else {
         return false;
     };
@@ -443,6 +456,54 @@ pub fn build_input_device_statuses(
     });
 
     (out, dirty)
+}
+
+/// Override `connected` for wireless HUGE: dongle stays in the list, dot reflects RF link.
+pub fn patch_wireless_huge_connected_status(
+    api: &HidApi,
+    statuses: &mut [InputDeviceStatus],
+    huge_rf_last_input: &parking_lot::Mutex<Option<std::time::Instant>>,
+    profile_enabled: bool,
+) {
+    use std::time::Instant;
+
+    for d in api.device_list() {
+        if !is_huge(d.vendor_id(), d.product_id()) || !is_wireless_huge(d.vendor_id(), d.product_id()) {
+            continue;
+        }
+        if !wireless_huge_dongle_attached(api, d) {
+            if !profile_enabled {
+                *huge_rf_last_input.lock() = None;
+            }
+            continue;
+        }
+
+        let rf_now = probe_wireless_huge_ball_rf(api, d);
+        {
+            let mut last = huge_rf_last_input.lock();
+            if rf_now {
+                *last = Some(Instant::now());
+            } else if !profile_enabled {
+                *last = None;
+            }
+        }
+
+        let linked = rf_now || huge_rf_last_input.lock().is_some();
+        let key = (d.vendor_id(), d.product_id());
+        for row in statuses.iter_mut() {
+            if (row.vendor_id, row.product_id) != key {
+                continue;
+            }
+            row.connected = linked;
+            if linked {
+                if row.active_transport.is_none() {
+                    row.active_transport = Some(row.transport);
+                }
+            } else {
+                row.active_transport = None;
+            }
+        }
+    }
 }
 
 #[cfg(all(test, target_os = "macos"))]

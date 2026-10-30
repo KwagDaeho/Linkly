@@ -1,5 +1,15 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import {
+  chromeSegmentButtonPadYRem,
+  chromeSegmentIconRem,
+  chromeSegmentPaddingPx,
+  chromeSegmentPillRadiusPx,
+  chromeSegmentRadiusPx,
+  tabTransitionEase,
+  tabTransitionMs,
+} from "@/components/ui/panelLayout";
+
 /** Font scale row — px only, fixed size (top-right). */
 const fontScaleHeight = 34;
 const fontScaleWidth = 112;
@@ -12,38 +22,10 @@ const fontScalePill = {
   width: `${fontScaleWidth}px`,
   height: `${fontScaleHeight}px`,
   border: "1px solid var(--line)",
-  borderRadius: 999,
+  borderRadius: chromeSegmentRadiusPx,
   overflow: "hidden",
   background: "var(--panel)",
   flexShrink: 0,
-} as const;
-
-/** Theme / language — rem (scales with app font-size). */
-const chromePill = {
-  display: "inline-flex",
-  alignItems: "stretch",
-  border: "1px solid var(--line)",
-  borderRadius: 999,
-  overflow: "hidden",
-  background: "var(--panel)",
-  flexShrink: 0,
-} as const;
-
-const chromeButton = {
-  border: 0,
-  borderRadius: 0,
-  background: "transparent",
-  color: "var(--muted)",
-  padding: "0.22rem 0.55rem",
-  fontSize: "0.72rem",
-  fontWeight: 700,
-  letterSpacing: "0.04em",
-  display: "inline-grid",
-  placeItems: "center",
-  minWidth: "1.9rem",
-  minHeight: "1.55rem",
-  boxSizing: "border-box",
-  cursor: "pointer",
 } as const;
 
 export const hero = style({
@@ -84,28 +66,80 @@ export const toolbarRow = style({
   gap: 8,
 });
 
-export const themeToggle = style(chromePill);
+export const headerSegment = style({
+  position: "relative",
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  alignItems: "stretch",
+  gap: chromeSegmentPaddingPx,
+  padding: chromeSegmentPaddingPx,
+  border: "1px solid var(--line)",
+  borderRadius: chromeSegmentRadiusPx,
+  overflow: "hidden",
+  background: "var(--panel)",
+  flexShrink: 0,
+});
 
-export const langSwitch = style(chromePill);
-
-export const langButton = style(chromeButton);
-
-export const langButtonActive = style({
+export const headerSegmentPill = style({
+  position: "absolute",
+  zIndex: 0,
+  borderRadius: chromeSegmentPillRadiusPx,
   background: "var(--accent)",
+  pointerEvents: "none",
+  transition: `left ${tabTransitionMs}ms ${tabTransitionEase}, top ${tabTransitionMs}ms ${tabTransitionEase}, width ${tabTransitionMs}ms ${tabTransitionEase}, height ${tabTransitionMs}ms ${tabTransitionEase}`,
+  selectors: {
+    '&[data-nudge="true"]': {
+      transition:
+        "left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease",
+    },
+  },
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
+});
+
+export const headerSegmentButton = style({
+  position: "relative",
+  zIndex: 1,
+  border: 0,
+  borderRadius: 0,
+  background: "transparent",
+  color: "var(--muted)",
+  padding: `${chromeSegmentButtonPadYRem}rem 0.55rem`,
+  width: "100%",
+  minWidth: 0,
+  alignSelf: "stretch",
+  minHeight: `calc(${chromeSegmentIconRem}rem + ${chromeSegmentButtonPadYRem * 2}rem)`,
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  letterSpacing: "0.04em",
+  lineHeight: 1,
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  cursor: "pointer",
+  WebkitAppearance: "none",
+  appearance: "none",
+  transition: `color ${tabTransitionMs}ms ${tabTransitionEase}`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
+});
+
+export const headerSegmentButtonActive = style({
   color: "var(--accent-ink)",
 });
 
-export const themeButton = style(chromeButton);
-
-globalStyle(`${themeButton} svg`, {
-  width: 16,
-  height: 16,
+globalStyle(`${headerSegmentButton} svg`, {
+  width: `${chromeSegmentIconRem}rem`,
+  height: `${chromeSegmentIconRem}rem`,
   display: "block",
-});
-
-export const themeButtonActive = style({
-  background: "var(--accent)",
-  color: "var(--accent-ink)",
+  flexShrink: 0,
 });
 
 export const fontScaleToggle = style(fontScalePill);
@@ -147,17 +181,6 @@ export const fontScaleButtonDisabled = style({
   cursor: "not-allowed",
 });
 
-globalStyle(`${langButton}:hover:not(:disabled)`, {
-  background: "var(--interaction-hover-surface)",
-  color: "var(--interaction-hover-border)",
-});
-
-globalStyle(`${themeButton}:hover:not(:disabled)`, {
-  background: "var(--interaction-hover-surface)",
-  color: "var(--interaction-hover-border)",
-});
-
 globalStyle(`${fontScaleButton}:hover:not(:disabled)`, {
-  background: "var(--interaction-hover-surface)",
-  color: "var(--interaction-hover-border)",
+  background: "var(--chrome-subtle-hover) !important",
 });

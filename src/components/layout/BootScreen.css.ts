@@ -6,8 +6,8 @@ import { title } from "./AppHeader.css";
 
 const shellHorizontalInset = shellSideInsetPx * 2;
 
-/** Header logo is 84px; boot screen uses 1.5×. */
-const BOOT_LOGO_FONT_PX = 84 * 1.5;
+/** Header logo is 84px; boot screen uses 2×. */
+const BOOT_LOGO_FONT_PX = 84 * 2;
 
 export const screen = style({
   minHeight: "100vh",

@@ -1,4 +1,4 @@
-export const FONT_SCALE_MIN = 50;
+export const FONT_SCALE_MIN = 100;
 export const FONT_SCALE_MAX = 200;
 export const FONT_SCALE_STEP = 10;
 export const FONT_SCALE_DEFAULT = 100;

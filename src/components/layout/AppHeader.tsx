@@ -8,6 +8,7 @@ import { cx } from "@/utils/cx";
 
 import { AppBrandTitle } from "./AppBrandTitle";
 import * as styles from "./AppHeader.css";
+import { HeaderSegmentToggle } from "./HeaderSegmentToggle";
 
 export const AppHeader = () => {
   const {
@@ -32,6 +33,7 @@ export const AppHeader = () => {
           >
             <button
               type="button"
+              data-font-scale-btn=""
               className={cx(
                 styles.fontScaleButton,
                 fontScale <= FONT_SCALE_MIN && styles.fontScaleButtonDisabled,
@@ -48,6 +50,7 @@ export const AppHeader = () => {
             </span>
             <button
               type="button"
+              data-font-scale-btn=""
               className={cx(
                 styles.fontScaleButton,
                 fontScale >= FONT_SCALE_MAX && styles.fontScaleButtonDisabled,
@@ -61,54 +64,34 @@ export const AppHeader = () => {
             </button>
           </div>
           <div className={styles.toolbarRow}>
-          <div className={styles.themeToggle} role="group" aria-label="Theme">
-            <button
-              type="button"
-              className={cx(
-                styles.themeButton,
-                theme === "light" && styles.themeButtonActive,
-              )}
-              aria-label={i18n.themeLight}
-              title={i18n.themeLight}
-              onClick={() => setTheme("light")}
-            >
-              <SunIcon />
-            </button>
-            <button
-              type="button"
-              className={cx(
-                styles.themeButton,
-                theme === "dark" && styles.themeButtonActive,
-              )}
-              aria-label={i18n.themeDark}
-              title={i18n.themeDark}
-              onClick={() => setTheme("dark")}
-            >
-              <MoonIcon />
-            </button>
-          </div>
-          <div className={styles.langSwitch} role="group" aria-label="Language">
-            <button
-              type="button"
-              className={cx(
-                styles.langButton,
-                lang === "ko" && styles.langButtonActive,
-              )}
-              onClick={() => setLang("ko")}
-            >
-              KR
-            </button>
-            <button
-              type="button"
-              className={cx(
-                styles.langButton,
-                lang === "en" && styles.langButtonActive,
-              )}
-              onClick={() => setLang("en")}
-            >
-              EN
-            </button>
-          </div>
+            <HeaderSegmentToggle
+              groupLabel="Theme"
+              value={theme}
+              onChange={(id) => setTheme(id as "light" | "dark")}
+              segments={[
+                {
+                  id: "light",
+                  label: <SunIcon />,
+                  ariaLabel: i18n.themeLight,
+                  title: i18n.themeLight,
+                },
+                {
+                  id: "dark",
+                  label: <MoonIcon />,
+                  ariaLabel: i18n.themeDark,
+                  title: i18n.themeDark,
+                },
+              ]}
+            />
+            <HeaderSegmentToggle
+              groupLabel="Language"
+              value={lang}
+              onChange={(id) => setLang(id as "ko" | "en")}
+              segments={[
+                { id: "ko", label: "KR" },
+                { id: "en", label: "EN" },
+              ]}
+            />
           </div>
         </div>
       </div>

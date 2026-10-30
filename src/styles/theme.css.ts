@@ -19,6 +19,8 @@ globalStyle(":root, [data-theme='light']", {
     "--interaction-hover-border": "var(--accent)",
     "--interaction-hover-button":
       "color-mix(in srgb, var(--accent) 86%, white)",
+    "--chrome-subtle-hover":
+      "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#2f8a55",
     "--ok-glow": "rgba(47, 138, 85, 0.18)",
     "--warn-bg": "#f8e8ff",
@@ -50,6 +52,8 @@ globalStyle("[data-theme='dark']", {
     "--interaction-hover-border": "var(--accent)",
     "--interaction-hover-button":
       "color-mix(in srgb, var(--accent) 86%, white)",
+    "--chrome-subtle-hover":
+      "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#5dcb87",
     "--ok-glow": "rgba(93, 203, 135, 0.2)",
     "--warn-bg": "#3a2a42",
@@ -137,11 +141,11 @@ globalStyle("button:disabled", {
   cursor: "not-allowed",
 });
 
-globalStyle("button:active:not(:disabled)", {
+globalStyle("button:active:not(:disabled):not([data-font-scale-btn])", {
   transform: "translateY(1px)",
 });
 
-globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger])", {
+globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn])", {
   background: "var(--interaction-hover-button)",
 });
 

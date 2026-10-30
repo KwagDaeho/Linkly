@@ -8,13 +8,17 @@ import {
 
 import type { TabId } from "@/types";
 
+import { tabHoverNudge } from "@/components/ui/panelLayout";
+
+import {
+  pillStyleForProgress,
+  readSegmentButtonPair,
+} from "./segmentPillMeasure";
+
 const tabIndex = (tab: TabId): number => (tab === "custom" ? 1 : 0);
 
 /** Fraction of the gap between tabs (toggle-like nudge). */
-const HOVER_NUDGE = 0.045;
-
-const clamp = (value: number, min: number, max: number): number =>
-  Math.max(min, Math.min(max, value));
+const HOVER_NUDGE = tabHoverNudge;
 
 const pillProgress = (active: TabId, hover: TabId | null): number => {
   const activeIndex = tabIndex(active);
@@ -52,14 +56,7 @@ export const useTabPill = (options: UseTabPillOptions) => {
     if (start === null || end === null) {
       return null;
     }
-    const listRect = list.getBoundingClientRect();
-    const startRect = start.getBoundingClientRect();
-    const endRect = end.getBoundingClientRect();
-    const span = endRect.left - startRect.left;
-    if (span <= 1) {
-      return null;
-    }
-    return { listRect, startRect, endRect, span };
+    return readSegmentButtonPair(list, start, end);
   }, [listRef]);
 
   const applyPillProgress = useCallback(
@@ -68,16 +65,7 @@ export const useTabPill = (options: UseTabPillOptions) => {
       if (pair === null) {
         return;
       }
-      const t = clamp(progress, 0, 1);
-      const { listRect, startRect, endRect } = pair;
-      setPillStyle({
-        left:
-          startRect.left - listRect.left + t * (endRect.left - startRect.left),
-        top: startRect.top - listRect.top + t * (endRect.top - startRect.top),
-        width: startRect.width + t * (endRect.width - startRect.width),
-        height: startRect.height + t * (endRect.height - startRect.height),
-        opacity: 1,
-      });
+      setPillStyle(pillStyleForProgress(pair, progress));
     },
     [readButtons],
   );

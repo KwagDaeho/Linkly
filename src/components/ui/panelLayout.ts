@@ -17,6 +17,24 @@ export const footerSpaceBottomPx = 120;
 export const tabTransitionMs = 520;
 export const tabTransitionEase = "cubic-bezier(0.4, 0, 0.2, 1)";
 
+/** Segmented controls (section tabs, header theme/lang, font scale) — not toggle switches. */
+export const chromeSegmentRadiusPx = 8;
+export const chromeSegmentPillRadiusPx = 6;
+export const chromeSegmentPaddingPx = 3;
+/** Scales with root font-size (20px at 100% zoom). */
+export const chromeSegmentIconRem = 1.25;
+/** Vertical padding per side on header theme/lang segment buttons. */
+export const chromeSegmentButtonPadYRem = 0.36;
+/** Info / Link tab column width at 100% root — bar is not full shell width. */
+export const sectionTabColumnWidthRem = 6.75;
+/** Primary section tab (Info / Link) typography & inset. */
+export const sectionTabFontRem = 1;
+export const sectionTabPadYRem = 0.72;
+export const sectionTabPadXRem = 1.05;
+export const tabHoverNudge = 0.045;
+/** Stronger horizontal pill nudge for compact header segments. */
+export const headerSegmentHoverNudge = 0.12;
+
 /** Horizontal padding inside boxed `Panel` root (see Panel.css.ts). */
 export const panelPaddingX = 12;
 

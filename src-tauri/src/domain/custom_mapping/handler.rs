@@ -32,6 +32,8 @@ pub struct CustomMaps {
     pub key_repeats: HashMap<String, ActionRepeat>,
     /// Physical HUGE button → active custom entry id.
     pub active: HashMap<ButtonId, String>,
+    /// OS trigger activator → entry id (mouse N, key, …).
+    pub active_os: HashMap<String, Activator>,
 }
 
 impl Default for CustomMaps {
@@ -42,6 +44,7 @@ impl Default for CustomMaps {
             scroll_repeats: HashMap::new(),
             key_repeats: HashMap::new(),
             active: HashMap::new(),
+            active_os: HashMap::new(),
         }
     }
 }
@@ -57,11 +60,13 @@ impl CustomMaps {
         self.scroll_repeats.clear();
         self.key_repeats.clear();
         self.active.clear();
+        self.active_os.clear();
         ACTIVE_BUTTONS.lock().clear();
+        super::os_trigger::clear_os_active(self);
     }
 }
 
-fn fire_custom_press(
+pub(crate) fn fire_custom_press(
     entry_id: String,
     button: ButtonId,
     binding: &ButtonBinding,

@@ -2,12 +2,14 @@
 
 mod chord;
 mod handler;
+mod os_trigger;
 mod state;
 
 pub use chord::{
     button_edge_from_event, is_reserved_huge, note_os_button_released, note_os_button_swallowed,
     note_os_down, note_os_up, should_swallow_os_button, should_swallow_os_key,
 };
+pub use os_trigger::{offer_os_trigger, process_os_trigger_queue};
 pub use handler::{
     fire_due_ticks, handle_transitions, maintain_chords, pointer_takeover_active, CustomMaps,
 };

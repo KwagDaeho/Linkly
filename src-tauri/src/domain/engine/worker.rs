@@ -518,6 +518,7 @@ fn apply_button_edges(
         return;
     }
     custom_mapping::sync_button_state(state);
+    custom_mapping::process_os_trigger_queue(profile, custom_maps);
     let mut skip_press = custom_mapping::maintain_chords(
         state,
         profile,

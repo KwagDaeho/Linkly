@@ -1,8 +1,11 @@
 import { BindingRow } from "./BindingRow";
+import { buttonMappingActivatorEditorFromEntry } from "@/domain/editors";
 import { asBinding } from "@/domain/profile";
-import { buttonMappingInputLabel } from "@/i18n";
+import { activatorToCaptureToken } from "@/domain/keys/mouseKeyToken";
+import { buttonMappingActivatorValid } from "@/domain/profile";
 import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
 import { Button } from "@/components/ui";
+import { MappingTriggerButton } from "../MappingTriggerButton";
 import type { ButtonId, ButtonMappingEntry } from "@/types";
 import * as styles from "./ButtonMappingRow.css";
 
@@ -23,27 +26,25 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
   const { catalogSelection, setEditor } = useEditor();
   const entry = props.entry;
   const binding = asBinding(entry);
-  const inputLabel = buttonMappingInputLabel(
-    entry,
-    lang,
-    i18n.buttonMappingSetInput,
-  );
+  const inputKeys =
+    entry.activator !== null && buttonMappingActivatorValid(entry.activator)
+      ? (() => {
+          const token = activatorToCaptureToken(entry.activator);
+          return token !== null ? [token] : null;
+        })()
+      : null;
   const resolvedButtonId = hugeButtonId(entry);
   return (
     <div className={styles.row}>
       <div className={styles.inputCell}>
-        <Button
-          size="tiny"
+        <MappingTriggerButton
+          lang={lang}
+          keys={inputKeys}
+          unsetLabel={i18n.buttonMappingSetInput}
           onClick={() =>
-            setEditor({
-              kind: "button_mapping_activator",
-              entryId: entry.id,
-              rejected: null,
-            })
+            setEditor(buttonMappingActivatorEditorFromEntry(entry))
           }
-        >
-          {inputLabel}
-        </Button>
+        />
       </div>
       <BindingRow
         target={{ kind: "button_mapping", id: entry.id }}

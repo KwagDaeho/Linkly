@@ -4,10 +4,11 @@ use crate::domain::device::ButtonId;
 use crate::domain::profile::{Activator, ComboActivator, CustomMappingEntry};
 use crate::platform::inject;
 
+use super::active_os_custom_entry_ids;
 use super::state::{
-    self, effective_sorted_keys, effective_sorted_modifiers, entry_by_id, is_modifier,
-    modifiers_from_flags, normalize_combo_keys, normalize_combo_modifiers, request_chord_reeval,
-    sorted_modifiers, ACTIVE_BUTTONS, SWALLOWED_OS_BUTTONS,
+    self, effective_sorted_keys, effective_sorted_modifiers, is_modifier, modifiers_from_flags,
+    normalize_combo_keys, normalize_combo_modifiers, request_chord_reeval, sorted_modifiers,
+    ACTIVE_BUTTONS, SWALLOWED_OS_BUTTONS,
 };
 
 pub(crate) fn combo_matches(combo: &ComboActivator, mods: &[String], keys: &[String]) -> bool {
@@ -15,11 +16,14 @@ pub(crate) fn combo_matches(combo: &ComboActivator, mods: &[String], keys: &[Str
         && normalize_combo_keys(&combo.keys) == *keys
 }
 
-pub(crate) fn find_match(id: ButtonId) -> Option<CustomMappingEntry> {
-    find_match_trigger(&Activator::Huge { button: id })
-}
-
-pub(crate) fn find_match_trigger(trigger: &Activator) -> Option<CustomMappingEntry> {
+/// Combo matched and `trigger` is the control that completed it (down edge or held HID).
+pub(crate) fn find_match_trigger_at_edge(
+    trigger: &Activator,
+    trigger_down: bool,
+) -> Option<CustomMappingEntry> {
+    if !trigger_down {
+        return None;
+    }
     let mods = effective_sorted_modifiers();
     let keys = effective_sorted_keys();
     state::entries()
@@ -28,6 +32,17 @@ pub(crate) fn find_match_trigger(trigger: &Activator) -> Option<CustomMappingEnt
             e.activator.triggers_match(trigger) && combo_matches(&e.activator, &mods, &keys)
         })
         .cloned()
+}
+
+pub(crate) fn find_match_trigger(trigger: &Activator) -> Option<CustomMappingEntry> {
+    find_match_trigger_at_edge(trigger, true)
+}
+
+pub(crate) fn find_match(id: ButtonId) -> Option<CustomMappingEntry> {
+    if !state::button_state().is_down(id) {
+        return None;
+    }
+    find_match_trigger_at_edge(&Activator::Huge { button: id }, true)
 }
 
 pub(crate) fn find_match_with_flags(id: ButtonId, event_flags: u64) -> Option<CustomMappingEntry> {
@@ -42,47 +57,11 @@ pub(crate) fn find_match_with_flags(id: ButtonId, event_flags: u64) -> Option<Cu
         .cloned()
 }
 
-fn chord_matches_any(id: ButtonId) -> bool {
-    let mods = effective_sorted_modifiers();
-    let keys = effective_sorted_keys();
-    state::entries()
-        .iter()
-        .any(|e| {
-            e.activator.triggers_match(&Activator::Huge { button: id })
-                && combo_matches(&e.activator, &mods, &keys)
-        })
-}
-
 pub fn is_reserved_huge(id: ButtonId) -> bool {
     if ACTIVE_BUTTONS.lock().contains(&id) {
         return true;
     }
-    if state::entries().is_empty() {
-        return false;
-    }
-    if chord_matches_any(id) {
-        return true;
-    }
-    chord_ready_for_button(id)
-}
-
-/// Modifiers + chord keys satisfied; waiting for or during HUGE button press.
-fn chord_ready_for_button(id: ButtonId) -> bool {
-    let mods = effective_sorted_modifiers();
-    if mods.is_empty() {
-        return false;
-    }
-    let keys = effective_sorted_keys();
-    state::entries().iter().any(|entry| {
-        if !entry.activator.triggers_match(&Activator::Huge { button: id }) {
-            return false;
-        }
-        if normalize_combo_modifiers(&entry.activator.modifiers) != mods {
-            return false;
-        }
-        let entry_keys = normalize_combo_keys(&entry.activator.keys);
-        entry_keys.iter().all(|key| keys.contains(key))
-    })
+    find_match(id).is_some()
 }
 
 pub(crate) fn release_active_chord() {
@@ -135,63 +114,31 @@ pub fn should_swallow_os_button(id: ButtonId, event_flags: u64, down: bool) -> b
         return false;
     }
     if down {
-        if find_match_with_flags(id, event_flags).is_some() || find_match(id).is_some() {
-            return true;
-        }
-        // Shift (etc.) may live in keyboard state while the mouse event flags omit it.
-        if is_reserved_huge(id) {
-            return true;
-        }
-        return false;
+        return find_match_with_flags(id, event_flags).is_some() || find_match(id).is_some();
     }
     SWALLOWED_OS_BUTTONS.lock().contains(&id) || ACTIVE_BUTTONS.lock().contains(&id)
 }
 
-/// Swallow OS key events that complete an active custom chord while the HUGE
-/// button is held — prevents cmd+R etc. from reaching foreground apps.
+/// Swallow combo keys/modifiers only while a matched mapping is actively held (after fire).
 pub fn should_swallow_os_key(name: &str) -> bool {
     if !state::uses_os_watch() {
         return false;
     }
-    let active = ACTIVE_BUTTONS.lock();
-    if active.iter().any(|button| {
-        state::entries().iter().any(|entry| {
-            entry
-                .activator
-                .effective_trigger()
-                .is_some_and(|t| t == Activator::Huge { button: *button })
-                && entry.activator.keys.iter().any(|k| k == name)
-        })
-    }) {
-        return true;
-    }
-    drop(active);
-    let mods = effective_sorted_modifiers();
-    if !mods.is_empty() {
-        let matches_prefix = state::entries().iter().any(|entry| {
-            if !entry.activator.keys.iter().any(|k| k == name) {
-                return false;
-            }
-            normalize_combo_modifiers(&entry.activator.modifiers) == mods
-        });
-        if matches_prefix {
-            return true;
-        }
-    }
-    let button_state = *state::button_state();
-    let keys = effective_sorted_keys();
     state::entries().iter().any(|entry| {
-        if !entry.activator.keys.iter().any(|k| k == name) {
+        if !entry_chord_is_live(entry) {
             return false;
         }
-        let Some(Activator::Huge { button }) = entry.activator.effective_trigger() else {
-            return false;
-        };
-        if !button_state.is_down(button) {
-            return false;
-        }
-        combo_matches(&entry.activator, &mods, &keys)
+        entry.activator.keys.iter().any(|k| k == name)
+            || entry.activator.modifiers.iter().any(|m| m == name)
     })
+}
+
+fn entry_chord_is_live(entry: &CustomMappingEntry) -> bool {
+    match entry.activator.effective_trigger() {
+        Some(Activator::Huge { button }) => ACTIVE_BUTTONS.lock().contains(&button),
+        Some(_) => active_os_custom_entry_ids().contains(&entry.id),
+        None => false,
+    }
 }
 
 pub fn note_os_down(activator: &Activator, is_repeat: bool) {

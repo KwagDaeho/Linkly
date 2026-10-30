@@ -5,7 +5,7 @@ use std::sync::LazyLock;
 use crate::domain::device::ButtonId;
 use crate::domain::profile::Activator;
 
-use super::chord::find_match_trigger;
+use super::chord::{find_match_trigger, find_match_trigger_at_edge};
 use super::handler::{fire_custom_press, CustomMaps};
 use super::state::{request_chord_reeval, uses_os_watch};
 use crate::domain::engine::input::apply_binding_release;
@@ -23,7 +23,7 @@ pub fn offer_os_trigger(activator: &Activator, down: bool) -> bool {
         return false;
     }
     let swallow = if down {
-        find_match_trigger(activator).is_some()
+        find_match_trigger_at_edge(activator, true).is_some()
     } else {
         ACTIVE_OS_ENTRIES.lock().iter().any(|entry_id| {
             super::state::entry_by_id(entry_id)

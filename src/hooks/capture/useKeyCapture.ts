@@ -7,17 +7,26 @@ import {
 } from "react";
 import {
   applyKeyCapture,
+  CAPTURE_HOLD_MS,
   captureModeOf,
-  captureSessionFor,
+  captureSessionForEditor,
+  comboActivatorToSnapshot,
+  mergeCaptureSnapshot,
+  normalizeCaptureSnapshot,
   resolveActivatorCapture,
+  snapshotIsValidCombo,
+  snapshotIsValidCustomKey,
+  snapshotToComboActivator,
+  stopHoldListening,
 } from "@/domain/capture";
-import { comboFromDraft, CHORD_MODIFIERS } from "@/domain/profile";
-import * as tauri from "@/services/tauri";
 import type {
   Activator,
   ActivatorCapturePayload,
   BallScrollSlot,
+  ComboActivator,
+  ComboTriggerCapturePayload,
   EditorMode,
+  KeyCapturePayload,
   Profile,
 } from "@/types";
 
@@ -32,6 +41,48 @@ const blockBrowserKeyEvent = (event: Event) => {
   }
 };
 
+const patchHoldEditor = (
+  editor: EditorMode,
+  snapshot: string[],
+  phase: "recognizing" | "confirmed",
+): EditorMode => {
+  if (editor.kind === "custom_key") {
+    if (phase === "confirmed") {
+      return {
+        ...editor,
+        listening: false,
+        holdPhase: "confirmed",
+        pending: [],
+        confirmed: snapshot,
+      };
+    }
+    return {
+      ...editor,
+      holdPhase: snapshot.length > 0 ? "recognizing" : "idle",
+      pending: snapshot,
+    };
+  }
+  if (editor.kind === "custom_combo_activator") {
+    if (phase === "confirmed") {
+      return {
+        ...editor,
+        listening: false,
+        holdPhase: "confirmed",
+        pending: [],
+        confirmed: snapshot,
+        rejected: null,
+      };
+    }
+    return {
+      ...editor,
+      holdPhase: snapshot.length > 0 ? "recognizing" : "idle",
+      pending: snapshot,
+      rejected: null,
+    };
+  }
+  return editor;
+};
+
 export const useKeyCapture = (
   editor: EditorMode | null,
   setEditor: Dispatch<SetStateAction<EditorMode | null>>,
@@ -42,7 +93,7 @@ export const useKeyCapture = (
   ) => boolean | Promise<boolean>,
   onComboAssigned: (
     entryId: string,
-    combo: ReturnType<typeof comboFromDraft>,
+    combo: ComboActivator | null,
   ) => boolean | Promise<boolean>,
   onButtonMappingAssigned: (
     entryId: string,
@@ -59,17 +110,122 @@ export const useKeyCapture = (
   onComboAssignedRef.current = onComboAssigned;
   const onButtonMappingAssignedRef = useRef(onButtonMappingAssigned);
   onButtonMappingAssignedRef.current = onButtonMappingAssigned;
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdSnapshotRef = useRef<string>("");
+
   const captureMode = captureModeOf(editor);
   const captureSession = useMemo(
-    () => captureSessionFor(captureMode),
-    [captureMode],
+    () => captureSessionForEditor(editor),
+    [editor],
   );
+
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current !== null) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+  };
+
+  const exitHoldListening = () => {
+    clearHoldTimer();
+    holdSnapshotRef.current = "";
+    setEditor((previousEditor) => {
+      if (previousEditor === null) {
+        return previousEditor;
+      }
+      return stopHoldListening(previousEditor);
+    });
+  };
+
+  const confirmHoldCapture = (snapshot: string[]) => {
+    clearHoldTimer();
+    holdSnapshotRef.current = "";
+    const activeEditor = editorRef.current;
+    if (activeEditor === null) {
+      return;
+    }
+    if (activeEditor.kind === "custom_key") {
+      if (!snapshotIsValidCustomKey(snapshot)) {
+        return;
+      }
+      setEditor(patchHoldEditor(activeEditor, snapshot, "confirmed"));
+      return;
+    }
+    if (activeEditor.kind === "custom_combo_activator") {
+      if (
+        snapshotToComboActivator(snapshot) === null ||
+        !snapshotIsValidCombo(snapshot)
+      ) {
+        return;
+      }
+      setEditor(patchHoldEditor(activeEditor, snapshot, "confirmed"));
+    }
+  };
+
+  const scheduleHoldCommit = (snapshot: string[]) => {
+    clearHoldTimer();
+    const normalized = normalizeCaptureSnapshot(snapshot);
+    const key = normalized.join("\0");
+    if (normalized.length === 0) {
+      holdSnapshotRef.current = "";
+      return;
+    }
+    if (key === holdSnapshotRef.current && holdTimerRef.current !== null) {
+      return;
+    }
+    holdSnapshotRef.current = key;
+    holdTimerRef.current = setTimeout(() => {
+      confirmHoldCapture(normalized);
+      holdTimerRef.current = null;
+    }, CAPTURE_HOLD_MS);
+  };
+
+  const applyHoldPreview = (snapshot: string[]) => {
+    const normalized = mergeCaptureSnapshot(snapshot);
+    setEditor((previousEditor) => {
+      if (
+        previousEditor?.kind !== "custom_key" &&
+        previousEditor?.kind !== "custom_combo_activator"
+      ) {
+        return previousEditor;
+      }
+      if (!previousEditor.listening) {
+        return previousEditor;
+      }
+      return patchHoldEditor(previousEditor, normalized, "recognizing");
+    });
+    if (normalized.length === 0) {
+      clearHoldTimer();
+      holdSnapshotRef.current = "";
+      setEditor((previousEditor) => {
+        if (
+          previousEditor?.kind !== "custom_key" &&
+          previousEditor?.kind !== "custom_combo_activator"
+        ) {
+          return previousEditor;
+        }
+        if (!previousEditor.listening) {
+          return previousEditor;
+        }
+        return patchHoldEditor(previousEditor, [], "recognizing");
+      });
+      return;
+    }
+    scheduleHoldCommit(normalized);
+  };
+
   useEffect(() => {
-    void tauri.applyCaptureSession(captureSession);
+    void import("@/services/tauri").then((tauri) => {
+      void tauri.applyCaptureSession(captureSession);
+    });
     return () => {
-      void tauri.applyCaptureSession(tauri.CAPTURE_SESSION_OFF);
+      clearHoldTimer();
+      void import("@/services/tauri").then((tauri) => {
+        void tauri.applyCaptureSession(tauri.CAPTURE_SESSION_OFF);
+      });
     };
   }, [captureSession, captureMode]);
+
   useEffect(() => {
     if (captureMode === "off") {
       return;
@@ -78,40 +234,73 @@ export const useKeyCapture = (
     const unlistenPromise = import("@tauri-apps/api/event").then(
       async ({ listen }) => {
         const unsubs: Array<() => void> = [];
-        if (
-          captureMode === "custom_key" ||
-          captureMode === "macro" ||
-          captureMode === "combo_capture"
-        ) {
-          const unChord = await listen<{
-            keys: string[];
-            escape: boolean;
-          }>("key-capture", (event) => {
-            if (cancelled) {
-              return;
-            }
-            const activeEditor = editorRef.current;
-            if (activeEditor === null) {
-              return;
-            }
-            const nextEditor = applyKeyCapture(
-              activeEditor,
-              captureMode,
-              event.payload,
-            );
-            if (nextEditor === null) {
-              setEditor(null);
-            } else if (nextEditor !== activeEditor) {
-              setEditor(nextEditor);
-            }
-          });
+
+        if (captureMode === "chord_hold") {
+          const unChord = await listen<KeyCapturePayload>(
+            "key-capture",
+            (event) => {
+              if (cancelled) {
+                return;
+              }
+              if (event.payload.escape) {
+                exitHoldListening();
+                return;
+              }
+              applyHoldPreview(event.payload.keys);
+            },
+          );
+          unsubs.push(unChord);
+
+          const unCombo = await listen<ComboTriggerCapturePayload>(
+            "combo-trigger-capture",
+            (event) => {
+              if (cancelled) {
+                return;
+              }
+              if (event.payload.escape) {
+                exitHoldListening();
+                return;
+              }
+              if (event.payload.combo !== null) {
+                applyHoldPreview(
+                  comboActivatorToSnapshot(event.payload.combo),
+                );
+              }
+            },
+          );
+          unsubs.push(unCombo);
+        }
+
+        if (captureMode === "macro" || captureMode === "combo_capture") {
+          const unChord = await listen<KeyCapturePayload>(
+            "key-capture",
+            (event) => {
+              if (cancelled) {
+                return;
+              }
+              const activeEditor = editorRef.current;
+              if (activeEditor === null) {
+                return;
+              }
+              const nextEditor = applyKeyCapture(
+                activeEditor,
+                captureMode === "macro" ? "macro" : "combo_capture",
+                event.payload,
+              );
+              if (nextEditor === null) {
+                setEditor(null);
+              } else if (nextEditor !== activeEditor) {
+                setEditor(nextEditor);
+              }
+            },
+          );
           unsubs.push(unChord);
         }
+
         if (
           captureMode === "ball_scroll" ||
           captureMode === "button_mapping_capture" ||
-          captureMode === "combo_trigger" ||
-          captureMode === "custom_key"
+          captureMode === "combo_trigger"
         ) {
           const unAct = await listen<ActivatorCapturePayload>(
             "activator-capture",
@@ -129,6 +318,10 @@ export const useKeyCapture = (
                   event.payload,
                 );
                 if (result === null) {
+                  return;
+                }
+                if (result.kind === "stop_listening") {
+                  exitHoldListening();
                   return;
                 }
                 if (result.kind === "close") {
@@ -149,23 +342,13 @@ export const useKeyCapture = (
                   });
                   return;
                 }
-                if (result.kind === "append_custom_key") {
-                  setEditor((previousEditor) => {
-                    if (previousEditor?.kind !== "custom_key") {
-                      return previousEditor;
-                    }
-                    const modifiers = previousEditor.draft.filter((key) =>
-                      CHORD_MODIFIERS.has(key),
-                    );
-                    return {
-                      ...previousEditor,
-                      draft: [...modifiers, result.token],
-                    };
-                  });
-                  return;
-                }
                 if (result.kind === "assign_combo") {
-                  const combo = comboFromDraft(result.chord, result.activator);
+                  const combo = snapshotToComboActivator([
+                    ...result.chord,
+                    ...(result.activator.type === "key"
+                      ? [result.activator.name]
+                      : []),
+                  ]);
                   if (combo === null) {
                     return;
                   }
@@ -179,6 +362,12 @@ export const useKeyCapture = (
                   return;
                 }
                 if (result.kind === "assign_button_mapping") {
+                  if (
+                    activeEditor?.kind !== "button_mapping_activator" ||
+                    !activeEditor.listening
+                  ) {
+                    return;
+                  }
                   const accepted = await onButtonMappingAssignedRef.current(
                     result.entryId,
                     result.activator,
@@ -188,18 +377,21 @@ export const useKeyCapture = (
                   }
                   return;
                 }
-                const accepted = await onActivatorAssignedRef.current(
-                  result.slot,
-                  result.activator,
-                );
-                if (accepted) {
-                  setEditor(null);
+                if (result.kind === "assign") {
+                  const accepted = await onActivatorAssignedRef.current(
+                    result.slot,
+                    result.activator,
+                  );
+                  if (accepted) {
+                    setEditor(null);
+                  }
                 }
               })();
             },
           );
           unsubs.push(unAct);
         }
+
         return () => {
           for (const unsubscribe of unsubs) {
             unsubscribe();
@@ -213,6 +405,7 @@ export const useKeyCapture = (
     window.addEventListener("keypress", blockBrowserKeyEvent, blockOpts);
     return () => {
       cancelled = true;
+      clearHoldTimer();
       void unlistenPromise.then((cleanup) => {
         if (cleanup !== undefined) {
           cleanup();

@@ -3,6 +3,7 @@ import type { Activator, BallScrollSlot, ComboActivator } from "../profile";
 export type CaptureMode =
   | "off"
   | "custom_key"
+  | "chord_hold"
   | "combo_capture"
   | "macro"
   | "ball_scroll"
@@ -15,6 +16,8 @@ export type CaptureSession = {
   activatorCapture: boolean;
   uiModal: boolean;
   allowLeftActivator?: boolean;
+  /** HUGE / OS left click acts like Esc while capture is listening. */
+  leftClickEscape?: boolean;
 };
 
 export type KeyCapturePayload = { keys: string[]; escape: boolean };
@@ -33,6 +36,7 @@ export type ComboTriggerCapturePayload = {
 
 export type ActivatorCaptureResult =
   | { kind: "close" }
+  | { kind: "stop_listening" }
   | { kind: "reject"; rejected: string }
   | { kind: "assign"; slot: BallScrollSlot; activator: Activator }
   | {

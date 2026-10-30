@@ -3,6 +3,7 @@ import {
   MACRO_SENTINEL,
   OPEN_APP_SENTINEL,
 } from "@/constants/sentinels";
+import { initialHoldCapture } from "@/domain/capture/holdCapture";
 import { asBinding } from "@/domain/profile";
 import { buttonMappingsOf, customMappingsOf } from "@/domain/profile";
 import type {
@@ -39,7 +40,12 @@ export const resolveCatalogSelection = (
   if (value === CUSTOM_KEY_SENTINEL) {
     return {
       kind: "editor",
-      editor: { kind: "custom_key", target, slot, draft: [] },
+      editor: {
+        kind: "custom_key",
+        target,
+        slot,
+        ...initialHoldCapture(),
+      },
     };
   }
   if (value === MACRO_SENTINEL) {

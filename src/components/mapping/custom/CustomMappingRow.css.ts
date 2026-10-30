@@ -21,8 +21,6 @@ export const comboTrigger = style({
   justifySelf: "start",
   maxWidth: "100%",
   overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
 });
 
 export const remove = style({

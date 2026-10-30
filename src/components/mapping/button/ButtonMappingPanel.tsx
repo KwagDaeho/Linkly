@@ -1,8 +1,10 @@
 import { longPressMs, withLongPressMs } from "@/domain/profile";
+import { buttonMappingActivatorEditor } from "@/domain/editors";
 import {
   buttonMappingsOf,
   newButtonMappingEntry,
 } from "@/domain/profile";
+import { useEditor } from "@/hooks/editor";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { Button, Muted, Panel, SettingsList, SettingsRow } from "@/components/ui";
 import { ButtonMappingRow } from "./ButtonMappingRow";
@@ -12,6 +14,7 @@ import * as styles from "../custom/CustomButtonMappingPanel.css";
 export const ButtonMappingPanel = () => {
   const { i18n } = usePrefs();
   const { profile, buttonMappings, lifecycle } = useProfileCtx();
+  const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
@@ -40,7 +43,11 @@ export const ButtonMappingPanel = () => {
       <div className={styles.toolbar}>
         <Button
           className={styles.addButton}
-          onClick={() => void buttonMappings.add(newButtonMappingEntry())}
+          onClick={() => {
+            const entry = newButtonMappingEntry();
+            void buttonMappings.add(entry);
+            setEditor(buttonMappingActivatorEditor(entry.id));
+          }}
         >
           {i18n.customMappingAdd}
         </Button>

@@ -1,4 +1,3 @@
-import { formatActivatorLabel } from "@/domain/input";
 import { formatKeyChord } from "./keys";
 import type { ComboEditorState, Lang } from "@/types";
 
@@ -7,21 +6,13 @@ export const buildComboPreview = (
   lang: Lang,
   waitingLabel: string,
 ): string => {
-  const chordPreview =
-    editor.draftChord.length > 0
-      ? formatKeyChord(editor.draftChord, lang)
-      : null;
-  const triggerPreview =
-    editor.draftTrigger !== null
-      ? formatActivatorLabel(editor.draftTrigger, lang)
-      : null;
-  const previewParts = [chordPreview, triggerPreview].filter(
-    (part): part is string => part !== null,
-  );
-  if (previewParts.length === 0) {
-    return waitingLabel;
+  if (editor.holdPhase === "confirmed" && editor.confirmed.length > 0) {
+    return formatKeyChord(editor.confirmed, lang);
   }
-  return previewParts.join(" + ");
+  if (editor.pending.length > 0) {
+    return formatKeyChord(editor.pending, lang);
+  }
+  return waitingLabel;
 };
 
 export const buildComboErrorMessage = (

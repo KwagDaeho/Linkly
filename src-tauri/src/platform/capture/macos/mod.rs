@@ -11,6 +11,11 @@ mod viewer;
 pub use combo::{clear_combo_held, combo_held_parts};
 
 #[cfg(target_os = "macos")]
+pub(crate) fn refresh_combo_preview() {
+    combo::emit_combo_preview();
+}
+
+#[cfg(target_os = "macos")]
 pub(crate) fn reenable_key_capture_tap() {
     use core_foundation::mach_port::CFMachPortRef;
     use std::ffi::c_void;

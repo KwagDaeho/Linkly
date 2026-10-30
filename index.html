@@ -8,7 +8,11 @@
     <style>
       html, body, #root { margin: 0; min-height: 100%; background: #f3eef6; color: #1f1a22; font-family: "Avenir Next", "Gill Sans", sans-serif; }
       html[data-theme="dark"], html[data-theme="dark"] body, html[data-theme="dark"] #root { background: #161218; color: #f3eaf6; }
-      .boot { padding: 32px; }
+      /* Static shell until React mounts — same layout as BootScreen (no legacy copy). */
+      .boot-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
+      .boot-stack { display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center; }
+      .boot-tag { margin: 0; font-size: 0.94rem; font-weight: 650; letter-spacing: 0.08em; opacity: 0.72; }
+      .boot-brand { margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: 0.02em; }
     </style>
     <script>
       (function () {
@@ -23,7 +27,14 @@
     </script>
   </head>
   <body>
-    <div id="root"><div class="boot">Loading Linkly…</div></div>
+    <div id="root">
+      <main class="boot-shell" aria-busy="true">
+        <div class="boot-stack">
+          <p class="boot-tag">[ Loading ]</p>
+          <h1 class="boot-brand">Linkly</h1>
+        </div>
+      </main>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

@@ -1,9 +1,11 @@
 import { BindingRow } from "../button/BindingRow";
 import { asBinding, hugeButtonFromComboTrigger } from "@/domain/profile";
+import { comboActivatorToSnapshot } from "@/domain/capture";
 import { comboEditorStateFromEntry } from "@/domain/editors";
-import { customMappingTriggerLabel } from "@/i18n";
+import { comboIsValid } from "@/domain/profile";
 import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
 import { Button } from "@/components/ui";
+import { MappingTriggerButton } from "../MappingTriggerButton";
 import type { CustomMappingEntry } from "@/types";
 import * as styles from "./CustomMappingRow.css";
 
@@ -17,20 +19,18 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
   const { catalogSelection, setEditor } = useEditor();
   const entry = props.entry;
   const binding = asBinding(entry);
-  const triggerLabel = customMappingTriggerLabel(
-    entry,
-    lang,
-    i18n.customMappingSetTrigger,
-  );
+  const triggerKeys = comboIsValid(entry.activator)
+    ? comboActivatorToSnapshot(entry.activator)
+    : null;
   return (
     <div className={styles.row}>
       <div className={styles.comboTrigger}>
-        <Button
-          size="tiny"
+        <MappingTriggerButton
+          lang={lang}
+          keys={triggerKeys}
+          unsetLabel={i18n.customMappingSetTrigger}
           onClick={() => setEditor(comboEditorStateFromEntry(entry))}
-        >
-          {triggerLabel}
-        </Button>
+        />
       </div>
       <BindingRow
         target={{ kind: "custom", id: entry.id }}

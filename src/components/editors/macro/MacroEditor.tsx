@@ -3,7 +3,7 @@ import { useState } from "react";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
 import { useEditor } from "@/hooks/editor";
-import { Button, Modal, Muted, Row } from "@/components/ui";
+import { Button, Modal, ModalFooter, Muted, Row } from "@/components/ui";
 import type { MacroEditorState, MacroStep } from "@/types";
 
 import { MacroDelayPrompt } from "./MacroDelayPrompt";
@@ -66,7 +66,7 @@ export const MacroEditor = (props: MacroEditorProps) => {
 
   return (
     <>
-      <Modal wide>
+      <Modal wide onEscape={() => setEditor(null)}>
         <h2>{i18n.macroTitle}</h2>
         <Muted variant="modal">{i18n.macroHint}</Muted>
         <MacroStepList
@@ -86,14 +86,14 @@ export const MacroEditor = (props: MacroEditorProps) => {
             {i18n.addDelay}
           </Button>
         </Row>
-        <Row>
+        <ModalFooter>
           <Button variant="ghost" onClick={() => setEditor(null)}>
             {i18n.cancel}
           </Button>
           <Button disabled={editor.steps.length === 0} onClick={handleSave}>
             {i18n.save}
           </Button>
-        </Row>
+        </ModalFooter>
       </Modal>
       {editor.keyPrompt ? (
         <MacroKeyPrompt
@@ -102,8 +102,8 @@ export const MacroEditor = (props: MacroEditorProps) => {
               ? i18n.addKeystroke
               : i18n.editKeystroke
           }
-          hint={i18n.customKeyHint}
-          waitingLabel={i18n.customKeyWaiting}
+          hint={i18n.macroKeystrokeHint}
+          waitingLabel={i18n.macroKeystrokeWaiting}
           cancelLabel={i18n.cancel}
           onCancel={() => setEditor({ ...editor, keyPrompt: null })}
         />

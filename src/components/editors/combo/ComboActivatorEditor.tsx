@@ -1,11 +1,17 @@
-import type { KeyboardEvent } from "react";
-
-import { buildComboErrorMessage, buildComboPreview } from "@/i18n";
+import { buildComboErrorMessage } from "@/i18n";
+import {
+  beginHoldCaptureListening,
+  captureWaitingPressButton,
+  snapshotToComboActivator,
+  stopHoldListening,
+} from "@/domain/capture";
 import { usePrefs } from "@/hooks/prefs";
+import { useProfileCtx } from "@/hooks/profile";
 import { useEditor } from "@/hooks/editor";
 import type { ComboEditorState } from "@/types";
 
-import { KeyChordModal } from "../shared";
+import { ChordHoldCaptureModal } from "../shared/ChordHoldCaptureModal";
+import { HoldCapturePreviewView } from "../shared/HoldCapturePreview";
 
 interface ComboActivatorEditorProps {
   editor: ComboEditorState;
@@ -13,51 +19,69 @@ interface ComboActivatorEditorProps {
 
 export const ComboActivatorEditor = (props: ComboActivatorEditorProps) => {
   const { lang, i18n } = usePrefs();
+  const { customMappings } = useProfileCtx();
   const { setEditor } = useEditor();
   const editor = props.editor;
-  const hint =
-    editor.phase === "capture"
-      ? i18n.customMappingTriggerCaptureHint
-      : i18n.customMappingTriggerInputHint;
-  const waiting =
-    editor.phase === "trigger"
-      ? i18n.customMappingTriggerInputWaiting
-      : i18n.customMappingTriggerWaiting;
-  const preview = buildComboPreview(editor, lang, waiting);
-  const resetTrigger = () => {
-    setEditor({
-      ...editor,
-      phase: "capture",
-      draftChord: [],
-      draftTrigger: null,
-      rejected: null,
-    });
-  };
-  const handleKeyDown = (event: KeyboardEvent) => {
-    if (event.key === "Escape") {
-      setEditor(null);
-    }
-  };
+  const startLabel = i18n.captureStartTrigger;
+  const canSave =
+    editor.holdPhase === "confirmed" &&
+    snapshotToComboActivator(editor.confirmed) !== null;
+  const error = buildComboErrorMessage(editor.rejected, {
+    incomplete: i18n.customMappingTriggerIncomplete,
+    tilt: i18n.activatorRejectedTilt,
+  });
 
   return (
-    <KeyChordModal
-      copy={{
-        title: i18n.customMappingTriggerTitle,
-        hint,
-        cancelLabel: i18n.cancel,
-        saveLabel: i18n.save,
-      }}
-      preview={preview}
-      error={buildComboErrorMessage(editor.rejected, {
-        incomplete: i18n.customMappingTriggerIncomplete,
-        tilt: i18n.activatorRejectedTilt,
-      })}
-      saveDisabled
-      resetLabel={i18n.customMappingTriggerReset}
-      onReset={resetTrigger}
-      handlers={{
-        onCancel: () => setEditor(null),
-        onKeyDown: handleKeyDown,
+    <ChordHoldCaptureModal
+      title={i18n.customMappingTriggerTitle}
+      hint={i18n.customMappingTriggerCaptureHint}
+      preview={
+        <HoldCapturePreviewView
+          lang={lang}
+          labels={{
+            inProgressTag: i18n.captureInProgressTag,
+            idlePrompt: i18n.captureHoldListening,
+            waitingStart: captureWaitingPressButton(startLabel, lang),
+          }}
+          state={editor}
+        />
+      }
+      error={error}
+      cancelLabel={i18n.cancel}
+      saveLabel={i18n.save}
+      startInputLabel={startLabel}
+      retryLabel={i18n.captureRetryInput}
+      listening={editor.listening}
+      canSave={canSave}
+      onCancel={() => setEditor(null)}
+      onStartInput={() =>
+        setEditor({
+          ...editor,
+          ...beginHoldCaptureListening(),
+          rejected: null,
+        })
+      }
+      onRetry={() =>
+        setEditor({
+          ...editor,
+          ...beginHoldCaptureListening(),
+          rejected: null,
+        })
+      }
+      onStopListening={() =>
+        setEditor((previous) =>
+          previous?.kind === "custom_combo_activator"
+            ? stopHoldListening(previous)
+            : previous,
+        )
+      }
+      onSave={() => {
+        const combo = snapshotToComboActivator(editor.confirmed);
+        if (combo === null) {
+          return;
+        }
+        customMappings.updateActivator(editor.entryId, combo);
+        setEditor(null);
       }}
     />
   );

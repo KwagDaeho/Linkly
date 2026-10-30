@@ -1,6 +1,6 @@
 import type { MacroStep } from "../action";
 import type { InstalledAppWithIcon } from "../device";
-import type { ButtonId, Activator } from "../profile";
+import type { ButtonId } from "../profile";
 export type PermissionStatus = {
   accessibility: boolean;
   inputMonitoring: boolean;
@@ -9,6 +9,9 @@ export type PermissionStatus = {
 };
 
 export type ActionSlot = "click" | "long_press";
+
+/** Chord-hold capture UX: start button → recognizing → 1s confirmed. */
+export type HoldCapturePhase = "idle" | "recognizing" | "confirmed";
 
 export type MappingTarget =
   | { kind: "button"; id: ButtonId }
@@ -20,7 +23,10 @@ export type EditorMode =
       kind: "custom_key";
       target: MappingTarget;
       slot: ActionSlot;
-      draft: string[];
+      listening: boolean;
+      holdPhase: HoldCapturePhase;
+      pending: string[];
+      confirmed: string[];
     }
   | {
       kind: "macro";
@@ -48,14 +54,16 @@ export type EditorMode =
       kind: "button_mapping_activator";
       entryId: string;
       rejected: string | null;
+      listening: boolean;
     }
   | {
       kind: "custom_combo_activator";
       entryId: string;
-      phase: "capture" | "trigger" | "confirm";
-      draftChord: string[];
-      draftTrigger: Activator | null;
       rejected: string | null;
+      listening: boolean;
+      holdPhase: HoldCapturePhase;
+      pending: string[];
+      confirmed: string[];
     };
 
 export type TabId = "info" | "custom";

@@ -14,3 +14,7 @@ pub use handler::{
     fire_due_ticks, handle_transitions, maintain_chords, pointer_takeover_active, CustomMaps,
 };
 pub use state::{sync_button_state, sync_from_profile, uses_os_watch};
+
+pub(crate) fn active_os_custom_entry_ids() -> std::collections::HashSet<String> {
+    os_trigger::ACTIVE_OS_ENTRIES.lock().clone()
+}

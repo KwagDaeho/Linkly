@@ -49,6 +49,7 @@ export type {
 export type {
   PermissionStatus,
   ActionSlot,
+  HoldCapturePhase,
   EditorMode,
   MappingTarget,
   TabId,

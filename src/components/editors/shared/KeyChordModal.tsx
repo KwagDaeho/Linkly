@@ -6,6 +6,7 @@ import {
   ChordError,
   ChordPreview,
   Modal,
+  ModalFooter,
   Muted,
   Row,
 } from "@/components/ui";
@@ -31,10 +32,15 @@ export const KeyChordModal = (props: KeyChordModalProps) => {
   const showSaveButton = props.handlers.onSave !== undefined;
 
   return (
-    <Modal ref={dialogRef} tabIndex={-1} onKeyDown={props.handlers.onKeyDown}>
+    <Modal
+      ref={dialogRef}
+      tabIndex={-1}
+      onEscape={props.handlers.onCancel}
+      onKeyDown={props.handlers.onKeyDown}
+    >
       <h2>{props.copy.title}</h2>
       <Muted variant="modal">{props.copy.hint}</Muted>
-      <ChordPreview>{props.preview}</ChordPreview>
+      <ChordPreview variant="field">{props.preview}</ChordPreview>
       {props.error ? <ChordError>{props.error}</ChordError> : null}
       {props.onReset ? (
         <Row>
@@ -43,7 +49,7 @@ export const KeyChordModal = (props: KeyChordModalProps) => {
           </Button>
         </Row>
       ) : null}
-      <Row>
+      <ModalFooter>
         <Button variant="ghost" onClick={props.handlers.onCancel}>
           {props.copy.cancelLabel}
         </Button>
@@ -55,7 +61,7 @@ export const KeyChordModal = (props: KeyChordModalProps) => {
             {props.copy.saveLabel}
           </Button>
         ) : null}
-      </Row>
+      </ModalFooter>
     </Modal>
   );
 };

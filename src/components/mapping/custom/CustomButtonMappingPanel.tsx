@@ -1,4 +1,6 @@
+import { comboEditorStateFromEntry } from "@/domain/editors";
 import { customMappingsOf, newCustomMappingEntry } from "@/domain/profile";
+import { useEditor } from "@/hooks/editor";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { Button, Muted, Panel } from "@/components/ui";
 import { CustomMappingRow } from "./CustomMappingRow";
@@ -8,6 +10,7 @@ import * as styles from "./CustomButtonMappingPanel.css";
 export const CustomButtonMappingPanel = () => {
   const { i18n } = usePrefs();
   const { profile, customMappings } = useProfileCtx();
+  const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
@@ -17,7 +20,11 @@ export const CustomButtonMappingPanel = () => {
       <div className={styles.toolbar}>
         <Button
           className={styles.addButton}
-          onClick={() => void customMappings.add(newCustomMappingEntry())}
+          onClick={() => {
+            const entry = newCustomMappingEntry();
+            void customMappings.add(entry);
+            setEditor(comboEditorStateFromEntry(entry));
+          }}
         >
           {i18n.customMappingAdd}
         </Button>

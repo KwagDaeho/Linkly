@@ -3,6 +3,7 @@ import { migrateProfileInputs } from "@/domain/input";
 import { normalizeTiltPanStreamFlags } from "@/domain/profile";
 import * as tauri from "@/services/tauri";
 import type { ButtonMeta, Profile, ProfileLoader } from "@/types";
+
 export const useProfileLoader = (): ProfileLoader => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [catalog, setCatalog] = useState<ButtonMeta[]>([]);
@@ -13,12 +14,12 @@ export const useProfileLoader = (): ProfileLoader => {
         tauri.getProfile(),
         tauri.buttonCatalog(),
       ]);
-      setProfile(loadedProfile);
-      setCatalog(buttonCatalog);
-      setBootError("");
       const normalizedProfile = normalizeTiltPanStreamFlags(
         migrateProfileInputs(loadedProfile),
       );
+      setProfile(loadedProfile);
+      setCatalog(buttonCatalog);
+      setBootError("");
       if (normalizedProfile !== loadedProfile) {
         void tauri
           .saveProfile(normalizedProfile)

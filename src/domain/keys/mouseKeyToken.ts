@@ -1,4 +1,5 @@
 import type { Activator } from "@/types";
+import { buttonLabel } from "@/i18n/translate";
 
 import {
   mouseButtonEventNumber,
@@ -13,10 +14,53 @@ const MOUSE_TOKEN: Record<string, string> = {
   forward: "MouseForward",
 };
 
+const HUGE_BUTTON_TOKEN: Record<string, string> = {
+  left: "MouseLeft",
+  right: "MouseRight",
+  middle: "MouseMiddle",
+  back: "MouseBack",
+  forward: "MouseForward",
+  fn1: "Fn1",
+  fn2: "Fn2",
+  fn3: "Fn3",
+  wheel_tilt_left: "WheelTiltLeft",
+  wheel_tilt_right: "WheelTiltRight",
+};
+
+/** Capture / pill labels — same SSOT as button mapping `buttons.*`. */
+const CAPTURE_MOUSE_TO_BUTTON_ID: Record<string, string> = {
+  MouseLeft: "left",
+  MouseRight: "right",
+  MouseMiddle: "middle",
+  MouseBack: "back",
+  MouseForward: "forward",
+  Fn1: "fn1",
+  Fn2: "fn2",
+  Fn3: "fn3",
+  WheelTiltLeft: "wheel_tilt_left",
+  WheelTiltRight: "wheel_tilt_right",
+};
+
+/** Token for chord-hold capture (keyboard + mouse + trackball). */
+export const activatorToCaptureToken = (
+  activator: Activator,
+): string | null => {
+  if (activator.type === "key") {
+    return activator.name;
+  }
+  if (activator.type === "huge") {
+    return HUGE_BUTTON_TOKEN[activator.button] ?? null;
+  }
+  return activatorToCustomKeyToken(activator);
+};
+
 /** Serialize a captured mouse activator into a custom-key / keystroke token. */
 export const activatorToCustomKeyToken = (
   activator: Activator,
 ): string | null => {
+  if (activator.type === "huge") {
+    return HUGE_BUTTON_TOKEN[activator.button] ?? null;
+  }
   if (activator.type !== "mouse") {
     return null;
   }
@@ -35,20 +79,9 @@ export const formatMouseKeyToken = (
   token: string,
   lang: "ko" | "en",
 ): string | null => {
-  if (token === "MouseLeft") {
-    return lang === "ko" ? "마우스 왼쪽" : "Mouse left";
-  }
-  if (token === "MouseRight") {
-    return lang === "ko" ? "마우스 오른쪽" : "Mouse right";
-  }
-  if (token === "MouseMiddle") {
-    return lang === "ko" ? "마우스 가운데" : "Mouse middle";
-  }
-  if (token === "MouseBack") {
-    return lang === "ko" ? "마우스 뒤로" : "Mouse back";
-  }
-  if (token === "MouseForward") {
-    return lang === "ko" ? "마우스 앞으로" : "Mouse forward";
+  const buttonId = CAPTURE_MOUSE_TO_BUTTON_ID[token];
+  if (buttonId !== undefined) {
+    return buttonLabel(buttonId, lang);
   }
   if (token.startsWith("Button")) {
     const n = token.slice("Button".length);

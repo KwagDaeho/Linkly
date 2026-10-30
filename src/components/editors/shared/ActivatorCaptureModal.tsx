@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-import { Button, ChordPreview, Modal, Muted, Row } from "@/components/ui";
+import {
+  Button,
+  ChordPreview,
+  Modal,
+  ModalFooter,
+  Muted,
+} from "@/components/ui";
 
 interface ActivatorCaptureModalProps {
   title: ReactNode;
@@ -12,15 +18,15 @@ interface ActivatorCaptureModalProps {
 
 export const ActivatorCaptureModal = (props: ActivatorCaptureModalProps) => {
   return (
-    <Modal>
+    <Modal onEscape={props.onCancel}>
       <h2>{props.title}</h2>
       <Muted variant="modal">{props.hint}</Muted>
-      <ChordPreview>{props.statusMessage}</ChordPreview>
-      <Row>
+      <ChordPreview variant="field">{props.statusMessage}</ChordPreview>
+      <ModalFooter>
         <Button variant="ghost" onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
-      </Row>
+      </ModalFooter>
     </Modal>
   );
 };

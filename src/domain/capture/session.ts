@@ -2,29 +2,55 @@ import type { EditorMode, CaptureMode, CaptureSession } from "@/types";
 import { CAPTURE_SESSION_OFF } from "@/services/tauri";
 export const captureModeOf = (editor: EditorMode | null): CaptureMode => {
   if (!editor) return "off";
-  if (editor.kind === "custom_key") return "custom_key";
-  if (editor.kind === "custom_combo_activator") {
-    if (editor.phase === "capture") {
-      return "combo_capture";
-    }
-    if (editor.phase === "trigger") {
-      return "combo_trigger";
-    }
-    return "off";
+  if (editor.kind === "custom_key" && editor.listening) return "chord_hold";
+  if (editor.kind === "custom_combo_activator" && editor.listening) {
+    return "chord_hold";
   }
   if (editor.kind === "macro" && editor.keyPrompt) return "macro";
   if (editor.kind === "ball_scroll_activator") return "ball_scroll";
-  if (editor.kind === "button_mapping_activator") {
+  if (editor.kind === "button_mapping_activator" && editor.listening) {
     return "button_mapping_capture";
   }
   return "off";
 };
+export const captureLeftClickEscape = (
+  editor: EditorMode | null,
+): boolean => {
+  if (editor === null) {
+    return false;
+  }
+  if (editor.kind === "custom_key" && editor.listening) {
+    return true;
+  }
+  if (editor.kind === "custom_combo_activator" && editor.listening) {
+    return true;
+  }
+  if (editor.kind === "button_mapping_activator") {
+    return true;
+  }
+  if (editor.kind === "macro" && editor.keyPrompt) {
+    return true;
+  }
+  return false;
+};
+
+export const captureSessionForEditor = (
+  editor: EditorMode | null,
+): CaptureSession => {
+  const mode = captureModeOf(editor);
+  const session = captureSessionFor(mode);
+  return {
+    ...session,
+    leftClickEscape: captureLeftClickEscape(editor),
+  };
+};
+
 export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
   switch (mode) {
-    case "custom_key":
+    case "chord_hold":
       return {
-        keyCapture: true,
-        comboTrigger: false,
+        keyCapture: false,
+        comboTrigger: true,
         activatorCapture: true,
         allowLeftActivator: true,
         uiModal: true,

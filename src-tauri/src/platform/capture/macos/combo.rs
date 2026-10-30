@@ -101,9 +101,6 @@ pub(crate) fn emit_combo_preview() {
     let (mods, keys) = combo_held_parts();
     let mut chord = mods;
     chord.extend(keys);
-    if chord.is_empty() {
-        return;
-    }
     emit_chord(CaptureChord {
         escape: false,
         keys: chord,

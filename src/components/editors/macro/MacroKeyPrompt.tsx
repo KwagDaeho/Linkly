@@ -2,8 +2,8 @@ import {
   Button,
   ChordPreview,
   Modal,
+  ModalFooter,
   Muted,
-  Row,
 } from "@/components/ui";
 
 interface MacroKeyPromptProps {
@@ -16,24 +16,15 @@ interface MacroKeyPromptProps {
 
 export const MacroKeyPrompt = (props: MacroKeyPromptProps) => {
   return (
-    <Modal
-      nested
-      compact
-      onBackdropClick={props.onCancel}
-      onKeyDown={(event) => {
-        if (event.key === "Escape") {
-          props.onCancel();
-        }
-      }}
-    >
+    <Modal nested compact onBackdropClick={props.onCancel} onEscape={props.onCancel}>
       <h2 id="macro-key-prompt-title">{props.title}</h2>
       <Muted variant="modal">{props.hint}</Muted>
-      <ChordPreview>{props.waitingLabel}</ChordPreview>
-      <Row>
+      <ChordPreview variant="field">{props.waitingLabel}</ChordPreview>
+      <ModalFooter>
         <Button variant="ghost" onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
-      </Row>
+      </ModalFooter>
     </Modal>
   );
 };

@@ -1,17 +1,22 @@
-import { Muted } from "@/components/ui/Muted";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
 
-import { shell } from "./AppShell.css";
+import { AppBrandTitle } from "./AppBrandTitle";
 import * as probeStyles from "../info/ProbePanel.css";
+import * as styles from "./BootScreen.css";
 
 export const BootScreen = () => {
   const { i18n } = usePrefs();
   const { bootError } = useProfileCtx();
   return (
-    <main className={shell}>
-      <Muted>{bootError ? i18n.failedUi : i18n.loading}</Muted>
-      {bootError && <pre className={probeStyles.probe}>{bootError}</pre>}
+    <main className={styles.screen}>
+      <div className={styles.stack}>
+        <p className={styles.loadingTag}>
+          {bootError ? i18n.bootFailedTag : i18n.bootLoadingTag}
+        </p>
+        <AppBrandTitle />
+        {bootError ? <pre className={probeStyles.probe}>{bootError}</pre> : null}
+      </div>
     </main>
   );
 };

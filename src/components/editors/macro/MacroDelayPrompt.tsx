@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { clampMacroDelayMs } from "@/domain/editors";
-import { Button, Modal, Row } from "@/components/ui";
+import { Button, Modal, ModalFooter } from "@/components/ui";
 
 import * as styles from "./MacroDelayPrompt.css";
 
@@ -33,13 +33,11 @@ export const MacroDelayPrompt = (props: MacroDelayPromptProps) => {
       nested
       compact
       onBackdropClick={props.onCancel}
+      onEscape={props.onCancel}
       onKeyDown={(event) => {
         if (event.key === "Enter") {
           event.preventDefault();
           submit();
-        }
-        if (event.key === "Escape") {
-          props.onCancel();
         }
       }}
     >
@@ -56,12 +54,12 @@ export const MacroDelayPrompt = (props: MacroDelayPromptProps) => {
           onChange={(event) => setMs(event.target.value)}
         />
       </label>
-      <Row>
+      <ModalFooter>
         <Button variant="ghost" onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
         <Button onClick={submit}>{props.confirmLabel}</Button>
-      </Row>
+      </ModalFooter>
     </Modal>
   );
 };

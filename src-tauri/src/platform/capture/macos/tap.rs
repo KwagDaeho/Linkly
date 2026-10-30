@@ -12,7 +12,10 @@ use super::keycodes::{
     CGEventGetIntegerValueField, FLAG_COMMAND, KEYBOARD_EVENT_AUTOREPEAT,
     KEYBOARD_EVENT_KEYCODE, KEY_DOWN, KEY_UP, FLAGS_CHANGED, MOUSE_EVENT_BUTTON_NUMBER,
 };
-use super::super::emit::{emit_activator, emit_activator_choice, emit_chord};
+use super::super::emit::{
+    emit_activator, emit_activator_choice, emit_capture_escape_from_pointer, emit_chord,
+    emit_combo_trigger_activator,
+};
 use super::super::session;
 use super::super::types::{ActivatorCapture, ComboTriggerCapture};
 
@@ -79,6 +82,17 @@ pub(crate) unsafe extern "C" fn tap_callback(
         if session::activator_capture() && !session::combo_trigger_capture() {
             return handle_activator_capture(etype, event);
         }
+        if session::combo_trigger_capture() {
+            if let Some((activator, down)) = ball_scroll::mouse_from_event(
+                etype,
+                unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) },
+            ) {
+                if down {
+                    emit_combo_trigger_activator(activator);
+                }
+                return std::ptr::null_mut();
+            }
+        }
         return event;
     }
 
@@ -124,6 +138,10 @@ fn handle_activator_capture(etype: u32, event: CGEventRef) -> CGEventRef {
         etype,
         unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) },
     ) {
+        if down && session::left_click_escape_active() && activator.is_left_click() {
+            emit_capture_escape_from_pointer();
+            return std::ptr::null_mut();
+        }
         if activator.is_left_click() {
             if down {
                 emit_activator_choice(activator);

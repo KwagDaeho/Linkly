@@ -577,7 +577,18 @@ fn apply_button_edges(
 }
 
 fn note_huge_activators(prev: ButtonState, state: ButtonState) {
+    if capture::left_click_escape_active() {
+        for id in state.pressed_edges(prev) {
+            if id == ButtonId::Left {
+                capture::emit_capture_escape_from_pointer();
+                return;
+            }
+        }
+    }
     if capture::combo_trigger_capture_active() {
+        if !state.released_edges(prev).is_empty() {
+            capture::refresh_combo_key_capture();
+        }
         for id in state.pressed_edges(prev) {
             capture::emit_combo_trigger_huge(id);
         }

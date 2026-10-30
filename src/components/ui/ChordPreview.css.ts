@@ -1,16 +1,40 @@
 import { style } from "@vanilla-extract/css";
 
-export const root = style({
-  minHeight: "2.2rem",
-  display: "grid",
-  placeItems: "center",
+/** Plain inline row (no frame). */
+export const inline = style({
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: 6,
+  padding: "0.25rem 0",
+  fontSize: "0.92rem",
+  fontWeight: 600,
+  letterSpacing: "0.02em",
+  color: "var(--ink)",
+});
+
+/** Hold-capture / key input — fixed height for idle, listening, and confirmed. */
+export const field = style({
+  boxSizing: "border-box",
+  width: "100%",
+  height: "3.15rem",
+  display: "flex",
+  flexWrap: "wrap",
+  justifyContent: "center",
+  alignItems: "center",
+  alignContent: "center",
+  gap: 6,
+  padding: "0.4rem 0.75rem",
   borderRadius: 8,
   border: "1px dashed var(--line)",
   background: "var(--accent-soft)",
-  fontSize: "1.1rem",
+  fontSize: "0.92rem",
   fontWeight: 600,
-  letterSpacing: "0.03em",
+  letterSpacing: "0.02em",
   color: "var(--ink)",
+  textAlign: "center",
+  overflow: "hidden",
 });
 
 export const error = style({

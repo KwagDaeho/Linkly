@@ -1,9 +1,11 @@
 export { Accordion } from "./Accordion";
 export { Button } from "./Button";
 export { ChordError, ChordPreview } from "./ChordPreview";
+export { KeyChordPills } from "./KeyChordPills";
 export { Controls } from "./Controls";
 export { MappingGroup } from "./MappingGroup";
 export { Modal } from "./Modal";
+export { ModalFooter } from "./ModalFooter";
 export { Muted } from "./Muted";
 export { Panel, panelStyles } from "./Panel";
 export { Row } from "./Row";

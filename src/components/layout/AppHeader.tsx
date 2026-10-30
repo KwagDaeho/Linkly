@@ -2,6 +2,7 @@ import { MoonIcon, SunIcon } from "@/components/icons";
 import { usePrefs } from "@/hooks";
 import { cx } from "@/utils/cx";
 
+import { AppBrandTitle } from "./AppBrandTitle";
 import * as styles from "./AppHeader.css";
 
 export const AppHeader = () => {
@@ -9,7 +10,7 @@ export const AppHeader = () => {
   return (
     <header className={styles.hero}>
       <div className={styles.heroTop}>
-        <h1 className={styles.title}>Linkly</h1>
+        <AppBrandTitle />
         <div className={styles.toolbar}>
           <div className={styles.themeToggle} role="group" aria-label="Theme">
             <button

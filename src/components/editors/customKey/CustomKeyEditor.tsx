@@ -1,10 +1,15 @@
-import { formatKeyChord } from "@/i18n";
+import {
+  beginHoldCaptureListening,
+  captureWaitingPressButton,
+  stopHoldListening,
+} from "@/domain/capture";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
 import { useEditor } from "@/hooks/editor";
 import type { CustomKeyEditorState } from "@/types";
 
-import { KeyChordModal } from "../shared";
+import { ChordHoldCaptureModal } from "../shared/ChordHoldCaptureModal";
+import { HoldCapturePreviewView } from "../shared/HoldCapturePreview";
 
 interface CustomKeyEditorProps {
   editor: CustomKeyEditorState;
@@ -15,30 +20,51 @@ export const CustomKeyEditor = (props: CustomKeyEditorProps) => {
   const { mappings } = useProfileCtx();
   const { setEditor } = useEditor();
   const editor = props.editor;
-  const preview =
-    editor.draft.length > 0
-      ? formatKeyChord(editor.draft, lang)
-      : i18n.customKeyWaiting;
+  const startLabel = i18n.captureStartInput;
+  const canSave =
+    editor.holdPhase === "confirmed" && editor.confirmed.length > 0;
 
   return (
-    <KeyChordModal
-      copy={{
-        title: i18n.customKeyTitle,
-        hint: i18n.customKeyHint,
-        cancelLabel: i18n.cancel,
-        saveLabel: i18n.save,
-      }}
-      preview={preview}
-      saveDisabled={editor.draft.length === 0}
-      handlers={{
-        onCancel: () => setEditor(null),
-        onSave: () => {
-          mappings.updateSlot(editor.target, editor.slot, {
-            type: "key_stroke",
-            keys: editor.draft,
-          });
-          setEditor(null);
-        },
+    <ChordHoldCaptureModal
+      title={i18n.customKeyTitle}
+      hint={i18n.customKeyHint}
+      preview={
+        <HoldCapturePreviewView
+          lang={lang}
+          labels={{
+            inProgressTag: i18n.captureInProgressTag,
+            idlePrompt: i18n.captureHoldListening,
+            waitingStart: captureWaitingPressButton(startLabel, lang),
+          }}
+          state={editor}
+        />
+      }
+      cancelLabel={i18n.cancel}
+      saveLabel={i18n.save}
+      startInputLabel={startLabel}
+      retryLabel={i18n.captureRetryInput}
+      listening={editor.listening}
+      canSave={canSave}
+      onCancel={() => setEditor(null)}
+      onStartInput={() =>
+        setEditor({ ...editor, ...beginHoldCaptureListening() })
+      }
+      onRetry={() =>
+        setEditor({ ...editor, ...beginHoldCaptureListening() })
+      }
+      onStopListening={() =>
+        setEditor((previous) =>
+          previous?.kind === "custom_key"
+            ? stopHoldListening(previous)
+            : previous,
+        )
+      }
+      onSave={() => {
+        mappings.updateSlot(editor.target, editor.slot, {
+          type: "key_stroke",
+          keys: editor.confirmed,
+        });
+        setEditor(null);
       }}
     />
   );

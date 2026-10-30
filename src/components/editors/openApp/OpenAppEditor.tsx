@@ -2,7 +2,7 @@ import { filterOpenAppEditorApps } from "@/domain/apps";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
 import { useEditor } from "@/hooks/editor";
-import { Button, Modal, Muted, Row, SrOnly } from "@/components/ui";
+import { Button, Modal, ModalFooter, Muted, SrOnly } from "@/components/ui";
 import type { InstalledAppWithIcon, OpenAppEditorState } from "@/types";
 
 import { OpenAppPicker } from "./OpenAppPicker";
@@ -39,7 +39,7 @@ export const OpenAppEditor = (props: OpenAppEditorProps) => {
   };
 
   return (
-    <Modal wide>
+    <Modal wide onEscape={() => setEditor(null)}>
       <h2>{i18n.openAppTitle}</h2>
       <Muted variant="modal">{i18n.openAppHint}</Muted>
       <label className={styles.search}>
@@ -62,14 +62,14 @@ export const OpenAppEditor = (props: OpenAppEditorProps) => {
         emptyLabel={i18n.openAppEmpty}
         onSelect={handleSelect}
       />
-      <Row>
+      <ModalFooter>
         <Button variant="ghost" onClick={() => setEditor(null)}>
           {i18n.cancel}
         </Button>
         <Button disabled={editor.selected === null} onClick={handleSave}>
           {i18n.save}
         </Button>
-      </Row>
+      </ModalFooter>
     </Modal>
   );
 };

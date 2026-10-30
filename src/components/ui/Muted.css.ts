@@ -6,6 +6,7 @@ export const root = style({
 });
 
 export const inModal = style({
+  whiteSpace: "pre-line",
   fontSize: "0.8rem",
 });
 

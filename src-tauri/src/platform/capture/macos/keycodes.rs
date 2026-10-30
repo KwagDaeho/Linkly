@@ -156,7 +156,13 @@ pub(crate) fn chord_from_event(event: CGEventRef) -> Option<CaptureChord> {
     if flags & FLAG_COMMAND != 0 {
         keys.push("Meta".into());
     }
-    keys.push(main.into());
+    if modifier_name(code).is_some() {
+        if !keys.iter().any(|k| k == &main) {
+            keys.push(main.into());
+        }
+    } else {
+        keys.push(main.into());
+    }
 
     Some(CaptureChord {
         escape: main == "Escape" && keys.len() == 1,

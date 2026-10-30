@@ -52,12 +52,12 @@ export const stopHoldListening = (editor: EditorMode): EditorMode => {
 
 export type HoldCapturePreview =
   | { kind: "text"; text: string }
-  | { kind: "tokens"; keys: string[]; prefix?: string };
+  | { kind: "tokens"; keys: string[]; statusText?: string };
 
 export const holdCapturePreviewContent = (
   labels: {
+    listeningWaiting: string;
     inProgressTag: string;
-    idlePrompt: string;
     waitingStart: string;
   },
   state: {
@@ -75,12 +75,12 @@ export const holdCapturePreviewContent = (
       return {
         kind: "tokens",
         keys: state.pending,
-        prefix: labels.inProgressTag,
+        statusText: labels.inProgressTag,
       };
     }
     return {
       kind: "text",
-      text: `${labels.inProgressTag} ${labels.idlePrompt}`,
+      text: labels.listeningWaiting,
     };
   }
   return { kind: "text", text: labels.waitingStart };

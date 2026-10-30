@@ -10,10 +10,10 @@ export const row = style({
   gridTemplateColumns: mappingTableColumns,
   alignItems: "center",
   gap: mappingTableGap,
-  minHeight: 32,
-  padding: "3px 8px 3px 10px",
+  minHeight: "2rem",
+  padding: "0.1875rem 0.5rem 0.1875rem 0.625rem",
   border: "1px solid var(--line)",
-  borderRadius: 8,
+  borderRadius: "0.5rem",
   background: "var(--accent-soft)",
 });
 
@@ -44,5 +44,5 @@ globalStyle(`${row} > *:nth-child(4), ${row} > *:nth-child(5)`, {
 });
 
 globalStyle(`${row} > *:nth-child(6)`, {
-  marginLeft: -14,
+  marginLeft: "-0.875rem",
 });

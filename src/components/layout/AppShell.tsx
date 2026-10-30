@@ -44,8 +44,10 @@ export const AppShell = () => {
           </button>
         </nav>
 
-        {tab === "info" && <InfoTab />}
-        {tab === "custom" && <CustomTab />}
+        <div className={styles.tabPanel}>
+          {tab === "info" && <InfoTab />}
+          {tab === "custom" && <CustomTab />}
+        </div>
 
         <ContactFooter />
         <EditorHost />

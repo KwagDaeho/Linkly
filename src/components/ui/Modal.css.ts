@@ -30,14 +30,14 @@ export const nestedBackdrop = style({
 });
 
 export const dialog = style({
-  width: "min(100%, 400px)",
-  padding: "18px 20px 16px",
-  borderRadius: 10,
+  width: "min(100%, 25rem)",
+  padding: "1.125rem 1.25rem 1rem",
+  borderRadius: "0.625rem",
   border: "1px solid var(--line)",
   background: "var(--panel-solid)",
   boxShadow: "0 14px 36px var(--shadow)",
   display: "grid",
-  gap: 12,
+  gap: "0.75rem",
 });
 export const dialogHeading = style({
   margin: 0,
@@ -50,8 +50,8 @@ globalStyle(`${dialog} h2`, {
 });
 
 export const dialogWide = style({
-  width: "min(100%, 520px)",
+  width: "min(100%, 32.5rem)",
 });
 export const dialogCompact = style({
-  width: "min(100%, 320px)",
+  width: "min(100%, 20rem)",
 });

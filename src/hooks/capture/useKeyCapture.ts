@@ -9,8 +9,10 @@ import {
   applyKeyCapture,
   CAPTURE_HOLD_MS,
   captureModeOf,
-  captureSessionForEditor,
+  captureSessionFor,
   comboActivatorToSnapshot,
+  ensurePointerHitTracking,
+  hitCaptureCancelAtPointer,
   mergeCaptureSnapshot,
   normalizeCaptureSnapshot,
   resolveActivatorCapture,
@@ -23,6 +25,7 @@ import type {
   Activator,
   ActivatorCapturePayload,
   BallScrollSlot,
+  ButtonMappingEntry,
   ComboActivator,
   ComboTriggerCapturePayload,
   EditorMode,
@@ -98,6 +101,7 @@ export const useKeyCapture = (
   onButtonMappingAssigned: (
     entryId: string,
     activator: Activator,
+    draftEntry?: ButtonMappingEntry,
   ) => boolean | Promise<boolean>,
 ) => {
   const editorRef = useRef(editor);
@@ -115,8 +119,8 @@ export const useKeyCapture = (
 
   const captureMode = captureModeOf(editor);
   const captureSession = useMemo(
-    () => captureSessionForEditor(editor),
-    [editor],
+    () => captureSessionFor(captureMode),
+    [captureMode],
   );
 
   const clearHoldTimer = () => {
@@ -224,7 +228,11 @@ export const useKeyCapture = (
         void tauri.applyCaptureSession(tauri.CAPTURE_SESSION_OFF);
       });
     };
-  }, [captureSession, captureMode]);
+  }, [captureMode, captureSession]);
+
+  useEffect(() => {
+    ensurePointerHitTracking();
+  }, []);
 
   useEffect(() => {
     if (captureMode === "off") {
@@ -269,6 +277,59 @@ export const useKeyCapture = (
             },
           );
           unsubs.push(unCombo);
+
+        }
+
+        if (
+          captureMode === "chord_hold" ||
+          captureMode === "button_mapping_capture"
+        ) {
+          const unLeft = await listen("capture-left-pointer", () => {
+            if (cancelled) {
+              return;
+            }
+            const activeEditor = editorRef.current;
+            if (activeEditor === null) {
+              return;
+            }
+            if (activeEditor.kind === "button_mapping_activator") {
+              if (!activeEditor.listening) {
+                return;
+              }
+              if (hitCaptureCancelAtPointer()) {
+                setEditor(null);
+                return;
+              }
+              void (async () => {
+                const accepted = await onButtonMappingAssignedRef.current(
+                  activeEditor.entryId,
+                  { type: "huge", button: "left" },
+                  activeEditor.draftEntry,
+                );
+                if (accepted) {
+                  setEditor(null);
+                }
+              })();
+              return;
+            }
+            if (
+              activeEditor.kind !== "custom_key" &&
+              activeEditor.kind !== "custom_combo_activator"
+            ) {
+              return;
+            }
+            if (!activeEditor.listening) {
+              return;
+            }
+            if (hitCaptureCancelAtPointer()) {
+              exitHoldListening();
+              return;
+            }
+            void import("@/services/tauri").then((tauri) => {
+              void tauri.mergeComboCaptureToken("MouseLeft");
+            });
+          });
+          unsubs.push(unLeft);
         }
 
         if (captureMode === "macro" || captureMode === "combo_capture") {
@@ -368,9 +429,14 @@ export const useKeyCapture = (
                   ) {
                     return;
                   }
+                  const draftEntry =
+                    activeEditor.draftEntry !== undefined
+                      ? activeEditor.draftEntry
+                      : undefined;
                   const accepted = await onButtonMappingAssignedRef.current(
                     result.entryId,
                     result.activator,
+                    draftEntry,
                   );
                   if (accepted) {
                     setEditor(null);

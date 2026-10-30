@@ -6,17 +6,17 @@ import {
 } from "../mappingTableGrid.css";
 
 export const buttonGrid = style({
-  marginTop: 8,
+  marginTop: 0,
   display: "grid",
   gridTemplateColumns: "1fr",
-  gap: 6,
+  gap: "0.375rem",
 });
 
 export const buttonHead = style({
   display: "grid",
   gridTemplateColumns: mappingTableColumnsNoRemove,
   gap: mappingTableGap,
-  padding: "0 8px 2px 10px",
+  padding: "0 0.5rem 0.125rem 0.625rem",
   color: "var(--muted)",
   fontSize: "0.68rem",
   fontWeight: 700,

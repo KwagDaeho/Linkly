@@ -18,13 +18,13 @@ export const InfoTab = () => {
     <>
       <section className={sectionStyles.staticSection}>
         <SectionHeading alignWithAccordion>{i18n.sectionGeneral}</SectionHeading>
-        <div className={sectionStyles.contentIndent}>
+        <div className={sectionStyles.staticSectionBody}>
           <GeneralSettings />
         </div>
       </section>
       <section className={sectionStyles.staticSection}>
         <SectionHeading alignWithAccordion>{i18n.eventViewer}</SectionHeading>
-        <div className={sectionStyles.contentIndent}>
+        <div className={sectionStyles.staticSectionBody}>
           <EventViewerLauncher />
         </div>
       </section>

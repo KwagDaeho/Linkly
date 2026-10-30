@@ -5,8 +5,10 @@ use crate::domain::profile::{Activator, ComboActivator, CustomMappingEntry};
 use crate::platform::inject;
 
 use super::active_os_custom_entry_ids;
+use crate::domain::chord_token::capture_token_for_mouse_button;
+
 use super::state::{
-    self, effective_sorted_keys, effective_sorted_modifiers, is_modifier, modifiers_from_flags,
+    self, effective_combo_keys_for_match, effective_sorted_modifiers, is_modifier,
     normalize_combo_keys, normalize_combo_modifiers, request_chord_reeval, sorted_modifiers,
     ACTIVE_BUTTONS, SWALLOWED_OS_BUTTONS,
 };
@@ -25,10 +27,10 @@ pub(crate) fn find_match_trigger_at_edge(
         return None;
     }
     let mods = effective_sorted_modifiers();
-    let keys = effective_sorted_keys();
     state::entries()
         .iter()
         .find(|e| {
+            let keys = effective_combo_keys_for_match(&e.activator);
             e.activator.triggers_match(trigger) && combo_matches(&e.activator, &mods, &keys)
         })
         .cloned()
@@ -45,12 +47,12 @@ pub(crate) fn find_match(id: ButtonId) -> Option<CustomMappingEntry> {
     find_match_trigger_at_edge(&Activator::Huge { button: id }, true)
 }
 
-pub(crate) fn find_match_with_flags(id: ButtonId, event_flags: u64) -> Option<CustomMappingEntry> {
-    let mods = sorted_modifiers(&modifiers_from_flags(event_flags));
-    let keys = effective_sorted_keys();
+pub(crate) fn find_match_with_flags(id: ButtonId, _event_flags: u64) -> Option<CustomMappingEntry> {
+    let mods = effective_sorted_modifiers();
     state::entries()
         .iter()
         .find(|e| {
+            let keys = effective_combo_keys_for_match(&e.activator);
             e.activator.triggers_match(&Activator::Huge { button: id })
                 && combo_matches(&e.activator, &mods, &keys)
         })
@@ -153,6 +155,9 @@ pub fn note_os_down(activator: &Activator, is_repeat: bool) {
                 state::keys_held().insert(name.clone());
             }
         }
+        Activator::Mouse { button } => {
+            state::keys_held().insert(capture_token_for_mouse_button(button));
+        }
         _ => {}
     }
     request_chord_reeval();
@@ -169,6 +174,9 @@ pub fn note_os_up(activator: &Activator, is_repeat: bool) {
             } else {
                 state::keys_held().remove(name);
             }
+        }
+        Activator::Mouse { button } => {
+            state::keys_held().remove(&capture_token_for_mouse_button(button));
         }
         _ => {}
     }

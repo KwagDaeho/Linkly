@@ -1,5 +1,6 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import { panelPaddingX } from "./panelLayout";
 import { root as toggleRoot } from "./Toggle.css";
 
 export const heading = style({
@@ -9,10 +10,20 @@ export const heading = style({
 
 export const root = style({
   background: "var(--panel)",
-  border: "1px solid var(--line)",
+  border: "1px solid var(--line-accent)",
   borderRadius: "var(--radius)",
-  padding: "10px 12px",
+  padding: `10px ${panelPaddingX}px`,
   backdropFilter: "blur(10px)",
+});
+
+/** Accordion body — no outer box; layout rail lives on `Accordion` panelInner. */
+export const plain = style({
+  margin: 0,
+  padding: 0,
+  border: "none",
+  borderRadius: 0,
+  background: "transparent",
+  backdropFilter: "none",
 });
 
 globalStyle(`${root} h2`, {
@@ -25,8 +36,8 @@ export const row = style([
   {
     display: "flex",
     alignItems: "center",
-    minHeight: 40,
-    padding: "8px 12px",
+    minHeight: "2.5rem",
+    padding: "0.5rem 0.75rem",
     boxSizing: "border-box",
   },
 ]);
@@ -63,6 +74,15 @@ export const warn = style([
   {
     background: "var(--warn-bg)",
     borderColor: "transparent",
+  },
+]);
+
+export const warnPlain = style([
+  plain,
+  {
+    padding: `10px ${panelPaddingX}px`,
+    borderRadius: "var(--radius)",
+    background: "var(--warn-bg)",
   },
 ]);
 

@@ -13,14 +13,16 @@ const MOUSE_CAPTURE_TOKENS = new Set([
   "MouseMiddle",
   "MouseBack",
   "MouseForward",
+  "WheelTiltLeft",
+  "WheelTiltRight",
 ]);
 
 const HUGE_CAPTURE_TOKENS: Record<string, Activator> = {
   Fn1: { type: "huge", button: "fn1" },
   Fn2: { type: "huge", button: "fn2" },
   Fn3: { type: "huge", button: "fn3" },
-  L: { type: "huge", button: "left" },
-  R: { type: "huge", button: "right" },
+  WheelTiltLeft: { type: "huge", button: "wheel_tilt_left" },
+  WheelTiltRight: { type: "huge", button: "wheel_tilt_right" },
 };
 
 export const isCaptureMouseToken = (token: string): boolean => {
@@ -73,21 +75,13 @@ export const snapshotToComboActivator = (
   }
   const modifiers = MODIFIER_ORDER.filter((m) => normalized.includes(m));
   const nonMods = normalized.filter((t) => !CHORD_MODIFIERS.has(t));
-  const mouseLike = nonMods.filter((t) => isCaptureMouseToken(t));
-  const keyLike = nonMods.filter((t) => !isCaptureMouseToken(t));
-
-  let trigger: Activator | null = null;
-  let keys = keyLike;
-
-  if (mouseLike.length > 0) {
-    trigger = tokenToActivator(mouseLike[mouseLike.length - 1]!);
-  } else if (keyLike.length > 0) {
-    const last = keyLike[keyLike.length - 1]!;
-    trigger = { type: "key", name: last };
-    keys = keyLike.slice(0, -1);
-  } else if (modifiers.length > 0) {
-    return null;
+  if (nonMods.length === 0) {
+    return modifiers.length > 0 ? null : null;
   }
+
+  const triggerToken = nonMods[nonMods.length - 1]!;
+  const keys = nonMods.slice(0, -1);
+  const trigger = tokenToActivator(triggerToken);
 
   if (trigger === null) {
     return null;
@@ -126,6 +120,12 @@ export const tokenToActivator = (token: string): Activator | null => {
   }
   if (token === "MouseForward") {
     return { type: "mouse", button: "forward" };
+  }
+  if (token === "WheelTiltLeft") {
+    return { type: "huge", button: "wheel_tilt_left" };
+  }
+  if (token === "WheelTiltRight") {
+    return { type: "huge", button: "wheel_tilt_right" };
   }
   if (token.startsWith("Button")) {
     const n = Number.parseInt(token.slice("Button".length), 10);

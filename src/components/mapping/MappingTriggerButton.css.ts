@@ -15,7 +15,7 @@ export const unsetChip = style({
   display: "inline-flex",
   alignItems: "center",
   padding: "0.22rem 0.5rem",
-  borderRadius: 7,
+  borderRadius: "0.4375rem",
   border: "1px dashed var(--line)",
   background: "transparent",
   color: "var(--muted)",

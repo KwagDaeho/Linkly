@@ -20,7 +20,7 @@ export const PointerScrollPanel = () => {
   }
   const profilePointer = profile.pointer;
   return (
-    <Panel>
+    <Panel variant="plain">
       <SettingsList>
         <SettingsRow>
           <SpeedRangeControl

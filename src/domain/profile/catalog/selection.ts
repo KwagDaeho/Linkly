@@ -3,7 +3,7 @@ import {
   MACRO_SENTINEL,
   OPEN_APP_SENTINEL,
 } from "@/constants/sentinels";
-import { initialHoldCapture } from "@/domain/capture/holdCapture";
+import { beginHoldCaptureListening } from "@/domain/capture/holdCapture";
 import { asBinding } from "@/domain/profile";
 import { buttonMappingsOf, customMappingsOf } from "@/domain/profile";
 import type {
@@ -44,7 +44,7 @@ export const resolveCatalogSelection = (
         kind: "custom_key",
         target,
         slot,
-        ...initialHoldCapture(),
+        ...beginHoldCaptureListening(),
       },
     };
   }

@@ -1,6 +1,7 @@
 import { comboActivatorToSnapshot } from "@/domain/capture";
-import { initialHoldCapture } from "@/domain/capture/holdCapture";
-import { comboIsValid } from "@/domain/profile";
+import { beginHoldCaptureListening } from "@/domain/capture/holdCapture";
+import { comboIsValid, newCustomMappingEntry } from "@/domain/profile";
+import { newButtonMappingEntry } from "@/domain/profile/button";
 import type {
   ButtonMappingEntry,
   ComboEditorState,
@@ -8,17 +9,27 @@ import type {
   EditorMode,
 } from "@/types";
 
+export const comboDraftEditorFromNewEntry = (): ComboEditorState => {
+  const draftEntry = newCustomMappingEntry();
+  return {
+    kind: "custom_combo_activator",
+    entryId: draftEntry.id,
+    draftEntry,
+    rejected: null,
+    ...beginHoldCaptureListening(),
+  };
+};
+
 export const comboEditorStateFromEntry = (
   entry: CustomMappingEntry,
 ): ComboEditorState => {
   const valid = comboIsValid(entry.activator);
-  const base = initialHoldCapture();
   if (!valid) {
     return {
       kind: "custom_combo_activator",
       entryId: entry.id,
       rejected: null,
-      ...base,
+      ...beginHoldCaptureListening(),
     };
   }
   const confirmed = comboActivatorToSnapshot(entry.activator);
@@ -26,10 +37,24 @@ export const comboEditorStateFromEntry = (
     kind: "custom_combo_activator",
     entryId: entry.id,
     rejected: null,
-    listening: false,
+    listening: true,
     holdPhase: "confirmed",
     pending: [],
     confirmed,
+  };
+};
+
+export const buttonMappingDraftEditor = (): Extract<
+  EditorMode,
+  { kind: "button_mapping_activator" }
+> => {
+  const draftEntry = newButtonMappingEntry();
+  return {
+    kind: "button_mapping_activator",
+    entryId: draftEntry.id,
+    draftEntry,
+    rejected: null,
+    listening: true,
   };
 };
 

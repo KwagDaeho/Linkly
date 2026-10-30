@@ -17,8 +17,12 @@ export {
   snapshotToComboActivator,
 } from "./chordSnapshot";
 export {
-  captureLeftClickEscape,
   captureModeOf,
   captureSessionFor,
   captureSessionForEditor,
 } from "./session";
+export {
+  CAPTURE_CANCEL_ATTR,
+  ensurePointerHitTracking,
+  hitCaptureCancelAtPointer,
+} from "./pointerHit";

@@ -13,37 +13,10 @@ export const captureModeOf = (editor: EditorMode | null): CaptureMode => {
   }
   return "off";
 };
-export const captureLeftClickEscape = (
-  editor: EditorMode | null,
-): boolean => {
-  if (editor === null) {
-    return false;
-  }
-  if (editor.kind === "custom_key" && editor.listening) {
-    return true;
-  }
-  if (editor.kind === "custom_combo_activator" && editor.listening) {
-    return true;
-  }
-  if (editor.kind === "button_mapping_activator") {
-    return true;
-  }
-  if (editor.kind === "macro" && editor.keyPrompt) {
-    return true;
-  }
-  return false;
-};
 
 export const captureSessionForEditor = (
   editor: EditorMode | null,
-): CaptureSession => {
-  const mode = captureModeOf(editor);
-  const session = captureSessionFor(mode);
-  return {
-    ...session,
-    leftClickEscape: captureLeftClickEscape(editor),
-  };
-};
+): CaptureSession => captureSessionFor(captureModeOf(editor));
 
 export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
   switch (mode) {

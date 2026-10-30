@@ -13,3 +13,4 @@ export { buildComboErrorMessage, buildComboPreview } from "./format/combo";
 export { customMappingTriggerLabel } from "./format/customMapping";
 export { buttonMappingInputLabel } from "./format/buttonMapping";
 export { formatMacroStepLabel } from "./format/macro";
+export { formatMappingEntryCount } from "./format/count";

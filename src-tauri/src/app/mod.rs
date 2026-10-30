@@ -89,6 +89,7 @@ pub fn run() {
             commands::set_combo_activator_capture,
             commands::set_combo_trigger_capture,
             commands::set_ui_modal,
+            commands::merge_combo_capture_token,
             commands::list_installed_apps,
             commands::get_app_icon,
             commands::set_input_event_monitor_enabled,

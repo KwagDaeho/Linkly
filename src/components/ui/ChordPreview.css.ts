@@ -6,7 +6,7 @@ export const inline = style({
   flexWrap: "wrap",
   justifyContent: "center",
   alignItems: "center",
-  gap: 6,
+  gap: "0.375rem",
   padding: "0.25rem 0",
   fontSize: "0.92rem",
   fontWeight: 600,
@@ -15,6 +15,14 @@ export const inline = style({
 });
 
 /** Hold-capture / key input — fixed height for idle, listening, and confirmed. */
+/** Status line in field capture (waiting + in-progress). */
+export const fieldStatus = style({
+  fontSize: "0.92rem",
+  fontWeight: 600,
+  letterSpacing: "0.02em",
+  color: "var(--ink)",
+});
+
 export const field = style({
   boxSizing: "border-box",
   width: "100%",
@@ -24,9 +32,9 @@ export const field = style({
   justifyContent: "center",
   alignItems: "center",
   alignContent: "center",
-  gap: 6,
+  gap: "0.375rem",
   padding: "0.4rem 0.75rem",
-  borderRadius: 8,
+  borderRadius: "0.5rem",
   border: "1px dashed var(--line)",
   background: "var(--accent-soft)",
   fontSize: "0.92rem",

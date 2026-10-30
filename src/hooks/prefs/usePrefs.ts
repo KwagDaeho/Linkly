@@ -1,7 +1,15 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { LANG_KEY, THEME_KEY } from "@/constants/storage";
+import { FONT_SCALE_STEP } from "@/constants/fontScale";
+import { FONT_SCALE_KEY, LANG_KEY, THEME_KEY } from "@/constants/storage";
 import { t } from "@/i18n";
-import { applyTheme, loadLang, loadTheme } from "@/utils/theme";
+import {
+  applyFontScale,
+  applyTheme,
+  clampFontScale,
+  loadFontScale,
+  loadLang,
+  loadTheme,
+} from "@/utils/theme";
 import type { Lang, PrefsContextValue, Theme } from "@/types";
 export const PrefsContext = createContext<PrefsContextValue | null>(null);
 export const usePrefs = (): PrefsContextValue => {
@@ -14,9 +22,13 @@ export const usePrefs = (): PrefsContextValue => {
 export const usePrefsState = (): PrefsContextValue => {
   const [lang, setLangState] = useState<Lang>(() => loadLang());
   const [theme, setThemeState] = useState<Theme>(() => loadTheme());
+  const [fontScale, setFontScaleState] = useState(() => loadFontScale());
   useEffect(() => {
     applyTheme(theme);
   }, [theme]);
+  useEffect(() => {
+    applyFontScale(fontScale);
+  }, [fontScale]);
   const setLang = (next: Lang) => {
     setLangState(next);
     localStorage.setItem(LANG_KEY, next);
@@ -26,11 +38,27 @@ export const usePrefsState = (): PrefsContextValue => {
     localStorage.setItem(THEME_KEY, next);
     applyTheme(next);
   };
+  const setFontScale = (next: number) => {
+    const clamped = clampFontScale(next);
+    setFontScaleState(clamped);
+    localStorage.setItem(FONT_SCALE_KEY, String(clamped));
+    applyFontScale(clamped);
+  };
+  const decreaseFontScale = () => {
+    setFontScale(fontScale - FONT_SCALE_STEP);
+  };
+  const increaseFontScale = () => {
+    setFontScale(fontScale + FONT_SCALE_STEP);
+  };
   return {
     lang,
     setLang,
     theme,
     setTheme,
+    fontScale,
+    setFontScale,
+    decreaseFontScale,
+    increaseFontScale,
     i18n: t(lang),
   };
 };

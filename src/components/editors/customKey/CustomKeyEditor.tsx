@@ -32,8 +32,8 @@ export const CustomKeyEditor = (props: CustomKeyEditorProps) => {
         <HoldCapturePreviewView
           lang={lang}
           labels={{
+            listeningWaiting: i18n.captureInputWaiting,
             inProgressTag: i18n.captureInProgressTag,
-            idlePrompt: i18n.captureHoldListening,
             waitingStart: captureWaitingPressButton(startLabel, lang),
           }}
           state={editor}

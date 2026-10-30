@@ -314,9 +314,6 @@ pub(crate) fn binding_of(profile: &Profile, id: ButtonId) -> ButtonBinding {
     if let Some(entry) = crate::domain::button_mapping::find_huge(id) {
         return entry.binding.clone();
     }
-    if let Some(entry) = crate::domain::button_mapping::find_for_hid_button(id) {
-        return entry.binding.clone();
-    }
     profile
         .buttons
         .get(&id)

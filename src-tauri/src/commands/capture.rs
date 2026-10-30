@@ -29,3 +29,8 @@ pub fn set_combo_trigger_capture(active: bool) {
 pub fn set_ui_modal(active: bool) {
     capture::set_ui_modal(active);
 }
+
+#[tauri::command]
+pub fn merge_combo_capture_token(token: String) {
+    capture::merge_combo_capture_token(token);
+}

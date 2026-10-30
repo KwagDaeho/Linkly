@@ -18,17 +18,17 @@ export const inline = style({
   width: "fit-content",
   maxWidth: "100%",
   gap: 8,
-  minHeight: 14,
+  minHeight: "0.875rem",
 });
 
-/** Label column 200px, then switch (settings list rows). */
+/** Label column, then switch (settings list rows). */
 export const labelFirst = style({
   display: "grid",
   width: "100%",
-  gridTemplateColumns: "150px max-content",
-  columnGap: 12,
+  gridTemplateColumns: "minmax(9.375rem, 1fr) max-content",
+  columnGap: "0.75rem",
   alignItems: "center",
-  minHeight: 14,
+  minHeight: "0.875rem",
   fontSize: "0.92rem",
   fontWeight: 600,
 });
@@ -53,7 +53,7 @@ globalStyle(`${flag} input[type="checkbox"]:disabled`, {
 export const title = style({
   display: "inline-flex",
   alignItems: "center",
-  minHeight: 14,
+  minHeight: "0.875rem",
   lineHeight: 1.35,
   margin: 0,
   padding: 0,
@@ -64,7 +64,7 @@ export const title = style({
 export const description = style({
   display: "inline-flex",
   alignItems: "center",
-  height: 14,
+  height: "0.875rem",
   lineHeight: 1,
   margin: 0,
   padding: 0,
@@ -85,8 +85,8 @@ globalStyle(`${labelFirst} input[type="checkbox"]`, {
 globalStyle(`${root} input[type="checkbox"]`, {
   appearance: "none",
   WebkitAppearance: "none",
-  width: 28,
-  height: 14,
+  width: "1.75rem",
+  height: "0.875rem",
   margin: 0,
   padding: 0,
   flexShrink: 0,
@@ -105,10 +105,10 @@ globalStyle(`${root} input[type="checkbox"]`, {
 globalStyle(`${root} input[type="checkbox"]::after`, {
   content: '""',
   position: "absolute",
-  top: 2,
-  left: 2,
-  width: 10,
-  height: 10,
+  top: "0.125rem",
+  left: "0.125rem",
+  width: "0.625rem",
+  height: "0.625rem",
   borderRadius: "50%",
   background: "#fff",
   boxShadow: "0 1px 1px rgba(0, 0, 0, 0.18)",
@@ -121,11 +121,11 @@ globalStyle(`${root} input[type="checkbox"]:checked`, {
 });
 
 globalStyle(`${root} input[type="checkbox"]:checked::after`, {
-  transform: "translateX(14px)",
+  transform: "translateX(0.875rem)",
 });
 
 globalStyle(`${root} input[type="checkbox"]:focus-visible`, {
-  outline: "2px solid color-mix(in srgb, var(--accent) 55%, transparent)",
-  outlineOffset: 2,
+  outline: "0.125rem solid color-mix(in srgb, var(--accent) 55%, transparent)",
+  outlineOffset: "0.125rem",
   boxShadow: "none",
 });

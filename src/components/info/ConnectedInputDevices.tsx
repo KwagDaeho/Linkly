@@ -13,7 +13,7 @@ export const ConnectedInputDevices = () => {
   const { devices, error } = useInputDevices();
 
   return (
-    <Panel>
+    <Panel variant="plain">
       {error ? (
         <p className={styles.error}>{error}</p>
       ) : devices.length === 0 ? (

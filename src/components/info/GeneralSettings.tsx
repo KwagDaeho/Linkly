@@ -12,7 +12,7 @@ export const GeneralSettings = () => {
   }
   const loadedProfile = profile;
   return (
-    <Panel>
+    <Panel variant="plain">
       <SettingsList>
         <SettingsRow>
           <Toggle

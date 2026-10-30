@@ -4,8 +4,9 @@ use std::sync::LazyLock;
 
 use parking_lot::Mutex;
 
+use crate::domain::chord_token::{button_id_for_capture_token, is_hardware_capture_token};
 use crate::domain::device::{ButtonId, ButtonState};
-use crate::domain::profile::{CustomMappingEntry, Profile};
+use crate::domain::profile::{Activator, ComboActivator, CustomMappingEntry, Profile};
 
 pub(crate) const MODIFIER_ORDER: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
 
@@ -149,6 +150,30 @@ pub(crate) fn effective_sorted_modifiers() -> Vec<String> {
 
 pub(crate) fn effective_sorted_keys() -> Vec<String> {
     sorted_keys(&effective_keys())
+}
+
+/// Held keys for one combo entry — matches FE `snapshotToComboActivator` (trigger key excluded).
+pub(crate) fn effective_combo_keys_for_match(combo: &ComboActivator) -> Vec<String> {
+    let buttons = button_state();
+    let mut keyboard = keys_held().clone();
+    if let Some(Activator::Key { name }) = combo.effective_trigger() {
+        keyboard.remove(&name);
+    }
+    let mut matched = HashSet::new();
+    for token in &combo.keys {
+        if is_hardware_capture_token(token) {
+            if let Some(id) = button_id_for_capture_token(token) {
+                if buttons.is_down(id) {
+                    matched.insert(token.clone());
+                }
+            } else if keyboard.contains(token) {
+                matched.insert(token.clone());
+            }
+        } else if keyboard.contains(token) {
+            matched.insert(token.clone());
+        }
+    }
+    sorted_keys(&matched)
 }
 
 pub(crate) fn normalize_combo_modifiers(v: &[String]) -> Vec<String> {

@@ -54,6 +54,7 @@ export const Accordion = ({
     <section
       className={cx(styles.root, className)}
       data-heading-level={headingLevel}
+      data-open={open ? "" : undefined}
     >
       <HeadingTag id={headingId} className={styles.heading}>
         <button

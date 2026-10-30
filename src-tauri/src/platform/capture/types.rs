@@ -12,9 +12,6 @@ pub struct CaptureSession {
     /// Button-mapping / custom-key capture may use OS or HUGE left click as input.
     #[serde(default)]
     pub allow_left_activator: bool,
-    /// While listening, HUGE / OS left click cancels like Esc.
-    #[serde(default)]
-    pub left_click_escape: bool,
 }
 
 impl CaptureSession {
@@ -24,7 +21,6 @@ impl CaptureSession {
         activator_capture: false,
         ui_modal: false,
         allow_left_activator: false,
-        left_click_escape: false,
     };
 }
 

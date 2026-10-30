@@ -17,12 +17,7 @@ export const SectionHeading = ({
 }) => {
   if (alignWithAccordion) {
     return (
-      <h2 className={cx(sectionStyles.headingShell, className)}>
-        <div className={sectionStyles.headingRow}>
-          <span className={sectionStyles.headingLead} aria-hidden />
-          <span className={sectionStyles.headingH2}>{children}</span>
-        </div>
-      </h2>
+      <h2 className={cx(sectionStyles.headingH2, className)}>{children}</h2>
     );
   }
   return <h2 className={cx(styles.root, className)}>{children}</h2>;

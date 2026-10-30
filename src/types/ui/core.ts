@@ -1,6 +1,10 @@
 import type { MacroStep } from "../action";
 import type { InstalledAppWithIcon } from "../device";
-import type { ButtonId } from "../profile";
+import type {
+  ButtonId,
+  ButtonMappingEntry,
+  CustomMappingEntry,
+} from "../profile";
 export type PermissionStatus = {
   accessibility: boolean;
   inputMonitoring: boolean;
@@ -53,12 +57,16 @@ export type EditorMode =
   | {
       kind: "button_mapping_activator";
       entryId: string;
+      /** Set while adding a row — profile gets the entry on capture commit. */
+      draftEntry?: ButtonMappingEntry;
       rejected: string | null;
       listening: boolean;
     }
   | {
       kind: "custom_combo_activator";
       entryId: string;
+      /** Set while adding a row — profile gets the entry on save. */
+      draftEntry?: CustomMappingEntry;
       rejected: string | null;
       listening: boolean;
       holdPhase: HoldCapturePhase;

@@ -20,7 +20,7 @@ export const BallScrollPanel = () => {
     ballScroll.update({ holdActivator: null, holdEnabled: false });
   };
   return (
-    <Panel>
+    <Panel variant="plain">
       <SettingsList>
         <SettingsRow stack>
           <BallScrollActivatorRow

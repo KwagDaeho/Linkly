@@ -16,8 +16,6 @@ export type CaptureSession = {
   activatorCapture: boolean;
   uiModal: boolean;
   allowLeftActivator?: boolean;
-  /** HUGE / OS left click acts like Esc while capture is listening. */
-  leftClickEscape?: boolean;
 };
 
 export type KeyCapturePayload = { keys: string[]; escape: boolean };

@@ -39,8 +39,8 @@ export const ComboActivatorEditor = (props: ComboActivatorEditorProps) => {
         <HoldCapturePreviewView
           lang={lang}
           labels={{
+            listeningWaiting: i18n.captureInputWaiting,
             inProgressTag: i18n.captureInProgressTag,
-            idlePrompt: i18n.captureHoldListening,
             waitingStart: captureWaitingPressButton(startLabel, lang),
           }}
           state={editor}
@@ -80,7 +80,11 @@ export const ComboActivatorEditor = (props: ComboActivatorEditorProps) => {
         if (combo === null) {
           return;
         }
-        customMappings.updateActivator(editor.entryId, combo);
+        if (editor.draftEntry !== undefined) {
+          customMappings.add({ ...editor.draftEntry, activator: combo });
+        } else {
+          customMappings.updateActivator(editor.entryId, combo);
+        }
         setEditor(null);
       }}
     />

@@ -1,7 +1,7 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const stepsArea = style({
-  maxHeight: 360,
+  maxHeight: "22.5rem",
 });
 
 export const listDragging = style({});

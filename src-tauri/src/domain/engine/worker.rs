@@ -577,28 +577,28 @@ fn apply_button_edges(
 }
 
 fn note_huge_activators(prev: ButtonState, state: ButtonState) {
-    if capture::left_click_escape_active() {
+    if capture::combo_trigger_capture_active() {
+        for id in state.released_edges(prev) {
+            capture::release_combo_capture_token_for_huge(id);
+        }
         for id in state.pressed_edges(prev) {
             if id == ButtonId::Left {
-                capture::emit_capture_escape_from_pointer();
-                return;
+                capture::emit_capture_left_pointer();
+            } else {
+                capture::emit_combo_trigger_huge(id);
             }
-        }
-    }
-    if capture::combo_trigger_capture_active() {
-        if !state.released_edges(prev).is_empty() {
-            capture::refresh_combo_key_capture();
-        }
-        for id in state.pressed_edges(prev) {
-            capture::emit_combo_trigger_huge(id);
         }
         return;
     }
     if capture::activator_capture_active() {
         for id in state.pressed_edges(prev) {
-            capture::emit_activator_from_hid(crate::domain::profile::Activator::Huge {
-                button: id,
-            });
+            if id == ButtonId::Left && capture::allow_left_activator() {
+                capture::emit_capture_left_pointer();
+            } else {
+                capture::emit_activator_from_hid(crate::domain::profile::Activator::Huge {
+                    button: id,
+                });
+            }
         }
         return;
     }

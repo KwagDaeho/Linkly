@@ -8,6 +8,7 @@ mod tap;
 mod viewer;
 
 #[cfg(target_os = "macos")]
+pub(crate) use combo::{emit_combo_preview, note_capture_token};
 pub use combo::{clear_combo_held, combo_held_parts};
 
 #[cfg(target_os = "macos")]

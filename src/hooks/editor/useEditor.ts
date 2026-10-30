@@ -1,9 +1,11 @@
 import { createContext, useContext, useState } from "react";
 import { useKeyCapture } from "@/hooks/capture/useKeyCapture";
 import { useProfileCtx } from "@/hooks/profile";
+import { normalizeActivator } from "@/domain/profile/mouseButton";
 import type {
   ActionSlot,
   ButtonId,
+  ButtonMappingEntry,
   EditorContextValue,
   EditorMode,
 } from "@/types";
@@ -41,9 +43,14 @@ export const useEditorState = (): EditorContextValue => {
       customMappings.updateActivator(entryId, combo);
       return true;
     },
-    async (entryId, activator) => {
+    async (entryId, activator, draftEntry?: ButtonMappingEntry) => {
       try {
-        await buttonMappings.updateActivator(entryId, activator);
+        const next = normalizeActivator(activator);
+        if (draftEntry !== undefined) {
+          buttonMappings.add({ ...draftEntry, activator: next });
+          return true;
+        }
+        await buttonMappings.updateActivator(entryId, next);
         return true;
       } catch {
         return false;

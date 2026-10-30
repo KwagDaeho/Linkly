@@ -1,4 +1,5 @@
 pub mod ball_scroll;
+pub mod chord_token;
 pub mod button_mapping;
 pub mod custom_mapping;
 pub mod device;

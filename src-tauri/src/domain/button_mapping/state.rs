@@ -78,17 +78,6 @@ pub fn hid_button_for_mouse(button: &MouseClickButton) -> Option<ButtonId> {
     }
 }
 
-/// Link-tab row whose input is this HUGE / primary mouse button (OS tap + HID mirror).
-pub fn find_for_hid_button(id: ButtonId) -> Option<ButtonMappingEntry> {
-    ENTRIES.lock().iter().find(|entry| {
-        entry
-            .activator
-            .as_ref()
-            .and_then(hid_button_for_activator)
-            .is_some_and(|mapped| mapped == id)
-    }).cloned()
-}
-
 pub fn find_huge(id: ButtonId) -> Option<ButtonMappingEntry> {
     ENTRIES
         .lock()

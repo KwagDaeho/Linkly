@@ -1,7 +1,7 @@
 import { style } from "@vanilla-extract/css";
 
 /** Match app buttons — rounded chip, not full capsule. */
-const chipRadius = 7;
+const chipRadius = "0.4375rem";
 
 export const row = style({
   display: "flex",

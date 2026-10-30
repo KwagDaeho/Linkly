@@ -28,7 +28,7 @@ pub fn offer_os_trigger(activator: &Activator, down: bool) -> bool {
         ACTIVE_OS_ENTRIES.lock().iter().any(|entry_id| {
             super::state::entry_by_id(entry_id)
                 .and_then(|e| e.activator.effective_trigger())
-                .is_some_and(|t| t.same_as(activator))
+                .is_some_and(|t| t.matches_input(activator))
         })
     };
     if swallow {
@@ -72,7 +72,7 @@ pub fn process_os_trigger_queue(profile: &Profile, maps: &mut CustomMaps) {
             let to_release: Vec<String> = maps
                 .active_os
                 .iter()
-                .filter(|(_, t)| t.same_as(&activator))
+                .filter(|(_, t)| t.matches_input(&activator))
                 .map(|(id, _)| id.clone())
                 .collect();
             for entry_id in to_release {

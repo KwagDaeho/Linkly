@@ -27,12 +27,12 @@ export const ButtonMappingActivatorEditor = (
   const waitingLabel =
     rejectedMessage !== null
       ? rejectedMessage
-      : i18n.buttonMappingCaptureWaiting;
+      : i18n.captureInputWaiting;
 
   return (
     <MacroKeyPrompt
-      title={i18n.buttonMappingSetInput}
-      hint={i18n.buttonMappingInputHint}
+      title={i18n.buttonMappingTriggerModalTitle}
+      hint={i18n.macroKeystrokeHint}
       waitingLabel={waitingLabel}
       cancelLabel={i18n.cancel}
       onCancel={() => setEditor(null)}

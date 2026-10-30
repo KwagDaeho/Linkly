@@ -16,12 +16,12 @@ interface MacroKeyPromptProps {
 
 export const MacroKeyPrompt = (props: MacroKeyPromptProps) => {
   return (
-    <Modal nested compact onBackdropClick={props.onCancel} onEscape={props.onCancel}>
+    <Modal nested onBackdropClick={props.onCancel} onEscape={props.onCancel}>
       <h2 id="macro-key-prompt-title">{props.title}</h2>
       <Muted variant="modal">{props.hint}</Muted>
       <ChordPreview variant="field">{props.waitingLabel}</ChordPreview>
       <ModalFooter>
-        <Button variant="ghost" onClick={props.onCancel}>
+        <Button variant="ghost" data-capture-cancel onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
       </ModalFooter>

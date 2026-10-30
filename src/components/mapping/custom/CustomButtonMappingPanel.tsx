@@ -1,5 +1,5 @@
-import { comboEditorStateFromEntry } from "@/domain/editors";
-import { customMappingsOf, newCustomMappingEntry } from "@/domain/profile";
+import { comboDraftEditorFromNewEntry } from "@/domain/editors";
+import { customMappingsOf } from "@/domain/profile";
 import { useEditor } from "@/hooks/editor";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { Button, Muted, Panel } from "@/components/ui";
@@ -9,22 +9,18 @@ import * as styles from "./CustomButtonMappingPanel.css";
 
 export const CustomButtonMappingPanel = () => {
   const { i18n } = usePrefs();
-  const { profile, customMappings } = useProfileCtx();
+  const { profile } = useProfileCtx();
   const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
   const entries = customMappingsOf(profile);
   return (
-    <Panel>
+    <Panel variant="plain">
       <div className={styles.toolbar}>
         <Button
           className={styles.addButton}
-          onClick={() => {
-            const entry = newCustomMappingEntry();
-            void customMappings.add(entry);
-            setEditor(comboEditorStateFromEntry(entry));
-          }}
+          onClick={() => setEditor(comboDraftEditorFromNewEntry())}
         >
           {i18n.customMappingAdd}
         </Button>
@@ -40,7 +36,7 @@ export const CustomButtonMappingPanel = () => {
             <span>{i18n.autoClickEnable}</span>
             <span>{i18n.longPressEnable}</span>
             <span>{i18n.mappingActionLong}</span>
-            <span>{i18n.remove}</span>
+            <span aria-hidden />
           </div>
           {entries.map((entry) => (
             <CustomMappingRow key={entry.id} entry={entry} />

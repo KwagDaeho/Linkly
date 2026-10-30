@@ -40,17 +40,21 @@ export const ChordHoldCaptureModal = (props: ChordHoldCaptureModalProps) => {
   const showStart = !props.listening && !props.canSave;
   const showRetry = props.canSave;
 
+  const handleDismiss = () => {
+    if (props.listening) {
+      props.onStopListening();
+      return;
+    }
+    props.onCancel();
+  };
+
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key !== "Escape") {
       return;
     }
     event.preventDefault();
     event.stopPropagation();
-    if (props.listening) {
-      props.onStopListening();
-      return;
-    }
-    props.onCancel();
+    handleDismiss();
   };
 
   return (
@@ -70,7 +74,7 @@ export const ChordHoldCaptureModal = (props: ChordHoldCaptureModalProps) => {
         ) : null}
       </Row>
       <ModalFooter>
-        <Button variant="ghost" onClick={props.onCancel}>
+        <Button variant="ghost" data-capture-cancel onClick={handleDismiss}>
           {props.cancelLabel}
         </Button>
         <Button

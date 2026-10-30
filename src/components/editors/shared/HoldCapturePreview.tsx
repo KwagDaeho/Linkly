@@ -3,13 +3,14 @@ import {
   type HoldCapturePreview,
 } from "@/domain/capture";
 import { KeyChordPills } from "@/components/ui";
+import * as chordPreviewStyles from "@/components/ui/ChordPreview.css";
 import type { HoldCapturePhase, Lang } from "@/types";
 
 interface HoldCapturePreviewViewProps {
   lang: Lang;
   labels: {
+    listeningWaiting: string;
     inProgressTag: string;
-    idlePrompt: string;
     waitingStart: string;
   };
   state: {
@@ -27,13 +28,19 @@ export const HoldCapturePreviewView = (props: HoldCapturePreviewViewProps) => {
   );
   if (content.kind === "tokens") {
     return (
-      <KeyChordPills
-        lang={props.lang}
-        keys={content.keys}
-        prefix={content.prefix}
-        size="compact"
-        align="center"
-      />
+      <>
+        {content.statusText !== undefined ? (
+          <span className={chordPreviewStyles.fieldStatus}>
+            {content.statusText}
+          </span>
+        ) : null}
+        <KeyChordPills
+          lang={props.lang}
+          keys={content.keys}
+          size="compact"
+          align="center"
+        />
+      </>
     );
   }
   return content.text;

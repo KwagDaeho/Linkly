@@ -6,13 +6,13 @@ export const list = style({
   padding: 0,
   display: "flex",
   flexDirection: "column",
-  gap: 8,
+  gap: "0.5rem",
 });
 
 export const item = style({
   display: "flex",
   alignItems: "center",
-  padding: "8px 10px",
+  padding: "0.5rem 0.625rem",
   borderRadius: "var(--radius)",
   border: "1px solid var(--line)",
   background: "var(--panel)",
@@ -23,7 +23,7 @@ export const itemStack = style([
   {
     flexDirection: "column",
     alignItems: "stretch",
-    gap: 6,
+    gap: "0.375rem",
   },
 ]);
 

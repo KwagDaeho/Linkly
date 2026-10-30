@@ -6,15 +6,15 @@ use crate::domain::profile::Activator;
 use crate::platform::app_bus;
 use crate::platform::inject;
 
-use super::combo::{emit_combo_preview, note_key_up, sync_from_chord, sync_mods_from_flags};
+use super::combo::{emit_combo_preview, note_capture_token, note_key_down, note_key_up, sync_mods_from_flags};
+use super::super::token::activator_capture_token;
 use super::keycodes::{
     chord_from_event, key_activator, modifier_down, CGEventRef, CGEventTapProxy,
     CGEventGetIntegerValueField, FLAG_COMMAND, KEYBOARD_EVENT_AUTOREPEAT,
     KEYBOARD_EVENT_KEYCODE, KEY_DOWN, KEY_UP, FLAGS_CHANGED, MOUSE_EVENT_BUTTON_NUMBER,
 };
 use super::super::emit::{
-    emit_activator, emit_activator_choice, emit_capture_escape_from_pointer, emit_chord,
-    emit_combo_trigger_activator,
+    emit_activator, emit_activator_choice, emit_capture_left_pointer, emit_chord,
 };
 use super::super::session;
 use super::super::types::{ActivatorCapture, ComboTriggerCapture};
@@ -36,6 +36,7 @@ pub(crate) unsafe extern "C" fn tap_callback(
         let combo = session::combo_trigger_capture();
         if etype == KEY_UP {
             if combo {
+                sync_mods_from_flags(event);
                 let code =
                     unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
                 note_key_up(code);
@@ -69,9 +70,12 @@ pub(crate) unsafe extern "C" fn tap_callback(
                         return std::ptr::null_mut();
                     }
                     if combo {
-                        sync_from_chord(&chord.keys);
+                        sync_mods_from_flags(event);
+                        note_key_down(event);
+                        emit_combo_preview();
+                    } else {
+                        emit_chord(chord);
                     }
-                    emit_chord(chord);
                 } else if combo {
                     sync_mods_from_flags(event);
                     emit_combo_preview();
@@ -87,8 +91,11 @@ pub(crate) unsafe extern "C" fn tap_callback(
                 etype,
                 unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) },
             ) {
-                if down {
-                    emit_combo_trigger_activator(activator);
+                if down && activator.is_left_click() {
+                    emit_capture_left_pointer();
+                } else if let Some(token) = activator_capture_token(&activator) {
+                    note_capture_token(&token, down);
+                    emit_combo_preview();
                 }
                 return std::ptr::null_mut();
             }
@@ -138,13 +145,13 @@ fn handle_activator_capture(etype: u32, event: CGEventRef) -> CGEventRef {
         etype,
         unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) },
     ) {
-        if down && session::left_click_escape_active() && activator.is_left_click() {
-            emit_capture_escape_from_pointer();
-            return std::ptr::null_mut();
-        }
         if activator.is_left_click() {
             if down {
-                emit_activator_choice(activator);
+                if session::allow_left_activator() {
+                    emit_capture_left_pointer();
+                } else {
+                    emit_activator_choice(activator);
+                }
             }
             return std::ptr::null_mut();
         }

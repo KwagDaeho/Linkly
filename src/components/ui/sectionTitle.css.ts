@@ -1,5 +1,7 @@
 import { style } from "@vanilla-extract/css";
 
+import { staticSectionPadLeft } from "./panelLayout";
+
 /** h2 — Common/Trackball, 일반·이벤트·입력 디바이스 등 */
 export const headingH2 = style({
   margin: 0,
@@ -13,7 +15,7 @@ export const headingH2 = style({
 /** h3 — 버튼·조합·포인터·볼 스크롤 등 Link 아코디언 */
 export const headingH3 = style({
   margin: 0,
-  fontSize: "0.98rem",
+  fontSize: "1.09375rem",
   fontWeight: 620,
   lineHeight: 1.35,
   letterSpacing: "-0.01em",
@@ -23,13 +25,27 @@ export const headingH3 = style({
 /** @deprecated use headingH2 */
 export const text = headingH2;
 
+/** Info 등 비아코디언 본문 — 아코디언과 같은 들여쓰기, 세로선 없음 */
+export const staticSectionBody = style({
+  display: "grid",
+  gap: 10,
+  fontSize: "0.9375rem",
+  paddingLeft: staticSectionPadLeft,
+  paddingTop: 6,
+  paddingBottom: 12,
+});
+
 export const staticSection = style({
   display: "grid",
-  gap: 8,
-  marginBottom: 6,
-  paddingBottom: 10,
-  borderBottom: "1px solid color-mix(in srgb, var(--line) 65%, transparent)",
+  gap: 12,
+  marginBottom: 0,
+  paddingTop: 4,
+  paddingBottom: 16,
+  borderBottom: "1px solid var(--line-accent)",
   selectors: {
+    "& + &": {
+      paddingTop: 12,
+    },
     "&:last-child": {
       borderBottom: "none",
       marginBottom: 0,
@@ -62,7 +78,7 @@ export const headingLead = style({
 
 export const contentIndent = style({
   display: "grid",
-  gap: 8,
+  gap: 10,
   paddingLeft: "1.2rem",
 });
 

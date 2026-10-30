@@ -1,53 +1,26 @@
-import { longPressMs, withLongPressMs } from "@/domain/profile";
-import { buttonMappingActivatorEditor } from "@/domain/editors";
-import {
-  buttonMappingsOf,
-  newButtonMappingEntry,
-} from "@/domain/profile";
+import { buttonMappingDraftEditor } from "@/domain/editors";
+import { buttonMappingsOf } from "@/domain/profile";
 import { useEditor } from "@/hooks/editor";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { Button, Muted, Panel, SettingsList, SettingsRow } from "@/components/ui";
+import { Button, Muted, Panel } from "@/components/ui";
 import { ButtonMappingRow } from "./ButtonMappingRow";
 import { buttonGrid } from "./ButtonMappingPanel.css";
 import * as styles from "../custom/CustomButtonMappingPanel.css";
 
 export const ButtonMappingPanel = () => {
   const { i18n } = usePrefs();
-  const { profile, buttonMappings, lifecycle } = useProfileCtx();
+  const { profile } = useProfileCtx();
   const { setEditor } = useEditor();
   if (profile === null) {
     return null;
   }
   const entries = buttonMappingsOf(profile);
   return (
-    <Panel>
-      <SettingsList>
-        <SettingsRow>
-          <label>
-            {i18n.longPressTime} ({longPressMs(profile)} ms)
-            <input
-              type="range"
-              min={150}
-              max={2000}
-              step={50}
-              value={longPressMs(profile)}
-              onChange={(event) =>
-                void lifecycle.persist(
-                  withLongPressMs(profile, Number(event.target.value)),
-                )
-              }
-            />
-          </label>
-        </SettingsRow>
-      </SettingsList>
+    <Panel variant="plain">
       <div className={styles.toolbar}>
         <Button
           className={styles.addButton}
-          onClick={() => {
-            const entry = newButtonMappingEntry();
-            void buttonMappings.add(entry);
-            setEditor(buttonMappingActivatorEditor(entry.id));
-          }}
+          onClick={() => setEditor(buttonMappingDraftEditor())}
         >
           {i18n.customMappingAdd}
         </Button>
@@ -63,7 +36,7 @@ export const ButtonMappingPanel = () => {
             <span>{i18n.autoClickEnable}</span>
             <span>{i18n.longPressEnable}</span>
             <span>{i18n.mappingActionLong}</span>
-            <span>{i18n.remove}</span>
+            <span aria-hidden />
           </div>
           {entries.map((entry) => (
             <ButtonMappingRow key={entry.id} entry={entry} />

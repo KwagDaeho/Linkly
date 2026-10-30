@@ -80,7 +80,7 @@ export const MacroEditor = (props: MacroEditorProps) => {
         />
         <Row wrap>
           <Button variant="ghost" onClick={() => openKeyPrompt("add")}>
-            {i18n.addKeystroke}
+            {i18n.addMacroAction}
           </Button>
           <Button variant="ghost" onClick={() => setDelayPrompt({ mode: "add" })}>
             {i18n.addDelay}
@@ -99,11 +99,11 @@ export const MacroEditor = (props: MacroEditorProps) => {
         <MacroKeyPrompt
           title={
             editor.keyPrompt.mode === "add"
-              ? i18n.addKeystroke
+              ? i18n.addMacroAction
               : i18n.editKeystroke
           }
           hint={i18n.macroKeystrokeHint}
-          waitingLabel={i18n.macroKeystrokeWaiting}
+          waitingLabel={i18n.captureInputWaiting}
           cancelLabel={i18n.cancel}
           onCancel={() => setEditor({ ...editor, keyPrompt: null })}
         />

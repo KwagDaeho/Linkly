@@ -7,7 +7,7 @@ import {
 } from "../mappingTableGrid.css";
 
 export const toolbar = style({
-  marginTop: 8,
+  marginTop: 0,
   marginBottom: 10,
 });
 

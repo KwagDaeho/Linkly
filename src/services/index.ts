@@ -23,6 +23,7 @@ export {
   setComboActivatorCapture,
   setComboTriggerCapture,
   setUiModal,
+  mergeComboCaptureToken,
   getAppIcon,
   resetTccPermissions,
   autostartIsEnabled,

@@ -7,7 +7,7 @@ import * as styles from "./EventViewerLauncher.css";
 export const EventViewerLauncher = () => {
   const { i18n } = usePrefs();
   return (
-    <Panel>
+    <Panel variant="plain">
       <div className={styles.actions}>
         <Button onClick={() => void openEventViewerWindow("keyboard")}>
           {i18n.inputEventOpenKeyboard}

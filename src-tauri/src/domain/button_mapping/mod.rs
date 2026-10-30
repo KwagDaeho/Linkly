@@ -11,4 +11,4 @@ pub use handler::{
 };
 pub use os_trigger::{offer_os_trigger, process_os_trigger_queue};
 pub use reserve::is_reserved_huge;
-pub use state::{find_for_hid_button, find_huge, sync_from_profile, uses_os_watch};
+pub use state::{find_huge, sync_from_profile, uses_os_watch};

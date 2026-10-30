@@ -105,6 +105,9 @@ export const setComboTriggerCapture = async (
 export const setUiModal = async (active: boolean): Promise<void> => {
   await invoke("set_ui_modal", { active });
 };
+export const mergeComboCaptureToken = async (token: string): Promise<void> => {
+  await invoke("merge_combo_capture_token", { token });
+};
 export const getAppIcon = async (path: string): Promise<string | null> => {
   return invoke<string | null>("get_app_icon", { path });
 };

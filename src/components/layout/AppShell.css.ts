@@ -27,6 +27,13 @@ const flushBeforeFooter = {
 globalStyle(`${shell} ${staticSection}:has(+ ${footer})`, flushBeforeFooter);
 globalStyle(`${shell} ${accordionSection}:has(+ ${footer})`, flushBeforeFooter);
 
+/** Tab panels — extra top inset so gap below tabs matches sectionGroupFollow (~14px). */
+export const tabPanel = style({
+  display: "grid",
+  gap: 8,
+  paddingTop: 6,
+});
+
 export const tabs = style({
   display: "grid",
   gridTemplateColumns: "1fr 1fr",

@@ -9,7 +9,6 @@ static COMBO_ACTIVATOR_CAPTURE: AtomicBool = AtomicBool::new(false);
 static COMBO_TRIGGER_CAPTURE: AtomicBool = AtomicBool::new(false);
 static UI_MODAL_ACTIVE: AtomicBool = AtomicBool::new(false);
 static ALLOW_LEFT_ACTIVATOR: AtomicBool = AtomicBool::new(false);
-static LEFT_CLICK_ESCAPE: AtomicBool = AtomicBool::new(false);
 pub(crate) static TAP_STARTED: AtomicBool = AtomicBool::new(false);
 pub(crate) static KEY_CAPTURE_TAP_PORT: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
     std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
@@ -39,8 +38,6 @@ pub fn apply_capture_session(session: CaptureSession) {
     COMBO_TRIGGER_CAPTURE.store(session.combo_trigger, Ordering::SeqCst);
     UI_MODAL_ACTIVE.store(session.ui_modal, Ordering::SeqCst);
     ALLOW_LEFT_ACTIVATOR.store(session.allow_left_activator, Ordering::SeqCst);
-    LEFT_CLICK_ESCAPE.store(session.left_click_escape, Ordering::SeqCst);
-
     if session.combo_trigger != combo_was {
         #[cfg(target_os = "macos")]
         super::macos::clear_combo_held();
@@ -121,10 +118,7 @@ pub(crate) fn combo_trigger_capture() -> bool {
     COMBO_TRIGGER_CAPTURE.load(Ordering::SeqCst)
 }
 
-pub(crate) fn allow_left_activator() -> bool {
+pub fn allow_left_activator() -> bool {
     ALLOW_LEFT_ACTIVATOR.load(Ordering::SeqCst)
 }
 
-pub fn left_click_escape_active() -> bool {
-    LEFT_CLICK_ESCAPE.load(Ordering::SeqCst)
-}

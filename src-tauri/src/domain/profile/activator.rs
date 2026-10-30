@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::domain::chord_token::mouse_button_for_huge;
 use crate::domain::device::ButtonId;
 
 use super::action::MouseClickButton;
@@ -45,7 +46,7 @@ impl ComboActivator {
     pub fn triggers_match(&self, activator: &Activator) -> bool {
         self.effective_trigger()
             .as_ref()
-            .is_some_and(|t| t.same_as(activator))
+            .is_some_and(|t| t.matches_input(activator))
     }
 }
 
@@ -101,6 +102,20 @@ impl Activator {
                 let a = *a as i64;
                 let b = *b as i64;
                 a == b || a + 1 == b || a == b + 1
+            }
+            _ => false,
+        }
+    }
+
+    /// Match stored activator to live OS/HID input (incl. HUGE ↔ shared pointer mouse).
+    pub fn matches_input(&self, other: &Self) -> bool {
+        if self.same_as(other) {
+            return true;
+        }
+        match (self, other) {
+            (Activator::Huge { button: id }, Activator::Mouse { button: mb })
+            | (Activator::Mouse { button: mb }, Activator::Huge { button: id }) => {
+                mouse_button_for_huge(*id).as_ref() == Some(mb)
             }
             _ => false,
         }

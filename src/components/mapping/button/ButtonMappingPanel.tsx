@@ -1,6 +1,6 @@
 import { longPressMs, withLongPressMs } from "@/domain/profile";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { Controls, Panel, SectionHead } from "@/components/ui";
+import { Panel, SettingsList, SettingsRow } from "@/components/ui";
 import { ButtonMappingCard } from "./ButtonMappingCard";
 import * as styles from "./ButtonMappingPanel.css";
 
@@ -12,24 +12,25 @@ export const ButtonMappingPanel = () => {
   }
   return (
     <Panel>
-      <SectionHead title={i18n.buttonMapping} />
-      <Controls tight tools>
-        <label>
-          {i18n.longPressTime} ({longPressMs(profile)} ms)
-          <input
-            type="range"
-            min={150}
-            max={2000}
-            step={50}
-            value={longPressMs(profile)}
-            onChange={(event) =>
-              void lifecycle.persist(
-                withLongPressMs(profile, Number(event.target.value)),
-              )
-            }
-          />
-        </label>
-      </Controls>
+      <SettingsList>
+        <SettingsRow>
+          <label>
+            {i18n.longPressTime} ({longPressMs(profile)} ms)
+            <input
+              type="range"
+              min={150}
+              max={2000}
+              step={50}
+              value={longPressMs(profile)}
+              onChange={(event) =>
+                void lifecycle.persist(
+                  withLongPressMs(profile, Number(event.target.value)),
+                )
+              }
+            />
+          </label>
+        </SettingsRow>
+      </SettingsList>
       <div className={styles.buttonGrid}>
         <div className={styles.buttonHead}>
           <span />

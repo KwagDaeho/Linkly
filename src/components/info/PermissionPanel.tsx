@@ -11,7 +11,6 @@ export const PermissionPanel = () => {
   const { grantAccess } = useSession();
   return (
     <Panel variant="warn">
-      <h2>{i18n.accessibilityTitle}</h2>
       <ol className={styles.permSteps}>
         <li>{i18n.accessibilityStep1}</li>
         <li>{i18n.accessibilityStep2}</li>

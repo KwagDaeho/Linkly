@@ -1,4 +1,8 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
+
+import { footer } from "@/components/info/ContactFooter.css";
+import { root as accordionSection } from "@/components/ui/Accordion.css";
+import { staticSection } from "@/components/ui/sectionTitle.css";
 
 export const shell = style({
   width: "min(780px, calc(100% - 32px))",
@@ -13,6 +17,15 @@ export const shell = style({
     },
   },
 });
+
+const flushBeforeFooter = {
+  borderBottom: "none",
+  marginBottom: 0,
+  paddingBottom: 0,
+} as const;
+
+globalStyle(`${shell} ${staticSection}:has(+ ${footer})`, flushBeforeFooter);
+globalStyle(`${shell} ${accordionSection}:has(+ ${footer})`, flushBeforeFooter);
 
 export const tabs = style({
   display: "grid",

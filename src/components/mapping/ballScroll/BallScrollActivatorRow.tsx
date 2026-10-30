@@ -31,12 +31,13 @@ export const BallScrollActivatorRow = (props: BallScrollActivatorRowProps) => {
     : props.i18n.ballScrollHoldHelp;
   return (
     <div className={styles.row}>
-      <span>{label}</span>
       <Toggle
-        variant="flag"
+        variant="labelFirst"
         checked={enabled}
         onChange={(on) => props.onEnableChange(props.slot, on)}
-      />
+      >
+        {label}
+      </Toggle>
       <div className={styles.key}>
         <Button size="tiny" onClick={() => props.onOpenCapture(props.slot)}>
           {activator !== null

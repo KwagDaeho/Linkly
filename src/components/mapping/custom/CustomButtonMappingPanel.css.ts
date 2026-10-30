@@ -2,11 +2,12 @@ import { style } from "@vanilla-extract/css";
 
 import { buttonHead } from "../button/ButtonMappingPanel.css";
 
-export const sectionHeadRow = style({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: 8,
+export const toolbarRow = style({
+  justifyContent: "flex-end",
+});
+
+export const empty = style({
+  margin: "8px 0 0",
 });
 
 export const customMappingHead = style([

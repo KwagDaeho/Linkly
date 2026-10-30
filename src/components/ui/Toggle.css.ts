@@ -21,6 +21,24 @@ export const inline = style({
   minHeight: 14,
 });
 
+/** Label column 200px, then switch (settings list rows). */
+export const labelFirst = style({
+  display: "grid",
+  width: "100%",
+  gridTemplateColumns: "150px max-content",
+  columnGap: 12,
+  alignItems: "center",
+  minHeight: 14,
+  fontSize: "0.92rem",
+  fontWeight: 600,
+});
+
+export const labelFirstTitle = style({
+  margin: 0,
+  padding: 0,
+  minWidth: 0,
+});
+
 export const flag = style({
   justifyContent: "flex-start",
   gap: 0,
@@ -35,11 +53,12 @@ globalStyle(`${flag} input[type="checkbox"]:disabled`, {
 export const title = style({
   display: "inline-flex",
   alignItems: "center",
-  height: 14,
-  lineHeight: 1,
+  minHeight: 14,
+  lineHeight: 1.35,
   margin: 0,
   padding: 0,
-  flexShrink: 0,
+  flex: "0 1 auto",
+  minWidth: 0,
 });
 
 export const description = style({
@@ -56,6 +75,11 @@ export const description = style({
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
+});
+
+globalStyle(`${labelFirst} input[type="checkbox"]`, {
+  gridColumn: 2,
+  gridRow: 1,
 });
 
 globalStyle(`${root} input[type="checkbox"]`, {

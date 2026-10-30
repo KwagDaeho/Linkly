@@ -22,26 +22,52 @@ export const Toggle = (props: ToggleProps) => {
     styles.root,
     variant === "inline" && styles.inline,
     variant === "flag" && styles.flag,
+    variant === "labelFirst" && styles.labelFirst,
   );
+  const labelText = props.children ? (
+    <span
+      className={cx(
+        styles.title,
+        variant === "labelFirst" && styles.labelFirstTitle,
+      )}
+    >
+      {props.children}
+    </span>
+  ) : null;
+  const description = props.description ? (
+    <span className={styles.description}>{props.description}</span>
+  ) : null;
+
   return (
     <label className={className} title={props.title}>
-      <input
-        type="checkbox"
-        checked={props.checked}
-        disabled={disabled}
-        onChange={(event) => props.onChange(event.target.checked)}
-      />
-      {variant === "inline" ? (
+      {variant === "labelFirst" ? (
         <>
-          {props.children ? (
-            <span className={styles.title}>{props.children}</span>
-          ) : null}
-          {props.description ? (
-            <span className={styles.description}>{props.description}</span>
-          ) : null}
+          {labelText}
+          {description}
+          <input
+            type="checkbox"
+            checked={props.checked}
+            disabled={disabled}
+            onChange={(event) => props.onChange(event.target.checked)}
+          />
         </>
       ) : (
-        props.children
+        <>
+          <input
+            type="checkbox"
+            checked={props.checked}
+            disabled={disabled}
+            onChange={(event) => props.onChange(event.target.checked)}
+          />
+          {variant === "inline" ? (
+            <>
+              {labelText}
+              {description}
+            </>
+          ) : (
+            props.children
+          )}
+        </>
       )}
     </label>
   );

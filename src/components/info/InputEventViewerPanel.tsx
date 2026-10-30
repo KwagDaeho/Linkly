@@ -1,8 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
+import { formatEventRowText } from "@/domain/input/eventViewer";
 import { useInputEventStream } from "@/hooks/useInputEventStream";
 import { usePrefs } from "@/hooks/prefs";
-import { Button, Panel, SectionHead, Toggle } from "@/components/ui";
+import { Button, Panel } from "@/components/ui";
+import type { InputEventLine } from "@/types";
 
 import * as styles from "./InputEventViewerPanel.css";
 
@@ -18,89 +20,80 @@ const formatTime = (tsMs: number): string => {
   return `${base}.${ms}`;
 };
 
-export const InputEventViewerPanel = () => {
-  const { i18n } = usePrefs();
-  const { lines, latest, hidMotion, setHidMotion, clear } =
-    useInputEventStream(true);
-  const [filter, setFilter] = useState("");
-
+const EventChannel = ({
+  label,
+  latest,
+  history,
+  emptyLabel,
+}: {
+  label: string;
+  latest: InputEventLine | null;
+  history: InputEventLine[];
+  emptyLabel: string;
+}) => {
   const logRef = useRef<HTMLDivElement>(null);
-
-  const filtered = useMemo(() => {
-    const query = filter.trim().toLowerCase();
-    if (!query) {
-      return lines;
-    }
-    return lines.filter(
-      (line) =>
-        line.summary.toLowerCase().includes(query) ||
-        line.detail.toLowerCase().includes(query) ||
-        line.kind.toLowerCase().includes(query) ||
-        line.source.toLowerCase().includes(query),
-    );
-  }, [filter, lines]);
+  const latestText = latest ? formatEventRowText(latest) : "";
 
   useEffect(() => {
     const node = logRef.current;
     if (node) {
       node.scrollTop = node.scrollHeight;
     }
-  }, [lines.length, filtered.length]);
+  }, [history.length]);
 
-  const headline = latest?.summary ?? i18n.inputEventHeadlineEmpty;
+  return (
+    <div className={styles.block}>
+      <div className={styles.blockHead}>
+        <span className={styles.rowLabel}>{label}</span>
+      </div>
+      <input
+        type="text"
+        className={styles.rowInput}
+        readOnly
+        value={latestText}
+        placeholder={emptyLabel}
+        aria-label={label}
+      />
+      <div ref={logRef} className={styles.log} role="log" aria-label={label}>
+        {history.length === 0 ? (
+          <p className={styles.logEmpty}>{emptyLabel}</p>
+        ) : (
+          history.map((line, index) => (
+            <div key={`${line.tsMs}-${index}`} className={styles.row}>
+              <span className={styles.time}>{formatTime(line.tsMs)}</span>
+              <span className={styles.summary}>{formatEventRowText(line)}</span>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+};
+
+export const InputEventViewerPanel = ({ active = true }: { active?: boolean }) => {
+  const { i18n } = usePrefs();
+  const { historyByChannel, latestByChannel, clear } = useInputEventStream(active);
 
   return (
     <Panel>
-      <SectionHead title={i18n.inputEventViewer} />
-      <p className={styles.help}>{i18n.inputEventViewerHelp}</p>
-
-      <input
-        type="text"
-        className={styles.headline}
-        readOnly
-        value={headline}
-        aria-label={i18n.inputEventHeadlineLabel}
-      />
-
-      <input
-        type="search"
-        className={styles.filter}
-        value={filter}
-        onChange={(event) => setFilter(event.target.value)}
-        placeholder={i18n.inputEventFilterPlaceholder}
-        aria-label={i18n.inputEventFilterPlaceholder}
-      />
-
       <div className={styles.toolbar}>
-        <Toggle checked={hidMotion} onChange={setHidMotion}>
-          {i18n.inputEventHidMotion}
-        </Toggle>
         <Button variant="ghost" onClick={clear}>
           {i18n.inputEventClear}
         </Button>
       </div>
 
-      <div
-        ref={logRef}
-        className={styles.log}
-        role="log"
-        aria-live="polite"
-        aria-relevant="additions"
-      >
-        {filtered.length === 0 ? (
-          <p className={styles.empty}>{i18n.inputEventEmpty}</p>
-        ) : (
-          filtered.map((line, index) => (
-            <div key={`${line.tsMs}-${index}`} className={styles.row}>
-              <span className={styles.time}>{formatTime(line.tsMs)}</span>
-              <span className={styles.source} data-source={line.source}>
-                {line.source}
-              </span>
-              <span className={styles.summary}>{line.summary}</span>
-            </div>
-          ))
-        )}
-      </div>
+      <EventChannel
+        label={i18n.inputEventKeyboard}
+        latest={latestByChannel.keyboard}
+        history={historyByChannel.keyboard}
+        emptyLabel={i18n.inputEventRowEmpty}
+      />
+      <EventChannel
+        label={i18n.inputEventMouse}
+        latest={latestByChannel.mouse}
+        history={historyByChannel.mouse}
+        emptyLabel={i18n.inputEventRowEmpty}
+      />
     </Panel>
   );
 };

@@ -92,13 +92,15 @@ pub fn run() {
             commands::list_installed_apps,
             commands::get_app_icon,
             commands::set_input_event_monitor_enabled,
+            commands::set_event_viewer_channel,
         ])
         .setup(|app| setup::setup_app(app))
         .on_window_event(|window, event| {
             if let WindowEvent::CloseRequested { api, .. } = event {
-                // Keep running in tray.
-                api.prevent_close();
-                let _ = window.hide();
+                if window.label() == "main" {
+                    api.prevent_close();
+                    let _ = window.hide();
+                }
             }
         })
         .build(tauri::generate_context!())

@@ -1,46 +1,80 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import {
+  contentIndent,
+  headingH2,
+  headingH3,
+  headingShell,
+  headingRow,
+} from "./sectionTitle.css";
+
 export const root = style({
   display: "grid",
-  gap: 6,
+  gap: 8,
+  marginBottom: 6,
+  paddingBottom: 10,
+  borderBottom: "1px solid color-mix(in srgb, var(--line) 65%, transparent)",
+  selectors: {
+    "&:last-child": {
+      borderBottom: "none",
+      marginBottom: 0,
+      paddingBottom: 0,
+    },
+  },
 });
 
-export const groupTitle = style({
-  margin: "4px 0 0",
-  fontSize: "0.72rem",
-  fontWeight: 800,
-  letterSpacing: "0.06em",
+export const heading = headingShell;
+
+export const headingToggle = style([
+  headingRow,
+  {
+    margin: 0,
+    border: 0,
+    borderRadius: 0,
+    background: "transparent",
+    color: "inherit",
+    textAlign: "left",
+    cursor: "pointer",
+    font: "inherit",
+  },
+]);
+
+const headingTextBase = {
+  flex: 1,
+  minWidth: 0,
+} as const;
+
+export const headingTextH2 = style([headingH2, headingTextBase]);
+
+export const headingTextH3 = style([headingH3, headingTextBase]);
+
+export const status = style({
+  flexShrink: 0,
+  fontSize: "0.68rem",
+  fontWeight: 700,
+  letterSpacing: "0.05em",
   textTransform: "uppercase",
   color: "var(--muted)",
+  selectors: {
+    '&[data-on=""]': {
+      color: "var(--ok)",
+    },
+  },
 });
 
-export const shell = style({
-  display: "grid",
-  gap: 6,
-});
-
-export const trigger = style({
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  width: "100%",
-  margin: 0,
-  padding: "8px 10px",
-  border: "1px solid var(--line)",
-  borderRadius: "var(--radius)",
-  background: "var(--panel)",
-  color: "var(--ink)",
-  fontWeight: 700,
-  fontSize: "0.9rem",
-  textAlign: "left",
-  cursor: "pointer",
-});
+const panelEase = "cubic-bezier(0.4, 0, 0.2, 1)";
+const panelDuration = "0.38s";
 
 export const chevron = style({
-  display: "inline-block",
-  fontSize: "1.1rem",
+  display: "inline-grid",
+  placeItems: "center",
+  width: "1.1rem",
+  height: "1.1rem",
+  fontSize: "0.95rem",
   lineHeight: 1,
-  transition: "transform 0.15s ease",
+  color: "var(--muted)",
+  transition: `transform ${panelDuration} ${panelEase}`,
+  flexShrink: 0,
   selectors: {
     '&[data-open=""]': {
       transform: "rotate(90deg)",
@@ -48,21 +82,42 @@ export const chevron = style({
   },
 });
 
-export const triggerText = style({
-  flex: 1,
-  minWidth: 0,
-});
-
 export const panel = style({
   display: "grid",
-  gap: 8,
+  gridTemplateRows: "0fr",
+  overflow: "hidden",
+  transition: `grid-template-rows ${panelDuration} ${panelEase}`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
   selectors: {
-    '&:not([data-open=""])': {
-      display: "none",
+    '&[data-open=""]': {
+      gridTemplateRows: "1fr",
     },
   },
 });
 
-globalStyle(`${panel} > section`, {
+export const panelInner = style([
+  contentIndent,
+  {
+    minHeight: 0,
+    overflow: "hidden",
+    opacity: 0,
+    transition: `opacity 0.28s ${panelEase}`,
+    "@media": {
+      "(prefers-reduced-motion: reduce)": {
+        transition: "none",
+      },
+    },
+  },
+]);
+
+globalStyle(`${panel}[data-open=""] ${panelInner}`, {
+  opacity: 1,
+});
+
+globalStyle(`${panelInner} > section`, {
   margin: 0,
 });

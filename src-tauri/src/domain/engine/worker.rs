@@ -21,7 +21,7 @@ use crate::domain::engine::input::{
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{Action, Profile};
 use crate::domain::remap;
-use crate::platform::hid::{find_huge, open_huge_device};
+use crate::platform::hid::{collect_input_devices, find_huge, open_huge_device};
 use crate::platform::{capture, inject, permissions, suppress};
 
 pub(crate) fn run(
@@ -29,6 +29,7 @@ pub(crate) fn run(
     running: Arc<AtomicBool>,
     last_report: Arc<Mutex<Option<LastReport>>>,
     connected: Arc<Mutex<Option<DeviceInfo>>>,
+    input_devices: Arc<Mutex<Vec<DeviceInfo>>>,
 ) {
     let mut prev = ButtonState::default();
     let mut prev_raw = ButtonState::default();
@@ -49,6 +50,7 @@ pub(crate) fn run(
 
     while running.load(Ordering::SeqCst) {
         // Keep UI connection status even when remap is off (enumerate only).
+        *input_devices.lock() = collect_input_devices(&api);
         let device_info = find_huge(&api);
         *connected.lock() = device_info.clone();
 

@@ -36,7 +36,7 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
             } else {
                 "keyUp".to_string()
             };
-            let summary = format!("OS · key {name} {phase}");
+            let summary = format!("key {name} {phase}");
             (kind, summary)
         }
         FLAGS_CHANGED => {
@@ -45,14 +45,14 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
             if let Some((activator, down)) = modifier_down(event) {
                 let phase = if down { "down" } else { "up" };
                 if let crate::domain::profile::Activator::Key { name } = activator {
-                    let summary = format!("OS · flags {name} {phase}");
+                    let summary = format!("flags {name} {phase}");
                     ("flagsChanged".into(), summary)
                 } else {
                     return;
                 }
             } else {
                 let name = key_activator_name(code);
-                let summary = format!("OS · flags {name}");
+                let summary = format!("flags {name}");
                 ("flagsChanged".into(), summary)
             }
         }
@@ -84,7 +84,7 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
             } else {
                 "mouseUp".to_string()
             };
-            let summary = format!("OS · mouse {label}{btn_suffix} {phase}");
+            let summary = format!("mouse {label}{btn_suffix} {phase}");
             (kind, summary)
         }
         SCROLL_WHEEL => {
@@ -92,19 +92,19 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
                 unsafe { CGEventGetIntegerValueField(event, SCROLL_DELTA_AXIS_1) };
             let dx =
                 unsafe { CGEventGetIntegerValueField(event, SCROLL_DELTA_AXIS_2) };
-            let summary = format!("OS · scroll Δ({dx},{dy})");
+            let summary = format!("scroll Δ({dx},{dy})");
             ("scrollWheel".into(), summary)
         }
         _ => {
             if let Some(activator) = (unsafe { key_activator(event) }) {
                 if let crate::domain::profile::Activator::Key { name } = activator {
-                    let summary = format!("OS · event {etype} · {name}");
+                    let summary = format!("event {etype} · {name}");
                     (format!("cgEvent{etype}"), summary)
                 } else {
                     return;
                 }
             } else {
-                let summary = format!("OS · event type {etype}");
+                let summary = format!("event type {etype}");
                 (format!("cgEvent{etype}"), summary)
             }
         }

@@ -4,8 +4,8 @@ use crate::domain::engine;
 use tauri::State;
 
 #[tauri::command]
-pub fn list_devices() -> Result<Vec<device::DeviceInfo>, String> {
-    crate::platform::hid::list_elecom_devices()
+pub fn list_devices(state: State<'_, AppState>) -> Vec<device::DeviceInfo> {
+    state.engine.input_devices()
 }
 
 #[tauri::command]

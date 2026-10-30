@@ -35,6 +35,13 @@ export const setInputEventMonitorEnabled = async (
 ): Promise<void> => {
   await invoke("set_input_event_monitor_enabled", { enabled });
 };
+
+export const setEventViewerChannel = async (
+  channel: "keyboard" | "mouse",
+  enabled: boolean,
+): Promise<void> => {
+  await invoke("set_event_viewer_channel", { channel, enabled });
+};
 export const getPermissionStatus = async (): Promise<PermissionStatus> => {
   return invoke<PermissionStatus>("permission_status");
 };

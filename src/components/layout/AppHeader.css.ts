@@ -2,16 +2,17 @@ import { globalStyle, style } from "@vanilla-extract/css";
 
 export const hero = style({
   padding: "4px 2px 0",
-  marginBottom: "0.35rem",
+  marginBottom: "1.85rem",
 });
 
-globalStyle(`${hero} h1`, {
-  margin: "2px 0 1.85rem",
+export const title = style({
+  margin: 0,
   fontFamily: '"Futura", "Avenir Next", "Gill Sans", sans-serif',
   fontWeight: 700,
   fontSize: "clamp(2.4rem, 6vw, 3.6rem)",
   lineHeight: 0.92,
   letterSpacing: "-0.04em",
+  color: "var(--accent)",
 });
 
 export const heroTop = style({
@@ -78,10 +79,3 @@ export const themeButtonActive = style({
   color: "var(--accent-ink)",
 });
 
-export const eyebrow = style({
-  margin: 0,
-  letterSpacing: "0.28em",
-  fontSize: "0.72rem",
-  fontWeight: 600,
-  color: "var(--muted)",
-});

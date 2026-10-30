@@ -1,6 +1,6 @@
 import { customMappingsOf, newCustomMappingEntry } from "@/domain/profile";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { Button, Muted, Panel } from "@/components/ui";
+import { Button, Muted, Panel, SettingsList, SettingsRow } from "@/components/ui";
 import { CustomMappingRow } from "./CustomMappingRow";
 import { buttonGrid } from "../button/ButtonMappingPanel.css";
 import * as styles from "./CustomButtonMappingPanel.css";
@@ -14,18 +14,18 @@ export const CustomButtonMappingPanel = () => {
   const entries = customMappingsOf(profile);
   return (
     <Panel>
-      <div className={styles.sectionHeadRow}>
-        <h2>{i18n.customButtonMapping}</h2>
-        <Button
-          size="tiny"
-          onClick={() => void customMappings.add(newCustomMappingEntry())}
-        >
-          {i18n.customMappingAdd}
-        </Button>
-      </div>
-      <Muted variant="help">{i18n.customMappingHelp}</Muted>
+      <SettingsList>
+        <SettingsRow className={styles.toolbarRow}>
+          <Button
+            size="tiny"
+            onClick={() => void customMappings.add(newCustomMappingEntry())}
+          >
+            {i18n.customMappingAdd}
+          </Button>
+        </SettingsRow>
+      </SettingsList>
       {entries.length === 0 ? (
-        <Muted>{i18n.customMappingEmpty}</Muted>
+        <Muted className={styles.empty}>{i18n.customMappingEmpty}</Muted>
       ) : (
         <div className={buttonGrid}>
           <div className={styles.customMappingHead}>

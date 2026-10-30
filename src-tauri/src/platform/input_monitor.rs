@@ -1,6 +1,6 @@
 //! Live input event stream for the Info-tab event viewer (Karabiner-style).
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 
 use serde::Serialize;
 
@@ -8,6 +8,23 @@ use crate::domain::engine::LastReport;
 use crate::platform::app_bus;
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
+static VIEWER_KEYBOARD: AtomicBool = AtomicBool::new(false);
+static VIEWER_MOUSE: AtomicBool = AtomicBool::new(false);
+static LAST_MOTION_EMIT_MS: AtomicU64 = AtomicU64::new(0);
+static LAST_VENDOR_EMIT_MS: AtomicU64 = AtomicU64::new(0);
+
+const MOTION_MIN_INTERVAL_MS: u64 = 66;
+const VENDOR_MIN_INTERVAL_MS: u64 = 250;
+
+fn throttle_ms(last: &AtomicU64, ts_ms: u128, min_interval_ms: u64) -> bool {
+    let now = ts_ms as u64;
+    let prev = last.load(Ordering::Relaxed);
+    if now.saturating_sub(prev) < min_interval_ms {
+        return false;
+    }
+    last.store(now, Ordering::Relaxed);
+    true
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -19,6 +36,14 @@ pub struct InputEventLine {
     pub detail: String,
 }
 
+fn sync_enabled_from_viewers() {
+    let on = VIEWER_KEYBOARD.load(Ordering::SeqCst) || VIEWER_MOUSE.load(Ordering::SeqCst);
+    ENABLED.store(on, Ordering::SeqCst);
+    if on {
+        crate::platform::capture::ensure_watch_tap();
+    }
+}
+
 pub fn set_enabled(on: bool) {
     ENABLED.store(on, Ordering::SeqCst);
     if on {
@@ -26,12 +51,43 @@ pub fn set_enabled(on: bool) {
     }
 }
 
+pub fn set_viewer_channel(channel: &str, on: bool) {
+    match channel {
+        "keyboard" => VIEWER_KEYBOARD.store(on, Ordering::SeqCst),
+        "mouse" => VIEWER_MOUSE.store(on, Ordering::SeqCst),
+        _ => {}
+    }
+    sync_enabled_from_viewers();
+}
+
 pub fn enabled() -> bool {
     ENABLED.load(Ordering::SeqCst)
 }
 
+fn viewer_channel(line: &InputEventLine) -> &'static str {
+    match line.kind.as_str() {
+        "keyDown" | "keyUp" | "flagsChanged" => "keyboard",
+        _ if line.source == "hid" => "mouse",
+        "mouseDown" | "mouseUp" | "scrollWheel" => "mouse",
+        _ if line.summary.contains("key ") => "keyboard",
+        _ => "mouse",
+    }
+}
+
+fn viewer_wants_channel(channel: &str) -> bool {
+    match channel {
+        "keyboard" => VIEWER_KEYBOARD.load(Ordering::SeqCst),
+        "mouse" => VIEWER_MOUSE.load(Ordering::SeqCst),
+        _ => false,
+    }
+}
+
 fn emit(line: InputEventLine) {
     if !enabled() {
+        return;
+    }
+    let channel = viewer_channel(&line);
+    if !viewer_wants_channel(channel) {
         return;
     }
     app_bus::emit("input-event", line);
@@ -42,7 +98,10 @@ pub fn on_hid_report(report: &LastReport) {
         return;
     }
     if report.ignored {
-        let summary = format!("HID · vendor report {}", report.hex);
+        if !throttle_ms(&LAST_VENDOR_EMIT_MS, report.ts_ms, VENDOR_MIN_INTERVAL_MS) {
+            return;
+        }
+        let summary = format!("vendor report {}", report.hex);
         emit(InputEventLine {
             ts_ms: report.ts_ms,
             source: "hid",
@@ -68,11 +127,16 @@ pub fn on_hid_report(report: &LastReport) {
     } else {
         String::new()
     };
-    let summary = format!("HID · [{buttons}]{motion}{wheel}");
-    let detail = format!(
-        "{summary}\n{}",
-        report.hex
-    );
+    let motion_only = report.buttons.is_empty()
+        && report.wheel == 0
+        && report.pan == 0
+        && (report.dx != 0 || report.dy != 0);
+    if motion_only && !throttle_ms(&LAST_MOTION_EMIT_MS, report.ts_ms, MOTION_MIN_INTERVAL_MS) {
+        return;
+    }
+
+    let summary = format!("[{buttons}]{motion}{wheel}");
+    let detail = format!("{summary}\n{}", report.hex);
     emit(InputEventLine {
         ts_ms: report.ts_ms,
         source: "hid",

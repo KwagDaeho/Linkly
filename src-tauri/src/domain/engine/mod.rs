@@ -17,6 +17,7 @@ pub struct Engine {
     worker: Mutex<Option<JoinHandle<()>>>,
     last_report: Arc<Mutex<Option<LastReport>>>,
     connected: Arc<Mutex<Option<DeviceInfo>>>,
+    input_devices: Arc<Mutex<Vec<DeviceInfo>>>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -40,7 +41,12 @@ impl Engine {
             worker: Mutex::new(None),
             last_report: Arc::new(Mutex::new(None)),
             connected: Arc::new(Mutex::new(None)),
+            input_devices: Arc::new(Mutex::new(Vec::new())),
         }
+    }
+
+    pub fn input_devices(&self) -> Vec<DeviceInfo> {
+        self.input_devices.lock().clone()
     }
 
     pub fn profile(&self) -> Profile {
@@ -68,12 +74,13 @@ impl Engine {
         let running = Arc::clone(&self.running);
         let last_report = Arc::clone(&self.last_report);
         let connected = Arc::clone(&self.connected);
+        let input_devices = Arc::clone(&self.input_devices);
 
         let handle = thread::Builder::new()
             .name("huge-hid-worker".into())
             .spawn(move || {
                 let result = catch_unwind(AssertUnwindSafe(|| {
-                    worker::run(profile, running, last_report, connected);
+                    worker::run(profile, running, last_report, connected, input_devices);
                 }));
                 if result.is_err() {
                     log::error!("HID worker thread panicked");

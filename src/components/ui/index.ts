@@ -8,5 +8,8 @@ export { Muted } from "./Muted";
 export { Panel, panelStyles } from "./Panel";
 export { Row } from "./Row";
 export { SectionHead } from "./SectionHead";
+export { SectionGroupHeading } from "./SectionGroupHeading";
+export { SectionHeading } from "./SectionHeading";
+export { SettingsList, SettingsRow } from "./SettingsList";
 export { SrOnly } from "./SrOnly";
 export { Toggle } from "./Toggle";

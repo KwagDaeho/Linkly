@@ -1,56 +1,92 @@
 import { useId, useState, type ReactNode } from "react";
 
+import {
+  readAccordionOpen,
+  writeAccordionOpen,
+} from "@/services/accordionState";
 import { cx } from "@/utils/cx";
 
 import * as styles from "./Accordion.css";
 
 interface AccordionProps {
-  title: ReactNode;
-  summary?: ReactNode;
+  label: ReactNode;
+  status?: ReactNode;
+  statusOn?: boolean;
+  /** 2 = Info 입력 디바이스 등. 3 = Link 매핑 아코디언 (default). */
+  headingLevel?: 2 | 3;
   defaultOpen?: boolean;
+  stateKey?: string;
+  onOpenChange?: (open: boolean) => void;
   children: ReactNode;
   className?: string;
 }
 
 export const Accordion = ({
-  title,
-  summary,
+  label,
+  status,
+  statusOn = false,
+  headingLevel = 3,
   defaultOpen = true,
+  stateKey,
+  onOpenChange,
   children,
   className,
 }: AccordionProps) => {
-  const [open, setOpen] = useState(defaultOpen);
+  const [open, setOpen] = useState(() =>
+    stateKey !== undefined
+      ? readAccordionOpen(stateKey, defaultOpen)
+      : defaultOpen,
+  );
+  const setOpenState = (next: boolean) => {
+    setOpen(next);
+    if (stateKey !== undefined) {
+      writeAccordionOpen(stateKey, next);
+    }
+    onOpenChange?.(next);
+  };
   const panelId = useId();
-  const buttonId = useId();
+  const headingId = useId();
+  const HeadingTag = headingLevel === 2 ? "h2" : "h3";
+  const headingTextClass =
+    headingLevel === 2 ? styles.headingTextH2 : styles.headingTextH3;
 
   return (
-    <section className={cx(styles.root, className)}>
-      <h2 className={styles.groupTitle}>{title}</h2>
-      <div className={styles.shell}>
+    <section
+      className={cx(styles.root, className)}
+      data-heading-level={headingLevel}
+    >
+      <HeadingTag id={headingId} className={styles.heading}>
         <button
-          id={buttonId}
           type="button"
-          className={styles.trigger}
+          className={styles.headingToggle}
           aria-expanded={open}
           aria-controls={panelId}
-          onClick={() => setOpen((value) => !value)}
+          onClick={() => setOpenState(!open)}
         >
-          <span className={styles.chevron} data-open={open ? "" : undefined} aria-hidden>
+          <span
+            className={styles.chevron}
+            data-open={open ? "" : undefined}
+            aria-hidden
+          >
             ›
           </span>
-          <span className={styles.triggerText}>
-            {summary ?? title}
-          </span>
+          <span className={headingTextClass}>{label}</span>
+          {status !== undefined && status !== null && status !== "" ? (
+            <span className={styles.status} data-on={statusOn ? "" : undefined}>
+              {status}
+            </span>
+          ) : null}
         </button>
-        <div
-          id={panelId}
-          role="region"
-          aria-labelledby={buttonId}
-          className={styles.panel}
-          data-open={open ? "" : undefined}
-        >
-          {children}
-        </div>
+      </HeadingTag>
+      <div
+        id={panelId}
+        role="region"
+        aria-labelledby={headingId}
+        className={styles.panel}
+        data-open={open ? "" : undefined}
+        aria-hidden={!open}
+      >
+        <div className={styles.panelInner}>{children}</div>
       </div>
     </section>
   );

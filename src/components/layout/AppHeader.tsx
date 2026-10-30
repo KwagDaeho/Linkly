@@ -9,7 +9,7 @@ export const AppHeader = () => {
   return (
     <header className={styles.hero}>
       <div className={styles.heroTop}>
-        <p className={styles.eyebrow}>Linkly</p>
+        <h1 className={styles.title}>Linkly</h1>
         <div className={styles.toolbar}>
           <div className={styles.themeToggle} role="group" aria-label="Theme">
             <button
@@ -61,7 +61,6 @@ export const AppHeader = () => {
           </div>
         </div>
       </div>
-      <h1>{i18n.appTitle}</h1>
     </header>
   );
 };

@@ -1,13 +1,22 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const footer = style({
-  display: "grid",
-  gap: 6,
+  display: "flex",
+  alignItems: "flex-end",
+  justifyContent: "space-between",
+  gap: 24,
   color: "var(--muted)",
   fontSize: "0.86rem",
   padding: "14px 4px 10px",
   borderTop: "1px solid var(--line)",
   marginTop: 12,
+});
+
+export const footerMain = style({
+  display: "grid",
+  gap: 6,
+  flex: "1 1 auto",
+  minWidth: 0,
 });
 
 export const credit = style({

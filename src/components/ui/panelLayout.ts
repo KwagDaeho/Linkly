@@ -1,3 +1,6 @@
+/** Main shell inset from window left/right edges (AppShell, BootScreen). */
+export const shellSideInsetPx = 72;
+
 /** Horizontal padding inside boxed `Panel` root (see Panel.css.ts). */
 export const panelPaddingX = 12;
 

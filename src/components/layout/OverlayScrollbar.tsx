@@ -16,7 +16,7 @@ const SCROLLBAR_GONE_MS = 1120;
 const SCROLLBAR_FADE_START_MS = 480;
 const SCROLLBAR_FADE_MS = SCROLLBAR_GONE_MS - SCROLLBAR_FADE_START_MS;
 interface OverlayScrollbarProps {
-  /** Re-sync when main content changes (e.g. tab switch). */
+  /** Re-sync thumb when main content changes (e.g. tab switch); does not reset scroll. */
   contentKey?: string;
 }
 export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
@@ -86,10 +86,6 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
     };
   }, []);
   useEffect(() => {
-    const root = document.getElementById("root");
-    if (root) {
-      root.scrollTop = 0;
-    }
     setRevealed(false);
     clearHideTimer();
     requestAnimationFrame(() => syncRef.current());

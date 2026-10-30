@@ -47,7 +47,7 @@ const chromeButton = {
 } as const;
 
 export const hero = style({
-  padding: "4px 2px 0",
+  padding: "8px 2px 0",
   marginBottom: "1.85rem",
 });
 
@@ -56,15 +56,15 @@ export const title = style({
   margin: 0,
   fontFamily: '"Futura", "Avenir Next", "Gill Sans", sans-serif',
   fontWeight: 700,
-  fontSize: "clamp(38px, 6vw, 58px)",
-  lineHeight: 0.92,
-  letterSpacing: "-0.04em",
+  fontSize: "84px",
+  lineHeight: 1.2,
+  letterSpacing: "-0.09em",
   color: "var(--accent)",
 });
 
 export const heroTop = style({
   display: "flex",
-  alignItems: "center",
+  alignItems: "flex-start",
   justifyContent: "space-between",
   gap: 12,
 });
@@ -75,6 +75,7 @@ export const toolbarStack = style({
   alignItems: "flex-end",
   gap: 12,
   flexShrink: 0,
+  alignSelf: "flex-start",
 });
 
 export const toolbarRow = style({
@@ -97,8 +98,8 @@ export const langButtonActive = style({
 export const themeButton = style(chromeButton);
 
 globalStyle(`${themeButton} svg`, {
-  width: 14,
-  height: 14,
+  width: 16,
+  height: 16,
   display: "block",
 });
 

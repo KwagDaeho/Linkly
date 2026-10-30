@@ -1,4 +1,10 @@
-import { useState } from "react";
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
 import { EditorHost } from "@/components/editors";
 import { ContactFooter } from "@/components/info";
 import { AppHeader, BootScreen, OverlayScrollbar } from "@/components/layout";
@@ -14,6 +20,45 @@ export const AppShell = () => {
   const { i18n } = usePrefs();
   const { profile } = useProfileCtx();
   const [tab, setTab] = useState<TabId>("info");
+  const tabListRef = useRef<HTMLElement>(null);
+  const [pillStyle, setPillStyle] = useState<CSSProperties>({
+    opacity: 0,
+  });
+
+  /** Align pill box to the active tab button. */
+  const syncTabPill = useCallback(() => {
+    const list = tabListRef.current;
+    if (list === null) {
+      return;
+    }
+    const buttons = list.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    const index = tab === "custom" ? 1 : 0;
+    const activeBtn = buttons.item(index);
+    if (activeBtn === null) {
+      return;
+    }
+    setPillStyle({
+      left: activeBtn.offsetLeft,
+      top: activeBtn.offsetTop,
+      width: activeBtn.offsetWidth,
+      height: activeBtn.offsetHeight,
+      opacity: 1,
+    });
+  }, [tab]);
+
+  useLayoutEffect(() => {
+    syncTabPill();
+  }, [syncTabPill, i18n.tabInfo, i18n.tabCustom]);
+
+  useLayoutEffect(() => {
+    const list = tabListRef.current;
+    if (list === null) {
+      return;
+    }
+    const observer = new ResizeObserver(syncTabPill);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [syncTabPill]);
 
   /** Same #root scroll offset across tabs (not per-tab saved positions). */
   const setTabKeepScroll = (next: TabId) => {
@@ -49,7 +94,13 @@ export const AppShell = () => {
       <main className={styles.shell}>
         <AppHeader />
 
-        <nav className={styles.tabs} aria-label="Sections" role="tablist">
+        <nav
+          ref={tabListRef}
+          className={styles.tabs}
+          aria-label="Sections"
+          role="tablist"
+        >
+          <span className={styles.tabPill} style={pillStyle} aria-hidden />
           <button
             type="button"
             role="tab"

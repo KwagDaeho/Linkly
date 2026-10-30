@@ -43,6 +43,7 @@ export const tabPanel = style({
 });
 
 export const tabs = style({
+  position: "relative",
   display: "grid",
   gridTemplateColumns: "1fr 1fr",
   gap: 3,
@@ -52,7 +53,27 @@ export const tabs = style({
   background: "var(--panel)",
 });
 
+const tabColorMs = 380;
+const tabColorEase = "cubic-bezier(0.32, 0.72, 0, 1)";
+
+/** Slides under the active tab button. */
+export const tabPill = style({
+  position: "absolute",
+  zIndex: 0,
+  borderRadius: 6,
+  background: "var(--accent)",
+  pointerEvents: "none",
+  transition: `left ${tabColorMs}ms ${tabColorEase}, top ${tabColorMs}ms ${tabColorEase}, width ${tabColorMs}ms ${tabColorEase}, height ${tabColorMs}ms ${tabColorEase}`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
+});
+
 export const tab = style({
+  position: "relative",
+  zIndex: 1,
   border: 0,
   borderRadius: 6,
   padding: "0.38rem 0.7rem",
@@ -61,9 +82,16 @@ export const tab = style({
   fontWeight: 700,
   fontSize: "0.88rem",
   cursor: "pointer",
+  WebkitAppearance: "none",
+  appearance: "none",
+  transition: `color ${tabColorMs}ms ${tabColorEase}`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
 });
 
 export const tabActive = style({
-  background: "var(--accent)",
   color: "var(--accent-ink)",
 });

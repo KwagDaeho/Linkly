@@ -1,5 +1,6 @@
 use crate::app::state::AppState;
 use crate::domain::ball_scroll;
+use crate::domain::button_mapping;
 use crate::domain::custom_mapping;
 use crate::domain::watch;
 use crate::domain::profile::Profile;
@@ -14,11 +15,12 @@ pub fn get_profile(state: State<'_, AppState>) -> Profile {
 #[tauri::command]
 pub fn save_profile(state: State<'_, AppState>, profile: Profile) -> Result<(), String> {
     profile_store::save_profile(&profile)?;
+    state.engine.set_profile(profile.clone());
     ball_scroll::sync_from_profile(&profile);
     custom_mapping::sync_from_profile(&profile);
+    button_mapping::sync_from_profile(&profile);
     if watch::needs_os_event_watch(&profile) {
         crate::platform::capture::ensure_watch_tap();
     }
-    state.engine.set_profile(profile);
     Ok(())
 }

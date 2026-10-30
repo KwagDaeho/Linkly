@@ -7,9 +7,15 @@ import type {
   MappingTarget,
   Profile,
 } from "@/types";
-import { asBinding } from "@/domain/profile";
+import {
+  asBinding,
+  enforceTiltBindingFlags,
+  hugeButtonFromComboTrigger,
+  isTiltButton,
+  resolveBindingFlags,
+} from "@/domain/profile";
 import { customMappingsOf } from "@/domain/profile";
-import { resolveBindingFlags } from "@/domain/profile";
+import { withButtonMappingSlot } from "./buttonMappings";
 import { withButtonSlot } from "./buttons";
 
 export const withMappingSlot = (
@@ -21,15 +27,24 @@ export const withMappingSlot = (
   if (target.kind === "button") {
     return withButtonSlot(profile, target.id, slot, action);
   }
+  if (target.kind === "button_mapping") {
+    return withButtonMappingSlot(profile, target.id, slot, action);
+  }
   const entries = customMappingsOf(profile);
   const nextEntries = entries.map((entry) => {
     if (entry.id !== target.id) {
       return entry;
     }
     const currentBinding = asBinding(entry);
-    return slot === "click"
-      ? { ...entry, ...currentBinding, click: action }
-      : { ...entry, ...currentBinding, longPress: action };
+    const next =
+      slot === "click"
+        ? { ...entry, ...currentBinding, click: action }
+        : { ...entry, ...currentBinding, longPress: action };
+    const huge = hugeButtonFromComboTrigger(entry.activator);
+    if (huge !== undefined && isTiltButton(huge) && slot === "click") {
+      return { ...next, ...enforceTiltBindingFlags(asBinding(next)) };
+    }
+    return next;
   });
   return { ...profile, customMappings: nextEntries };
 };
@@ -43,6 +58,10 @@ export const withCustomMappingFlags = (
       return entry;
     }
     const currentBinding = asBinding(entry);
+    const huge = hugeButtonFromComboTrigger(entry.activator);
+    if (huge !== undefined && isTiltButton(huge)) {
+      return { ...entry, ...currentBinding, ...enforceTiltBindingFlags(currentBinding) };
+    }
     const flags = resolveBindingFlags(currentBinding, patch);
     return { ...entry, ...currentBinding, ...flags };
   });
@@ -73,8 +92,16 @@ export const withCustomMappingActivator = (
   entryId: string,
   activator: ComboActivator,
 ): Profile => {
-  const nextEntries = customMappingsOf(profile).map((entry) =>
-    entry.id === entryId ? { ...entry, activator } : entry,
-  );
+  const nextEntries = customMappingsOf(profile).map((entry) => {
+    if (entry.id !== entryId) {
+      return entry;
+    }
+    const next = { ...entry, activator };
+    const huge = hugeButtonFromComboTrigger(activator);
+    if (huge !== undefined && isTiltButton(huge)) {
+      return { ...next, ...enforceTiltBindingFlags(asBinding(entry)) };
+    }
+    return next;
+  });
   return { ...profile, customMappings: nextEntries };
 };

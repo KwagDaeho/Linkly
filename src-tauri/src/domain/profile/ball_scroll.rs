@@ -44,19 +44,11 @@ impl Default for BallScrollSettings {
 
 impl BallScrollSettings {
     pub fn toggle_armed(&self) -> Option<&Activator> {
-        if self.toggle_enabled {
-            self.toggle_activator.as_ref()
-        } else {
-            None
-        }
+        self.toggle_activator.as_ref()
     }
 
     pub fn hold_armed(&self) -> Option<&Activator> {
-        if self.hold_enabled {
-            self.hold_activator.as_ref()
-        } else {
-            None
-        }
+        self.hold_activator.as_ref()
     }
 
     pub fn is_reserved_huge(&self, id: ButtonId) -> bool {
@@ -67,9 +59,9 @@ impl BallScrollSettings {
     }
 
     pub fn uses_os_watch(&self) -> bool {
-        self.toggle_armed()
-            .into_iter()
-            .chain(self.hold_armed())
+        self.hold_activator
+            .iter()
+            .chain(self.toggle_activator.iter())
             .any(|a| matches!(a, Activator::Key { .. } | Activator::Mouse { .. }))
     }
 

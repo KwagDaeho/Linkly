@@ -44,13 +44,11 @@ export const BindingRow = (props: BindingRowProps) => {
       {!hideLabel ? (
         <span className={styles.btnName}>{props.label}</span>
       ) : null}
-      <Toggle
-        variant="flag"
-        title={i18n.longPressEnable}
-        checked={longPressOn}
-        disabled={autoClickOn || forceAutoClickOn}
-        onChange={(longPressEnabled) => props.onFlags({ longPressEnabled })}
+      <ActionSelect
+        action={props.binding.click}
+        onPick={(value) => props.onPick("click", value)}
       />
+      <span className={styles.actionToggleSpacer} aria-hidden />
       <Toggle
         variant="flag"
         title={i18n.autoClickEnable}
@@ -58,9 +56,12 @@ export const BindingRow = (props: BindingRowProps) => {
         disabled={isTilt || longPressOn}
         onChange={(autoClick) => props.onFlags({ autoClick })}
       />
-      <ActionSelect
-        action={props.binding.click}
-        onPick={(value) => props.onPick("click", value)}
+      <Toggle
+        variant="flag"
+        title={i18n.longPressEnable}
+        checked={longPressOn}
+        disabled={autoClickOn || forceAutoClickOn}
+        onChange={(longPressEnabled) => props.onFlags({ longPressEnabled })}
       />
       <ActionSelect
         action={props.binding.longPress}

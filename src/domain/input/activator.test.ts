@@ -7,7 +7,7 @@ import {
 } from "./activator";
 
 describe("comboEffectiveTrigger", () => {
-  it("prefers explicit trigger over legacy HUGE button", () => {
+  it("prefers explicit trigger over legacy device button", () => {
     const combo = comboWithTrigger(["Meta"], ["K"], {
       type: "mouse",
       button: { type: "other", number: 56 },
@@ -18,7 +18,7 @@ describe("comboEffectiveTrigger", () => {
     });
   });
 
-  it("falls back to legacy HUGE button", () => {
+  it("falls back to legacy device button", () => {
     expect(
       comboEffectiveTrigger({ modifiers: [], keys: ["K"], button: "fn1" }),
     ).toEqual({ type: "huge", button: "fn1" });

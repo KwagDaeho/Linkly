@@ -4,7 +4,7 @@ import {
   OPEN_APP_SENTINEL,
 } from "@/constants/sentinels";
 import { asBinding } from "@/domain/profile";
-import { customMappingsOf } from "@/domain/profile";
+import { buttonMappingsOf, customMappingsOf } from "@/domain/profile";
 import type {
   Action,
   ActionSlot,
@@ -18,6 +18,12 @@ const bindingForTarget = (profile: Profile | null, target: MappingTarget) => {
   }
   if (target.kind === "button") {
     return asBinding(profile.buttons[target.id]);
+  }
+  if (target.kind === "button_mapping") {
+    const row = buttonMappingsOf(profile).find(
+      (mapping) => mapping.id === target.id,
+    );
+    return asBinding(row);
   }
   const entry = customMappingsOf(profile).find(
     (mapping) => mapping.id === target.id,

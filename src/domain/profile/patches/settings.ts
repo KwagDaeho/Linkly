@@ -15,6 +15,13 @@ export const withBallScrollPatch = (
   patch: Partial<BallScrollSettings>,
 ): Profile => {
   let next = { ...ballScrollOf(profile.ballScroll), ...patch };
+  if ("holdActivator" in patch) {
+    next.holdEnabled = patch.holdActivator !== null && patch.holdActivator !== undefined;
+  }
+  if ("toggleActivator" in patch) {
+    next.toggleEnabled =
+      patch.toggleActivator !== null && patch.toggleActivator !== undefined;
+  }
   if (
     next.toggleActivator &&
     next.holdActivator &&

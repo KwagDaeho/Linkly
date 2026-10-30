@@ -18,12 +18,21 @@ export {
   newCustomMappingEntry,
 } from "./custom";
 export {
+  buttonMappingActivatorValid,
+  buttonMappingsOf,
+  findButtonMapping,
+  newButtonMappingEntry,
+} from "./button";
+export {
   invertHorizontalScrollEnabled,
   invertVerticalScrollEnabled,
   pointerSpeedX,
   pointerSpeedY,
   scrollSpeedHorizontal,
   scrollSpeedVertical,
+  enforceTiltBindingFlags,
+  hugeButtonFromActivator,
+  hugeButtonFromComboTrigger,
   isTiltButton,
   normalizeTiltPanStreamFlags,
   tiltForcesAutoClick,

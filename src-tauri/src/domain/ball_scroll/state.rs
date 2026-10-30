@@ -5,7 +5,7 @@ use parking_lot::Mutex;
 use serde::Serialize;
 
 use crate::domain::device::ButtonId;
-use crate::domain::profile::{BallScrollSettings, Profile};
+use crate::domain::profile::{activator_options_same, BallScrollSettings, Profile};
 use crate::platform::{app_bus, inject, suppress};
 
 pub(crate) static HOLD_DOWN: AtomicBool = AtomicBool::new(false);
@@ -41,19 +41,26 @@ pub(crate) fn settings() -> parking_lot::MutexGuard<'static, BallScrollSettings>
 }
 
 pub fn sync_from_profile(profile: &Profile) {
+    let prev = SETTINGS.lock().clone();
     let next = if profile.enabled {
         profile.ball_scroll.clone()
     } else {
         BallScrollSettings::default()
     };
+    let hold_changed =
+        !activator_options_same(&prev.hold_activator, &next.hold_activator);
+    let toggle_changed =
+        !activator_options_same(&prev.toggle_activator, &next.toggle_activator);
     *SETTINGS.lock() = next;
-    if !profile.enabled || !profile.ball_scroll.hold_enabled {
+    if !profile.enabled || profile.ball_scroll.hold_activator.is_none() || hold_changed {
         HOLD_DOWN.store(false, Ordering::SeqCst);
     }
-    if !profile.enabled || !profile.ball_scroll.toggle_enabled {
+    if !profile.enabled || profile.ball_scroll.toggle_activator.is_none() || toggle_changed {
         TOGGLE_LATCH.store(false, Ordering::SeqCst);
     }
-    *DEACTIVATE_AT.lock() = None;
+    if hold_changed || toggle_changed {
+        *DEACTIVATE_AT.lock() = None;
+    }
     if !SHUTTING_DOWN.load(Ordering::SeqCst) {
         apply_active(logical_armed());
     }
@@ -97,8 +104,8 @@ pub fn needs_event_watch(profile: &Profile) -> bool {
     if !profile.enabled {
         return is_active();
     }
-    profile.ball_scroll.hold_enabled
-        || profile.ball_scroll.toggle_enabled
+    profile.ball_scroll.hold_activator.is_some()
+        || profile.ball_scroll.toggle_activator.is_some()
         || profile.ball_scroll.uses_os_watch()
         || is_active()
 }

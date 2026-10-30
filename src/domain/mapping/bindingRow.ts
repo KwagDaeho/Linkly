@@ -9,5 +9,8 @@ export const resolveBindingButtonId = (
   if (target.kind === "button") {
     return target.id;
   }
+  if (target.kind === "button_mapping") {
+    return buttonId;
+  }
   return undefined;
 };

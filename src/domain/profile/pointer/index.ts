@@ -8,6 +8,9 @@ export {
   scrollSpeedVertical,
 } from "./speeds";
 export {
+  enforceTiltBindingFlags,
+  hugeButtonFromActivator,
+  hugeButtonFromComboTrigger,
   isTiltButton,
   isTiltPanStreamAction,
   normalizeTiltPanStreamFlags,

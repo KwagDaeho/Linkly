@@ -1,3 +1,4 @@
+use serde::de::{self, Deserializer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,7 +35,7 @@ pub enum MacroStep {
     MouseClick { button: MouseClickButton },
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum MouseClickButton {
     Left,
@@ -46,6 +47,48 @@ pub enum MouseClickButton {
     Other {
         number: u8,
     },
+}
+
+/// FE uses `{ "type": "other", "number" }`; legacy/rust uses `{ "other": { "number" } }`.
+fn parse_mouse_button_value(v: serde_json::Value) -> Result<MouseClickButton, String> {
+    match v {
+        serde_json::Value::String(s) => match s.as_str() {
+            "left" => Ok(MouseClickButton::Left),
+            "right" => Ok(MouseClickButton::Right),
+            "middle" => Ok(MouseClickButton::Middle),
+            "back" => Ok(MouseClickButton::Back),
+            "forward" => Ok(MouseClickButton::Forward),
+            other => Err(format!("unknown mouse button {other}")),
+        },
+        serde_json::Value::Object(map) => {
+            if let Some(serde_json::Value::Object(other)) = map.get("other") {
+                if let Some(n) = other.get("number").and_then(|n| n.as_u64()) {
+                    return Ok(MouseClickButton::Other {
+                        number: n as u8,
+                    });
+                }
+            }
+            if map.get("type").and_then(|t| t.as_str()) == Some("other") {
+                if let Some(n) = map.get("number").and_then(|n| n.as_u64()) {
+                    return Ok(MouseClickButton::Other {
+                        number: n as u8,
+                    });
+                }
+            }
+            Err("invalid mouse button object".into())
+        }
+        _ => Err("invalid mouse button value".into()),
+    }
+}
+
+impl<'de> Deserialize<'de> for MouseClickButton {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let v = serde_json::Value::deserialize(deserializer)?;
+        parse_mouse_button_value(v).map_err(de::Error::custom)
+    }
 }
 
 impl MouseClickButton {

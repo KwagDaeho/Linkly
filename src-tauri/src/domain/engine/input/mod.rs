@@ -10,7 +10,8 @@ use std::time::{Duration, Instant};
 use crate::domain::ball_scroll;
 use crate::domain::custom_mapping;
 use crate::domain::device::{ButtonId, ButtonState};
-use crate::domain::profile::{Action, ButtonBinding, Profile};
+use crate::domain::link_event::{self, LinkPhase};
+use crate::domain::profile::{Action, Activator, ButtonBinding, Profile};
 use crate::domain::remap;
 use crate::platform::inject;
 
@@ -73,9 +74,11 @@ fn fire_action_pulse(
 /// suppress bit is off because the physical button is up — still inject.
 fn fire_deferred_click_pulse(
     id: ButtonId,
+    input: &Activator,
     action: &Action,
     pointer: &crate::domain::profile::PointerSettings,
 ) {
+    link_event::announce(input, action, id, LinkPhase::Press);
     fire_action_pulse_with(id, action, pointer, true);
 }
 
@@ -164,18 +167,24 @@ pub(crate) fn fire_due_long_presses(
         pointer,
         threshold,
         |id| *id,
+        |id, action| {
+            let input = Activator::Huge { button: *id };
+            link_event::announce(&input, action, *id, LinkPhase::LongPress);
+        },
     );
 }
 
-pub(crate) fn fire_due_long_presses_for<K, F>(
+pub(crate) fn fire_due_long_presses_for<K, F, P>(
     pending: &mut HashMap<K, PendingHold>,
     held: &mut HashMap<K, Action>,
     pointer: &crate::domain::profile::PointerSettings,
     threshold: Duration,
     inject_id: F,
+    on_long_press: P,
 ) where
     K: Eq + Hash + Clone,
     F: Fn(&K) -> ButtonId,
+    P: Fn(&K, &Action),
 {
     let now = Instant::now();
     let due: Vec<(K, Action)> = pending
@@ -188,6 +197,7 @@ pub(crate) fn fire_due_long_presses_for<K, F>(
             if hold.long_press.is_noop() {
                 return None;
             }
+            on_long_press(key, &hold.long_press);
             let id = inject_id(key);
             inject::press_action(id, &hold.long_press, pointer);
             Some((key.clone(), hold.long_press.clone()))
@@ -301,6 +311,12 @@ fn start_scroll_repeat(repeats: &mut HashMap<ButtonId, ScrollRepeat>, id: Button
 }
 
 pub(crate) fn binding_of(profile: &Profile, id: ButtonId) -> ButtonBinding {
+    if let Some(entry) = crate::domain::button_mapping::find_huge(id) {
+        return entry.binding.clone();
+    }
+    if let Some(entry) = crate::domain::button_mapping::find_for_hid_button(id) {
+        return entry.binding.clone();
+    }
     profile
         .buttons
         .get(&id)
@@ -388,6 +404,7 @@ fn start_scroll_repeat_for<K: Eq + Hash>(
 pub(crate) fn apply_binding_release<K>(
     state_key: K,
     inject_id: ButtonId,
+    input: &Activator,
     profile: &Profile,
     pending: &mut HashMap<K, PendingHold>,
     held: &mut HashMap<K, Action>,
@@ -404,7 +421,12 @@ pub(crate) fn apply_binding_release<K>(
                 inject::release_action(inject_id, &action);
             }
         } else {
-            fire_deferred_click_pulse(inject_id, &hold.click, &profile.pointer);
+            fire_deferred_click_pulse(
+                inject_id,
+                input,
+                &hold.click,
+                &profile.pointer,
+            );
         }
     } else if let Some(action) = held.remove(&state_key) {
         inject::release_action(inject_id, &action);
@@ -414,12 +436,14 @@ pub(crate) fn apply_binding_release<K>(
 pub(crate) fn apply_binding_press<K>(
     state_key: K,
     inject_id: ButtonId,
+    input: &Activator,
     binding: &ButtonBinding,
     profile: &Profile,
     pending: &mut HashMap<K, PendingHold>,
     held: &mut HashMap<K, Action>,
     scroll_repeats: &mut HashMap<K, ScrollRepeat>,
     key_repeats: &mut HashMap<K, ActionRepeat>,
+    synth_native_if_suppressed: bool,
 ) where
     K: Eq + Hash + Clone,
 {
@@ -434,8 +458,10 @@ pub(crate) fn apply_binding_press<K>(
         if inject::shared_pointer_mode() && remap::action_is_native_for(inject_id, &binding.click) {
             // OS-native already handled elsewhere.
         } else if is_scroll_action(&binding.click) {
+            link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
             inject::press_action(inject_id, &binding.click, &profile.pointer);
         } else {
+            link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
             fire_action_pulse(inject_id, &binding.click, &profile.pointer);
         }
         return;
@@ -453,6 +479,7 @@ pub(crate) fn apply_binding_press<K>(
         );
     } else if binding.uses_auto_click() {
         if is_scroll_action(&binding.click) {
+            link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
             held.insert(state_key.clone(), binding.click.clone());
             inject::press_action(inject_id, &binding.click, &profile.pointer);
             start_scroll_repeat_for(scroll_repeats, state_key, &binding.click);
@@ -467,16 +494,21 @@ pub(crate) fn apply_binding_press<K>(
                 }
                 other => other.clone(),
             };
+            link_event::announce(input, &pulse, inject_id, LinkPhase::Press);
             fire_action_pulse(inject_id, &pulse, &profile.pointer);
             start_key_repeat_for(key_repeats, state_key, inject_id, &pulse);
         }
     } else if inject::shared_pointer_mode()
         && remap::action_is_native_for(inject_id, &binding.click)
+        && !(synth_native_if_suppressed
+            && crate::platform::suppress::os_button_suppressed(inject_id))
     {
-        // Both off + OS-native → OS owns hold/drag.
+        // Catalog default: OS owns hold/drag unless we swallowed that HUGE stream (mapping/custom).
     } else if is_scroll_action(&binding.click) {
+        link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
         inject::press_action(inject_id, &binding.click, &profile.pointer);
     } else {
+        link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
         held.insert(state_key, binding.click.clone());
         inject::press_action(inject_id, &binding.click, &profile.pointer);
     }
@@ -532,7 +564,10 @@ pub(crate) fn handle_button_transitions(
             clear_regular_binding_state(id, pending, held, scroll_repeats, key_repeats);
             continue;
         }
-        if ball_scroll::is_reserved_huge(id) || custom_mapping::is_reserved_huge(id) {
+        if ball_scroll::is_reserved_huge(id)
+            || custom_mapping::is_reserved_huge(id)
+            || crate::domain::button_mapping::is_reserved_huge(id)
+        {
             scroll_repeats.remove(&id);
             key_repeats.remove(&id);
             pending.remove(&id);
@@ -541,25 +576,41 @@ pub(crate) fn handle_button_transitions(
             }
             continue;
         }
-        apply_binding_release(id, id, profile, pending, held, scroll_repeats, key_repeats);
+        let input = Activator::Huge { button: id };
+        apply_binding_release(
+            id,
+            id,
+            &input,
+            profile,
+            pending,
+            held,
+            scroll_repeats,
+            key_repeats,
+        );
     }
     for id in state.pressed_edges(prev) {
         if skip_press.contains(&id) {
             continue;
         }
-        if ball_scroll::is_reserved_huge(id) || custom_mapping::is_reserved_huge(id) {
+        if ball_scroll::is_reserved_huge(id)
+            || custom_mapping::is_reserved_huge(id)
+            || crate::domain::button_mapping::is_reserved_huge(id)
+        {
             continue;
         }
         let binding = binding_of(profile, id);
+        let input = Activator::Huge { button: id };
         apply_binding_press(
             id,
             id,
+            &input,
             &binding,
             profile,
             pending,
             held,
             scroll_repeats,
             key_repeats,
+            false,
         );
     }
 }

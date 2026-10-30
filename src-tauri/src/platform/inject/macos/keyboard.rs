@@ -3,6 +3,9 @@
 use core_graphics::event::{CGEvent, CGEventFlags, CGEventTapLocation};
 use core_graphics::event_source::CGEventSource;
 
+use crate::domain::profile::MouseClickButton;
+
+use super::mouse::{mouse_down, mouse_up};
 use super::source;
 
 #[link(name = "CoreGraphics", kind = "framework")]
@@ -141,10 +144,31 @@ pub(super) fn post_key(src: &CGEventSource, code: u16, key_down: bool, flags: CG
     }
 }
 
+fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
+    match name {
+        "MouseLeft" => Some(MouseClickButton::Left),
+        "MouseRight" => Some(MouseClickButton::Right),
+        "MouseMiddle" => Some(MouseClickButton::Middle),
+        "MouseBack" => Some(MouseClickButton::Back),
+        "MouseForward" => Some(MouseClickButton::Forward),
+        _ => {
+            let rest = name.strip_prefix("Button")?;
+            let karabiner: u8 = rest.parse().ok()?;
+            if karabiner <= 5 {
+                return None;
+            }
+            Some(MouseClickButton::Other {
+                number: karabiner.saturating_sub(1),
+            })
+        }
+    }
+}
+
 fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
     let mut flags = CGEventFlags::empty();
     let mut mod_order: Vec<CGEventFlags> = Vec::new();
     let mut main_key: Option<u16> = None;
+    let mut main_mouse: Option<MouseClickButton> = None;
     for k in keys {
         if let Some(f) = is_modifier(k) {
             if !flags.contains(f) {
@@ -153,11 +177,12 @@ fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
             }
         } else if let Some(code) = key_code(k) {
             main_key = Some(code);
+            main_mouse = None;
+        } else if let Some(button) = mouse_button_from_token(k) {
+            main_mouse = Some(button);
+            main_key = None;
         }
     }
-    let Some(code) = main_key else {
-        return;
-    };
 
     let mut accumulated = CGEventFlags::empty();
     for flag in &mod_order {
@@ -167,8 +192,22 @@ fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
         }
     }
 
-    post_key(src, code, true, flags);
-    post_key(src, code, false, flags);
+    if let Some(button) = main_mouse {
+        let _ = src;
+        mouse_down(&button);
+        mouse_up(&button);
+    } else if let Some(code) = main_key {
+        post_key(src, code, true, flags);
+        post_key(src, code, false, flags);
+    } else {
+        for flag in mod_order.iter().rev() {
+            if let Some(mk) = modifier_keycode(*flag) {
+                accumulated.remove(*flag);
+                post_key(src, mk, false, accumulated);
+            }
+        }
+        return;
+    }
 
     for flag in mod_order.iter().rev() {
         if let Some(mk) = modifier_keycode(*flag) {

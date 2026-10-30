@@ -1,7 +1,13 @@
 import type { Lang } from "@/types";
 import { normalizeKeys } from "@/domain/keys";
+import { formatMouseKeyToken } from "@/domain/keys/mouseKeyToken";
+
 export const formatKeyChord = (keys: string[], lang: Lang): string => {
   const parts = normalizeKeys(keys).map((k) => {
+    const mouseLabel = formatMouseKeyToken(k, lang);
+    if (mouseLabel !== null) {
+      return mouseLabel;
+    }
     switch (k) {
       case "Meta":
         return "⌘";

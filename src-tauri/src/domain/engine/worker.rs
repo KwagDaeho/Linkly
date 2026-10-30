@@ -9,6 +9,7 @@ use hidapi::HidApi;
 use parking_lot::Mutex;
 
 use crate::domain::ball_scroll;
+use crate::domain::button_mapping::{self, ButtonMaps};
 use crate::domain::custom_mapping::{self, CustomMaps};
 use crate::domain::watch;
 use crate::domain::device::{ButtonId, ButtonState, DeviceInfo, ParsedReport};
@@ -38,6 +39,7 @@ pub(crate) fn run(
     let mut scroll_repeats: HashMap<ButtonId, ScrollRepeat> = HashMap::new();
     let mut key_repeats: HashMap<ButtonId, ActionRepeat> = HashMap::new();
     let mut custom_maps = CustomMaps::default();
+    let mut button_maps = ButtonMaps::default();
     let mut tilt_gate = TiltHoldGate::default();
     let mut api = match HidApi::new() {
         Ok(api) => api,
@@ -57,6 +59,9 @@ pub(crate) fn run(
         let profile_snap = profile.lock().clone();
         ball_scroll::sync_from_profile(&profile_snap);
         custom_mapping::sync_from_profile(&profile_snap);
+        if button_mapping::sync_from_profile(&profile_snap) {
+            button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
+        }
         if watch::needs_os_event_watch(&profile_snap) {
             capture::ensure_watch_tap();
         }
@@ -69,6 +74,7 @@ pub(crate) fn run(
             scroll_repeats.clear();
             key_repeats.clear();
             custom_maps.clear();
+            button_maps.clear();
             tilt_gate = TiltHoldGate::default();
             prev = ButtonState::default();
             suppress::clear_suppress();
@@ -121,6 +127,9 @@ pub(crate) fn run(
             let profile_snap = profile.lock().clone();
             ball_scroll::sync_from_profile(&profile_snap);
             custom_mapping::sync_from_profile(&profile_snap);
+            if button_mapping::sync_from_profile(&profile_snap) {
+                button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
+            }
             if watch::needs_os_event_watch(&profile_snap) {
                 capture::ensure_watch_tap();
             }
@@ -132,6 +141,8 @@ pub(crate) fn run(
             match device.read_timeout(&mut buf, 40) {
                 Ok(0) => {
                     let now = Instant::now();
+                    custom_mapping::process_os_trigger_queue(&profile_snap, &mut custom_maps);
+                    button_mapping::process_os_trigger_queue(&profile_snap, &mut button_maps);
                     fire_due_long_presses(
                         &mut pending,
                         &mut held,
@@ -140,6 +151,11 @@ pub(crate) fn run(
                     );
                     custom_mapping::fire_due_ticks(
                         &mut custom_maps,
+                        &profile_snap,
+                        profile_snap.long_press_threshold(),
+                    );
+                    button_mapping::fire_due_ticks(
+                        &mut button_maps,
                         &profile_snap,
                         profile_snap.long_press_threshold(),
                     );
@@ -166,6 +182,7 @@ pub(crate) fn run(
                             state,
                             &profile_snap,
                             &mut custom_maps,
+                            &mut button_maps,
                             &mut pending,
                             &mut held,
                             &mut scroll_repeats,
@@ -189,18 +206,7 @@ pub(crate) fn run(
                     tilt_gate.clear_pulse_latches_when_idle();
                     inject::expire_restored_cursor_if_due();
                     inject::maintain_restored_cursor();
-                    suppress::set_suppress_motion(
-                        pointer_takeover_active(
-                            &held,
-                            &pending,
-                            &prev,
-                            &profile_snap,
-                        ) || custom_mapping::pointer_takeover_active(
-                            &custom_maps,
-                            &prev,
-                            &profile_snap,
-                        ),
-                    );
+                    suppress::set_suppress_motion(inject::synthetic_buttons_held());
                     continue;
                 }
                 Ok(n) => {
@@ -287,23 +293,28 @@ pub(crate) fn run(
                         (capture_block && state.left)
                             || rl
                             || ball_scroll::is_reserved_huge(ButtonId::Left)
-                            || custom_mapping::is_reserved_huge(ButtonId::Left),
+                            || custom_mapping::is_reserved_huge(ButtonId::Left)
+                            || button_mapping::is_reserved_huge(ButtonId::Left),
                         (capture_block && state.right)
                             || rr
                             || ball_scroll::is_reserved_huge(ButtonId::Right)
-                            || custom_mapping::is_reserved_huge(ButtonId::Right),
+                            || custom_mapping::is_reserved_huge(ButtonId::Right)
+                            || button_mapping::is_reserved_huge(ButtonId::Right),
                         (capture_block && state.middle)
                             || rm
                             || ball_scroll::is_reserved_huge(ButtonId::Middle)
-                            || custom_mapping::is_reserved_huge(ButtonId::Middle),
+                            || custom_mapping::is_reserved_huge(ButtonId::Middle)
+                            || button_mapping::is_reserved_huge(ButtonId::Middle),
                         (capture_block && state.back)
                             || rb
                             || ball_scroll::is_reserved_huge(ButtonId::Back)
-                            || custom_mapping::is_reserved_huge(ButtonId::Back),
+                            || custom_mapping::is_reserved_huge(ButtonId::Back)
+                            || button_mapping::is_reserved_huge(ButtonId::Back),
                         (capture_block && state.forward)
                             || rf
                             || ball_scroll::is_reserved_huge(ButtonId::Forward)
-                            || custom_mapping::is_reserved_huge(ButtonId::Forward),
+                            || custom_mapping::is_reserved_huge(ButtonId::Forward)
+                            || button_mapping::is_reserved_huge(ButtonId::Forward),
                     ));
 
                     ball_scroll::tick();
@@ -362,7 +373,7 @@ pub(crate) fn run(
                             &state,
                             &profile_snap,
                         );
-                        suppress::set_suppress_motion(takeover);
+                        suppress::set_suppress_motion(inject::synthetic_buttons_held());
                         let (out_x, out_y) = if ball_scroll_on {
                             (0.0, 0.0)
                         } else if shared && !takeover {
@@ -438,7 +449,9 @@ pub(crate) fn run(
                         inject::end_idle_ball_scroll();
                     }
 
-                    // Buttons: release first, then press.
+                    custom_mapping::process_os_trigger_queue(&profile_snap, &mut custom_maps);
+                    button_mapping::process_os_trigger_queue(&profile_snap, &mut button_maps);
+
                     fire_due_long_presses(
                         &mut pending,
                         &mut held,
@@ -450,6 +463,11 @@ pub(crate) fn run(
                         &profile_snap,
                         profile_snap.long_press_threshold(),
                     );
+                    button_mapping::fire_due_ticks(
+                        &mut button_maps,
+                        &profile_snap,
+                        profile_snap.long_press_threshold(),
+                    );
                     fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
 
                     apply_button_edges(
@@ -457,6 +475,7 @@ pub(crate) fn run(
                         state,
                         &profile_snap,
                         &mut custom_maps,
+                        &mut button_maps,
                         &mut pending,
                         &mut held,
                         &mut scroll_repeats,
@@ -465,18 +484,7 @@ pub(crate) fn run(
 
                     prev = state;
                     prev_raw = raw_buttons;
-                    suppress::set_suppress_motion(
-                        pointer_takeover_active(
-                            &held,
-                            &pending,
-                            &prev,
-                            &profile_snap,
-                        ) || custom_mapping::pointer_takeover_active(
-                            &custom_maps,
-                            &prev,
-                            &profile_snap,
-                        ),
-                    );
+                    suppress::set_suppress_motion(inject::synthetic_buttons_held());
                 }
                 Err(err) => {
                     log::warn!("huge read error (device gone?): {err}");
@@ -490,6 +498,7 @@ pub(crate) fn run(
             inject::release_action(id, &action);
         }
         custom_maps.clear();
+        button_maps.clear();
         pending.clear();
         scroll_repeats.clear();
         key_repeats.clear();
@@ -510,6 +519,7 @@ fn apply_button_edges(
     state: ButtonState,
     profile: &Profile,
     custom_maps: &mut CustomMaps,
+    button_maps: &mut ButtonMaps,
     pending: &mut HashMap<ButtonId, PendingHold>,
     held: &mut HashMap<ButtonId, Action>,
     scroll_repeats: &mut HashMap<ButtonId, ScrollRepeat>,
@@ -521,6 +531,7 @@ fn apply_button_edges(
     }
     custom_mapping::sync_button_state(state);
     custom_mapping::process_os_trigger_queue(profile, custom_maps);
+    button_mapping::process_os_trigger_queue(profile, button_maps);
     let mut skip_press = custom_mapping::maintain_chords(
         state,
         profile,
@@ -541,6 +552,17 @@ fn apply_button_edges(
         key_repeats,
     );
     skip_press.extend(skip_from_custom);
+    let (bm_skip_rel, bm_skip_press) = button_mapping::handle_huge_transitions(
+        prev,
+        state,
+        profile,
+        button_maps,
+        &skip_press,
+        &skip_rel,
+    );
+    skip_press.extend(bm_skip_press);
+    let mut skip_rel_all = skip_rel;
+    skip_rel_all.extend(bm_skip_rel);
     handle_button_transitions(
         prev,
         state,
@@ -549,7 +571,7 @@ fn apply_button_edges(
         held,
         scroll_repeats,
         key_repeats,
-        &skip_rel,
+        &skip_rel_all,
         &skip_press,
     );
 }
@@ -561,14 +583,6 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
         }
         return;
     }
-    if capture::ui_modal_active() {
-        for id in state.pressed_edges(prev) {
-            if id == ButtonId::Left {
-                inject::click_at_cursor();
-                return;
-            }
-        }
-    }
     if capture::activator_capture_active() {
         for id in state.pressed_edges(prev) {
             capture::emit_activator_from_hid(crate::domain::profile::Activator::Huge {
@@ -576,6 +590,14 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
             });
         }
         return;
+    }
+    if capture::ui_modal_active() {
+        for id in state.pressed_edges(prev) {
+            if id == ButtonId::Left {
+                inject::click_at_cursor();
+                return;
+            }
+        }
     }
     ball_scroll::note_huge_edges(prev, state);
 }

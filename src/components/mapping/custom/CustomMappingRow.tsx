@@ -1,5 +1,5 @@
 import { BindingRow } from "../button/BindingRow";
-import { asBinding } from "@/domain/profile";
+import { asBinding, hugeButtonFromComboTrigger } from "@/domain/profile";
 import { comboEditorStateFromEntry } from "@/domain/editors";
 import { customMappingTriggerLabel } from "@/i18n";
 import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
@@ -37,6 +37,7 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
         binding={binding}
         label={null}
         hideLabel
+        buttonId={hugeButtonFromComboTrigger(entry.activator)}
         onFlags={(patch) => customMappings.updateFlags(entry.id, patch)}
         onPick={(slot, value) =>
           catalogSelection.selectCustom(entry.id, slot, value)

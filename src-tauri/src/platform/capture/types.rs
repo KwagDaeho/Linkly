@@ -9,6 +9,9 @@ pub struct CaptureSession {
     pub combo_trigger: bool,
     pub activator_capture: bool,
     pub ui_modal: bool,
+    /// Button-mapping / custom-key capture may use OS or HUGE left click as input.
+    #[serde(default)]
+    pub allow_left_activator: bool,
 }
 
 impl CaptureSession {
@@ -17,6 +20,7 @@ impl CaptureSession {
         combo_trigger: false,
         activator_capture: false,
         ui_modal: false,
+        allow_left_activator: false,
     };
 }
 

@@ -10,11 +10,12 @@ import type {
   ButtonId,
   ComboActivator,
   CustomMappingEntry,
+  ButtonMappingEntry,
   Profile,
 } from "./model";
 
 export type ProfileLifecycle = {
-  persist: (nextProfile: Profile) => Promise<void>;
+  persist: (nextProfile: Profile) => Promise<boolean>;
   setBootError: (message: string) => void;
   refresh: () => Promise<void>;
 };
@@ -54,6 +55,16 @@ export type ProfileCustomMappingMutations = {
   updateActivator: (entryId: string, activator: ComboActivator) => void;
 };
 
+export type ProfileButtonMappingMutations = {
+  add: (entry: ButtonMappingEntry) => void;
+  remove: (entryId: string) => void;
+  updateFlags: (
+    entryId: string,
+    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
+  ) => void;
+  updateActivator: (entryId: string, activator: Activator) => Promise<void>;
+};
+
 export type ProfilePointerMutations = {
   update: <K extends keyof Profile["pointer"]>(
     key: K,
@@ -63,7 +74,10 @@ export type ProfilePointerMutations = {
 
 export type ProfileBallScrollMutations = {
   update: (patch: Partial<BallScrollSettings>) => void;
-  assignActivator: (slot: BallScrollSlot, activator: Activator) => void;
+  assignActivator: (
+    slot: BallScrollSlot,
+    activator: Activator,
+  ) => Promise<void>;
 };
 
 export type ProfileCatalogMutations = {
@@ -79,10 +93,17 @@ export type ProfileCatalogMutations = {
     value: string,
     setEditor: Dispatch<SetStateAction<EditorMode | null>>,
   ) => void;
+  selectButtonMapping: (
+    entryId: string,
+    slot: ActionSlot,
+    value: string,
+    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
+  ) => void;
 };
 
 export type ProfileMutations = {
   mappings: ProfileMappingMutations;
+  buttonMappings: ProfileButtonMappingMutations;
   customMappings: ProfileCustomMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
@@ -95,6 +116,7 @@ export type ProfileState = {
   bootError: string;
   lifecycle: ProfileLifecycle;
   mappings: ProfileMappingMutations;
+  buttonMappings: ProfileButtonMappingMutations;
   customMappings: ProfileCustomMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;

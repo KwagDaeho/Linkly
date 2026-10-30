@@ -8,6 +8,7 @@ use crate::domain::engine::input::{
     fire_due_key_repeats_for, take_due_scroll_repeats_for,
     ActionRepeat, PendingHold, ScrollRepeat,
 };
+use crate::domain::link_event::{self, LinkPhase};
 use crate::domain::profile::{Action, Activator, ButtonBinding, ComboActivator, Profile};
 use crate::domain::remap;
 use crate::platform::inject;
@@ -74,17 +75,22 @@ pub(crate) fn fire_custom_press(
     maps: &mut CustomMaps,
 ) {
     let mods = effective_sorted_modifiers();
+    let input = entry_by_id(&entry_id)
+        .and_then(|e| e.activator.effective_trigger())
+        .unwrap_or(Activator::Huge { button });
     inject::with_chord_action(&mods, || {
         release_active_chord();
         apply_binding_press(
             entry_id,
             button,
+            &input,
             binding,
             profile,
             &mut maps.pending,
             &mut maps.held,
             &mut maps.scroll_repeats,
             &mut maps.key_repeats,
+            true,
         );
     });
 }
@@ -173,9 +179,13 @@ pub fn handle_transitions(
         };
         skip_release.insert(id);
         ACTIVE_BUTTONS.lock().remove(&id);
+        let input = entry_by_id(&entry_id)
+            .and_then(|e| e.activator.effective_trigger())
+            .unwrap_or(Activator::Huge { button: id });
         apply_binding_release(
             entry_id,
             id,
+            &input,
             profile,
             &mut maps.pending,
             &mut maps.held,
@@ -223,6 +233,16 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
                 .map(|e| combo_huge_button(&e.activator))
                 .unwrap_or(ButtonId::Left);
             let mods = super::state::effective_sorted_modifiers();
+            if let Some(entry) = entry_by_id(entry_id) {
+                if let Some(trigger) = entry.activator.effective_trigger() {
+                    link_event::announce(
+                        &trigger,
+                        &hold.long_press,
+                        button,
+                        LinkPhase::LongPress,
+                    );
+                }
+            }
             inject::with_chord_action(&mods, || {
                 inject::press_action(button, &hold.long_press, &profile.pointer);
             });

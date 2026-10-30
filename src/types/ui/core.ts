@@ -12,6 +12,7 @@ export type ActionSlot = "click" | "long_press";
 
 export type MappingTarget =
   | { kind: "button"; id: ButtonId }
+  | { kind: "button_mapping"; id: string }
   | { kind: "custom"; id: string };
 
 export type EditorMode =
@@ -41,6 +42,11 @@ export type EditorMode =
   | {
       kind: "ball_scroll_activator";
       slot: "toggle" | "hold";
+      rejected: string | null;
+    }
+  | {
+      kind: "button_mapping_activator";
+      entryId: string;
       rejected: string | null;
     }
   | {

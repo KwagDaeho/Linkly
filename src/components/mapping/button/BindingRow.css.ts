@@ -11,6 +11,11 @@ export const btnName = style({
   whiteSpace: "normal",
 });
 
+export const actionToggleSpacer = style({
+  display: "block",
+  minWidth: 0,
+});
+
 globalStyle(`${btnName} em`, {
   fontStyle: "normal",
   fontSize: "0.7rem",

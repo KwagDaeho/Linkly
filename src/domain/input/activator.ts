@@ -1,6 +1,6 @@
 /**
  * Universal input identity (SSOT on the FE). Anything the user can capture —
- * key, mouse button N, HUGE HID button, etc. — maps to `Activator`.
+ * key, mouse button N, trackball HID button, etc. — maps to `Activator`.
  */
 import {
   mouseButtonEventNumber,

@@ -37,7 +37,7 @@ export const mouseClickLabel = (
   }
   return lang === "ko" ? "마우스 버튼" : "Mouse button";
 };
-export const hugeButtonLabel = (id: ButtonId, lang: Lang): string => {
+export const deviceButtonLabel = (id: ButtonId, lang: Lang): string => {
   return buttonLabel(id, lang);
 };
 export const formatActivator = (activator: Activator, lang: Lang): string => {
@@ -48,7 +48,7 @@ export const formatActivator = (activator: Activator, lang: Lang): string => {
   if (normalized.type === "mouse") {
     return mouseClickLabel(normalized.button, lang);
   }
-  return hugeButtonLabel(normalized.button, lang);
+  return deviceButtonLabel(normalized.button, lang);
 };
 export const formatComboActivator = (
   combo: ComboActivator,

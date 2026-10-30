@@ -1,11 +1,15 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import {
+  mappingTableColumnsNoRemove,
+  mappingTableGap,
+} from "../mappingTableGrid.css";
+
 export const card = style({
   display: "grid",
-  gridTemplateColumns:
-    "minmax(7.5rem, 10.5rem) 5.5rem 7rem minmax(0, 1fr) minmax(0, 1fr)",
+  gridTemplateColumns: mappingTableColumnsNoRemove,
   alignItems: "center",
-  gap: 10,
+  gap: mappingTableGap,
   minHeight: 32,
   padding: "3px 8px 3px 10px",
   border: "1px solid var(--line)",
@@ -21,4 +25,12 @@ globalStyle(`${card} select`, {
 globalStyle(`${card} select:disabled`, {
   opacity: 0.45,
   cursor: "not-allowed",
+});
+
+globalStyle(`${card} > *:nth-child(4), ${card} > *:nth-child(5)`, {
+  justifySelf: "start",
+});
+
+globalStyle(`${card} > *:nth-child(6)`, {
+  marginLeft: -14,
 });

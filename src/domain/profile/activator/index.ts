@@ -28,15 +28,17 @@ export const ballScrollOf = (
     value !== undefined
       ? { ...DEFAULT_BALL_SCROLL, ...value }
       : DEFAULT_BALL_SCROLL;
+  const toggleActivator = merged.toggleActivator
+    ? normalizeActivator(merged.toggleActivator)
+    : null;
+  const holdActivator = merged.holdActivator
+    ? normalizeActivator(merged.holdActivator)
+    : null;
   return {
-    toggleEnabled: merged.toggleEnabled,
-    toggleActivator: merged.toggleActivator
-      ? normalizeActivator(merged.toggleActivator)
-      : null,
-    holdEnabled: merged.holdEnabled,
-    holdActivator: merged.holdActivator
-      ? normalizeActivator(merged.holdActivator)
-      : null,
+    toggleEnabled: toggleActivator !== null ? true : merged.toggleEnabled,
+    toggleActivator,
+    holdEnabled: holdActivator !== null ? true : merged.holdEnabled,
+    holdActivator,
     invertVertical: merged.invertVertical === true,
     invertHorizontal: merged.invertHorizontal === true,
     speed:

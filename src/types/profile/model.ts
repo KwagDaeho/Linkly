@@ -52,9 +52,9 @@ export type ResolvedBallScrollSettings = {
 export type ComboActivator = {
   modifiers: string[];
   keys: string[];
-  /** Legacy HUGE-only trigger when `trigger` is absent. */
+  /** Legacy device-button trigger when `trigger` is absent. */
   button?: ButtonId;
-  /** Any captured input (key, mouse N, HUGE, …). */
+  /** Any captured input (key, mouse N, trackball button, …). */
   trigger?: Activator;
 };
 
@@ -63,9 +63,16 @@ export type CustomMappingEntry = {
   activator: ComboActivator;
 } & ButtonBinding;
 
+export type ButtonMappingEntry = {
+  id: string;
+  activator: Activator | null;
+} & ButtonBinding;
+
 export type Profile = {
   name: string;
   buttons: Partial<Record<ButtonId, Action | ButtonBinding>>;
+  /** User-defined input → action rows (replaces fixed catalog UI). */
+  buttonMappings?: ButtonMappingEntry[];
   pointer: {
     speed: number;
     speedX?: number;

@@ -1,6 +1,10 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 import { buttonHead } from "../button/ButtonMappingPanel.css";
+import {
+  mappingTableColumns,
+  mappingTableGap,
+} from "../mappingTableGrid.css";
 
 export const toolbar = style({
   marginTop: 8,
@@ -20,7 +24,13 @@ export const empty = style({
 export const customMappingHead = style([
   buttonHead,
   {
-    gridTemplateColumns:
-      "minmax(7.5rem, 10.5rem) 5.5rem 7rem minmax(0, 1fr) minmax(0, 1fr) 3.5rem",
+    gridTemplateColumns: mappingTableColumns,
+    gap: mappingTableGap,
   },
 ]);
+
+globalStyle(`${customMappingHead} > span:nth-child(4), ${customMappingHead} > span:nth-child(5)`, {
+  textAlign: "left",
+  paddingLeft: 1,
+});
+

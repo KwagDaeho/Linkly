@@ -43,7 +43,9 @@ impl ComboActivator {
     }
 
     pub fn triggers_match(&self, activator: &Activator) -> bool {
-        self.effective_trigger().as_ref() == Some(activator)
+        self.effective_trigger()
+            .as_ref()
+            .is_some_and(|t| t.same_as(activator))
     }
 }
 
@@ -56,7 +58,54 @@ pub struct CustomMappingEntry {
     pub binding: ButtonBinding,
 }
 
+/// Single captured input → binding (Link tab button mapping rows).
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ButtonMappingEntry {
+    pub id: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub activator: Option<Activator>,
+    #[serde(flatten)]
+    pub binding: ButtonBinding,
+}
+
+impl ButtonMappingEntry {
+    pub fn is_valid(&self) -> bool {
+        self.activator.is_some()
+    }
+}
+
+pub fn activator_options_same(a: &Option<Activator>, b: &Option<Activator>) -> bool {
+    match (a, b) {
+        (None, None) => true,
+        (Some(left), Some(right)) => left.same_as(right),
+        _ => false,
+    }
+}
+
 impl Activator {
+    /// Match live OS/HID input to a stored activator (incl. legacy off-by-one `Other` numbers).
+    pub fn same_as(&self, other: &Self) -> bool {
+        if self == other {
+            return true;
+        }
+        match (self, other) {
+            (
+                Activator::Mouse {
+                    button: MouseClickButton::Other { number: a },
+                },
+                Activator::Mouse {
+                    button: MouseClickButton::Other { number: b },
+                },
+            ) => {
+                let a = *a as i64;
+                let b = *b as i64;
+                a == b || a + 1 == b || a == b + 1
+            }
+            _ => false,
+        }
+    }
+
     pub fn is_left_click(&self) -> bool {
         matches!(
             self,

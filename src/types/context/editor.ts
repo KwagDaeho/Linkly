@@ -4,6 +4,11 @@ import type { ButtonId } from "../profile";
 
 export type EditorCatalogSelection = {
   selectButton: (buttonId: ButtonId, slot: ActionSlot, value: string) => void;
+  selectButtonMapping: (
+    entryId: string,
+    slot: ActionSlot,
+    value: string,
+  ) => void;
   selectCustom: (entryId: string, slot: ActionSlot, value: string) => void;
 };
 

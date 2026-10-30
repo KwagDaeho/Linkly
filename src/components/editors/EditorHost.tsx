@@ -1,6 +1,7 @@
 import { useEditor } from "@/hooks/editor";
 
 import { BallScrollActivatorEditor } from "./ballScroll";
+import { ButtonMappingActivatorEditor } from "./buttonMapping";
 import { ComboActivatorEditor } from "./combo";
 import { CustomKeyEditor } from "./customKey";
 import { MacroEditor } from "./macro";
@@ -20,6 +21,8 @@ export const EditorHost = () => {
       return <OpenAppEditor editor={editor} />;
     case "ball_scroll_activator":
       return <BallScrollActivatorEditor editor={editor} />;
+    case "button_mapping_activator":
+      return <ButtonMappingActivatorEditor editor={editor} />;
     case "custom_combo_activator":
       return <ComboActivatorEditor editor={editor} />;
     default:

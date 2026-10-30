@@ -4,11 +4,12 @@ export { groupCatalog } from "./format/catalog";
 export {
   formatActivator,
   formatComboActivator,
-  hugeButtonLabel,
+  deviceButtonLabel,
   mouseClickLabel,
   MOUSE_CLICK_ENTRY,
 } from "./format/activators";
 export { formatKeyChord } from "./format/keys";
 export { buildComboErrorMessage, buildComboPreview } from "./format/combo";
 export { customMappingTriggerLabel } from "./format/customMapping";
+export { buttonMappingInputLabel } from "./format/buttonMapping";
 export { formatMacroStepLabel } from "./format/macro";

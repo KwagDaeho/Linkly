@@ -10,6 +10,7 @@ import { accordionStateId } from "@/services/accordionState";
 import {
   ballScrollActivatorForSlot,
   ballScrollOf,
+  buttonMappingsOf,
   customMappingsOf,
 } from "@/domain/profile";
 import { useBallScrollLatch } from "@/hooks/useBallScrollLatch";
@@ -29,6 +30,9 @@ export const CustomTab = () => {
   }
 
   const onOff = (on: boolean) => (on ? i18n.stateOn : i18n.stateOff);
+  const buttonMappingCount = buttonMappingsOf(profile).filter(
+    (entry) => entry.activator !== null,
+  ).length;
   const comboCount = customMappingsOf(profile).length;
   const ball = ballScrollOf(profile.ballScroll);
   const trackballActive =
@@ -52,6 +56,10 @@ export const CustomTab = () => {
         <SectionGroupHeading>{i18n.sectionCommon}</SectionGroupHeading>
         <Accordion
           label={i18n.buttonMapping}
+          status={
+            buttonMappingCount > 0 ? String(buttonMappingCount) : undefined
+          }
+          statusOn={buttonMappingCount > 0}
           defaultOpen={false}
           stateKey={accordionStateId.linkButtonMapping}
         >

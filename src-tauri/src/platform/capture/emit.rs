@@ -13,26 +13,6 @@ pub(crate) fn emit_activator(payload: ActivatorCapture) {
 }
 
 pub(crate) fn emit_activator_choice(activator: Activator) {
-    if activator.is_left_click() {
-        let allow_huge_left = matches!(activator, Activator::Huge { .. })
-            && session::combo_activator_capture();
-        if !allow_huge_left {
-            emit_activator(ActivatorCapture {
-                escape: false,
-                rejected: Some("left".into()),
-                activator: None,
-            });
-            return;
-        }
-    }
-    if activator.is_huge_tilt() {
-        emit_activator(ActivatorCapture {
-            escape: false,
-            rejected: Some("tilt".into()),
-            activator: None,
-        });
-        return;
-    }
     emit_activator(ActivatorCapture {
         escape: false,
         rejected: None,

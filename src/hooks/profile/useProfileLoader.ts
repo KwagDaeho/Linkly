@@ -32,12 +32,14 @@ export const useProfileLoader = (): ProfileLoader => {
   useEffect(() => {
     void refresh();
   }, []);
-  const persist = async (nextProfile: Profile) => {
+  const persist = async (nextProfile: Profile): Promise<boolean> => {
     try {
       await tauri.saveProfile(nextProfile);
       setProfile(nextProfile);
+      return true;
     } catch (error) {
       setBootError(String(error));
+      return false;
     }
   };
   const mutateProfile = (applyPatch: (loadedProfile: Profile) => Profile) => {

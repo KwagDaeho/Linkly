@@ -11,7 +11,7 @@ import {
   captureSessionFor,
   resolveActivatorCapture,
 } from "@/domain/capture";
-import { comboFromDraft } from "@/domain/profile";
+import { comboFromDraft, CHORD_MODIFIERS } from "@/domain/profile";
 import * as tauri from "@/services/tauri";
 import type {
   Activator,
@@ -36,11 +36,18 @@ export const useKeyCapture = (
   editor: EditorMode | null,
   setEditor: Dispatch<SetStateAction<EditorMode | null>>,
   profile: Profile | null,
-  onActivatorAssigned: (slot: BallScrollSlot, activator: Activator) => boolean,
+  onActivatorAssigned: (
+    slot: BallScrollSlot,
+    activator: Activator,
+  ) => boolean | Promise<boolean>,
   onComboAssigned: (
     entryId: string,
     combo: ReturnType<typeof comboFromDraft>,
-  ) => boolean,
+  ) => boolean | Promise<boolean>,
+  onButtonMappingAssigned: (
+    entryId: string,
+    activator: Activator,
+  ) => boolean | Promise<boolean>,
 ) => {
   const editorRef = useRef(editor);
   editorRef.current = editor;
@@ -50,6 +57,8 @@ export const useKeyCapture = (
   onActivatorAssignedRef.current = onActivatorAssigned;
   const onComboAssignedRef = useRef(onComboAssigned);
   onComboAssignedRef.current = onComboAssigned;
+  const onButtonMappingAssignedRef = useRef(onButtonMappingAssigned);
+  onButtonMappingAssignedRef.current = onButtonMappingAssigned;
   const captureMode = captureModeOf(editor);
   const captureSession = useMemo(
     () => captureSessionFor(captureMode),
@@ -98,62 +107,95 @@ export const useKeyCapture = (
           });
           unsubs.push(unChord);
         }
-        if (captureMode === "ball_scroll" || captureMode === "combo_trigger") {
+        if (
+          captureMode === "ball_scroll" ||
+          captureMode === "button_mapping_capture" ||
+          captureMode === "combo_trigger" ||
+          captureMode === "custom_key"
+        ) {
           const unAct = await listen<ActivatorCapturePayload>(
             "activator-capture",
             (event) => {
-              if (cancelled) {
-                return;
-              }
-              const activeEditor = editorRef.current;
-              if (activeEditor === null) {
-                return;
-              }
-              const result = resolveActivatorCapture(
-                activeEditor,
-                event.payload,
-              );
-              if (result === null) {
-                return;
-              }
-              if (result.kind === "close") {
-                setEditor(null);
-                return;
-              }
-              if (result.kind === "reject") {
-                setEditor((previousEditor) => {
-                  if (
-                    previousEditor === null ||
-                    (previousEditor.kind !== "ball_scroll_activator" &&
-                      previousEditor.kind !== "custom_combo_activator")
-                  ) {
-                    return previousEditor;
-                  }
-                  return { ...previousEditor, rejected: result.rejected };
-                });
-                return;
-              }
-              if (result.kind === "assign_combo") {
-                const combo = comboFromDraft(result.chord, result.activator);
-                if (combo === null) {
+              void (async () => {
+                if (cancelled) {
                   return;
                 }
-                const accepted = onComboAssignedRef.current(
-                  result.entryId,
-                  combo,
+                const activeEditor = editorRef.current;
+                if (activeEditor === null) {
+                  return;
+                }
+                const result = resolveActivatorCapture(
+                  activeEditor,
+                  event.payload,
+                );
+                if (result === null) {
+                  return;
+                }
+                if (result.kind === "close") {
+                  setEditor(null);
+                  return;
+                }
+                if (result.kind === "reject") {
+                  setEditor((previousEditor) => {
+                    if (
+                      previousEditor === null ||
+                      (previousEditor.kind !== "ball_scroll_activator" &&
+                        previousEditor.kind !== "button_mapping_activator" &&
+                        previousEditor.kind !== "custom_combo_activator")
+                    ) {
+                      return previousEditor;
+                    }
+                    return { ...previousEditor, rejected: result.rejected };
+                  });
+                  return;
+                }
+                if (result.kind === "append_custom_key") {
+                  setEditor((previousEditor) => {
+                    if (previousEditor?.kind !== "custom_key") {
+                      return previousEditor;
+                    }
+                    const modifiers = previousEditor.draft.filter((key) =>
+                      CHORD_MODIFIERS.has(key),
+                    );
+                    return {
+                      ...previousEditor,
+                      draft: [...modifiers, result.token],
+                    };
+                  });
+                  return;
+                }
+                if (result.kind === "assign_combo") {
+                  const combo = comboFromDraft(result.chord, result.activator);
+                  if (combo === null) {
+                    return;
+                  }
+                  const accepted = await onComboAssignedRef.current(
+                    result.entryId,
+                    combo,
+                  );
+                  if (accepted) {
+                    setEditor(null);
+                  }
+                  return;
+                }
+                if (result.kind === "assign_button_mapping") {
+                  const accepted = await onButtonMappingAssignedRef.current(
+                    result.entryId,
+                    result.activator,
+                  );
+                  if (accepted) {
+                    setEditor(null);
+                  }
+                  return;
+                }
+                const accepted = await onActivatorAssignedRef.current(
+                  result.slot,
+                  result.activator,
                 );
                 if (accepted) {
                   setEditor(null);
                 }
-                return;
-              }
-              const accepted = onActivatorAssignedRef.current(
-                result.slot,
-                result.activator,
-              );
-              if (accepted) {
-                setEditor(null);
-              }
+              })();
             },
           );
           unsubs.push(unAct);

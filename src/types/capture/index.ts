@@ -6,6 +6,7 @@ export type CaptureMode =
   | "combo_capture"
   | "macro"
   | "ball_scroll"
+  | "button_mapping_capture"
   | "combo_trigger";
 
 export type CaptureSession = {
@@ -13,6 +14,7 @@ export type CaptureSession = {
   comboTrigger: boolean;
   activatorCapture: boolean;
   uiModal: boolean;
+  allowLeftActivator?: boolean;
 };
 
 export type KeyCapturePayload = { keys: string[]; escape: boolean };
@@ -38,4 +40,10 @@ export type ActivatorCaptureResult =
       entryId: string;
       activator: Activator;
       chord: string[];
-    };
+    }
+  | {
+      kind: "assign_button_mapping";
+      entryId: string;
+      activator: Activator;
+    }
+  | { kind: "append_custom_key"; token: string };

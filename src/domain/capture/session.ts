@@ -14,6 +14,9 @@ export const captureModeOf = (editor: EditorMode | null): CaptureMode => {
   }
   if (editor.kind === "macro" && editor.keyPrompt) return "macro";
   if (editor.kind === "ball_scroll_activator") return "ball_scroll";
+  if (editor.kind === "button_mapping_activator") {
+    return "button_mapping_capture";
+  }
   return "off";
 };
 export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
@@ -22,7 +25,8 @@ export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
       return {
         keyCapture: true,
         comboTrigger: false,
-        activatorCapture: false,
+        activatorCapture: true,
+        allowLeftActivator: true,
         uiModal: true,
       };
     case "combo_capture":
@@ -37,6 +41,7 @@ export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
         keyCapture: false,
         comboTrigger: false,
         activatorCapture: true,
+        allowLeftActivator: true,
         uiModal: true,
       };
     case "macro":
@@ -51,6 +56,14 @@ export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
         keyCapture: false,
         comboTrigger: false,
         activatorCapture: true,
+        uiModal: true,
+      };
+    case "button_mapping_capture":
+      return {
+        keyCapture: false,
+        comboTrigger: false,
+        activatorCapture: true,
+        allowLeftActivator: true,
         uiModal: true,
       };
     default:

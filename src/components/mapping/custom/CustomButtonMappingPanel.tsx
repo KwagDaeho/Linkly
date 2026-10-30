@@ -28,11 +28,12 @@ export const CustomButtonMappingPanel = () => {
         <div className={buttonGrid}>
           <div className={styles.customMappingHead}>
             <span>{i18n.customMappingTrigger}</span>
-            <span>{i18n.longPressEnable}</span>
+            <span>{i18n.mappingAction}</span>
+            <span aria-hidden />
             <span>{i18n.autoClickEnable}</span>
-            <span>{i18n.clickAction}</span>
-            <span>{i18n.longPressAction}</span>
-            <span />
+            <span>{i18n.longPressEnable}</span>
+            <span>{i18n.mappingActionLong}</span>
+            <span>{i18n.remove}</span>
           </div>
           {entries.map((entry) => (
             <CustomMappingRow key={entry.id} entry={entry} />

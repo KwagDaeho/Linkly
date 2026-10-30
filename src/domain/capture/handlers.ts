@@ -1,3 +1,4 @@
+import { activatorToCustomKeyToken } from "@/domain/keys/mouseKeyToken";
 import { CHORD_MODIFIERS } from "@/domain/profile";
 import type {
   ActivatorCapturePayload,
@@ -58,6 +59,22 @@ export const resolveActivatorCapture = (
   editor: EditorMode,
   payload: ActivatorCapturePayload,
 ): ActivatorCaptureResult | null => {
+  if (editor.kind === "custom_key") {
+    const { escape, rejected, activator } = payload;
+    if (escape) {
+      return { kind: "close" };
+    }
+    if (rejected !== null) {
+      return { kind: "reject", rejected };
+    }
+    if (activator !== null) {
+      const token = activatorToCustomKeyToken(activator);
+      if (token !== null) {
+        return { kind: "append_custom_key", token };
+      }
+    }
+    return null;
+  }
   if (
     editor.kind === "custom_combo_activator" &&
     editor.phase === "trigger"
@@ -71,6 +88,19 @@ export const resolveActivatorCapture = (
         entryId: editor.entryId,
         activator,
         chord: editor.draftChord,
+      };
+    }
+    return null;
+  }
+  if (editor.kind === "button_mapping_activator") {
+    const { escape, rejected, activator } = payload;
+    if (escape) return { kind: "close" };
+    if (rejected !== null) return { kind: "reject", rejected };
+    if (activator !== null) {
+      return {
+        kind: "assign_button_mapping",
+        entryId: editor.entryId,
+        activator,
       };
     }
     return null;

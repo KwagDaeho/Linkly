@@ -5,6 +5,7 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use serde::Serialize;
 
 use crate::domain::engine::LastReport;
+use crate::domain::profile::{Activator, MouseClickButton};
 use crate::platform::app_bus;
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
@@ -72,9 +73,60 @@ fn is_standard_os_mouse(summary: &str) -> bool {
         || summary.starts_with("mouse forward ")
 }
 
+pub fn activator_label(activator: &Activator) -> String {
+    activator_summary(activator)
+}
+
+fn activator_summary(activator: &Activator) -> String {
+    match activator {
+        Activator::Key { name } => format!("key {name}"),
+        Activator::Mouse { button } => match button {
+            MouseClickButton::Left => "mouse left".into(),
+            MouseClickButton::Right => "mouse right".into(),
+            MouseClickButton::Middle => "mouse middle".into(),
+            MouseClickButton::Back => "mouse back".into(),
+            MouseClickButton::Forward => "mouse forward".into(),
+            MouseClickButton::Other { number } => format!("Button {}", number + 1),
+        },
+        Activator::Huge { button } => (*button).id_str().to_string(),
+    }
+}
+
+/// Mapping applied (summary already formatted, e.g. `link · fn1 → …`).
+pub fn publish_link_line(summary: String) {
+    let ts_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    publish(InputEventLine {
+        ts_ms,
+        source: "link",
+        kind: "linkRemap".into(),
+        summary: summary.clone(),
+        detail: summary,
+    });
+}
+
+/// Fired when a configured long-press threshold elapses (Link tab duration).
+pub fn publish_long_press(activator: &Activator) {
+    let input = activator_summary(activator);
+    let summary = format!("long press · {input}");
+    let ts_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis())
+        .unwrap_or(0);
+    publish(InputEventLine {
+        ts_ms,
+        source: "link",
+        kind: "longPress".into(),
+        summary: summary.clone(),
+        detail: summary,
+    });
+}
+
 fn viewer_channel(line: &InputEventLine) -> &'static str {
     match line.kind.as_str() {
-        "keyDown" | "keyUp" | "flagsChanged" => "keyboard",
+        "keyDown" | "keyUp" | "flagsChanged" | "longPress" | "linkRemap" => "keyboard",
         "mouseDown" | "mouseUp" if line.source == "os" && !is_standard_os_mouse(&line.summary) => {
             "keyboard"
         }

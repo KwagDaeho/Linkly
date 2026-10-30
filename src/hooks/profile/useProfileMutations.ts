@@ -4,6 +4,10 @@ import {
   withBallScrollPatch,
   withButtonFlags,
   withButtonSlot,
+  withButtonMappingActivator,
+  withButtonMappingAdded,
+  withButtonMappingFlags,
+  withButtonMappingRemoved,
   withCustomMappingActivator,
   withCustomMappingAdded,
   withCustomMappingFlags,
@@ -21,11 +25,13 @@ import type {
   BallScrollSlot,
   ButtonBinding,
   ButtonId,
+  ButtonMappingEntry,
   ComboActivator,
   CustomMappingEntry,
   EditorMode,
   MappingTarget,
   Profile,
+  ProfileLifecycle,
   ProfileMutateFn,
   ProfileMutations,
 } from "@/types";
@@ -33,6 +39,7 @@ import type {
 export const useProfileMutations = (
   profile: Profile | null,
   mutateProfile: ProfileMutateFn,
+  persist: ProfileLifecycle["persist"],
 ): ProfileMutations => {
   const updateMappingSlot = (
     target: MappingTarget,
@@ -79,16 +86,22 @@ export const useProfileMutations = (
     mutateProfile((loadedProfile) => withBallScrollPatch(loadedProfile, patch));
   };
 
-  const assignBallScrollActivator = (
+  const assignBallScrollActivator = async (
     slot: BallScrollSlot,
     activator: Activator,
   ) => {
-    const next = normalizeActivator(activator);
-    if (slot === "toggle") {
-      updateBallScroll({ toggleActivator: next, toggleEnabled: true });
+    if (profile === null) {
       return;
     }
-    updateBallScroll({ holdActivator: next, holdEnabled: true });
+    const next = normalizeActivator(activator);
+    const patch: Partial<BallScrollSettings> =
+      slot === "toggle"
+        ? { toggleActivator: next, toggleEnabled: true }
+        : { holdActivator: next, holdEnabled: true };
+    const saved = await persist(withBallScrollPatch(profile, patch));
+    if (!saved) {
+      throw new Error("save_profile failed");
+    }
   };
 
   const updateCustomMappingFlags = (
@@ -98,6 +111,43 @@ export const useProfileMutations = (
     mutateProfile((loadedProfile) =>
       withCustomMappingFlags(loadedProfile, entryId, patch),
     );
+  };
+
+  const addButtonMapping = (entry: ButtonMappingEntry) => {
+    mutateProfile((loadedProfile) =>
+      withButtonMappingAdded(loadedProfile, entry),
+    );
+  };
+
+  const removeButtonMapping = (entryId: string) => {
+    mutateProfile((loadedProfile) =>
+      withButtonMappingRemoved(loadedProfile, entryId),
+    );
+  };
+
+  const updateButtonMappingFlags = (
+    entryId: string,
+    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
+  ) => {
+    mutateProfile((loadedProfile) =>
+      withButtonMappingFlags(loadedProfile, entryId, patch),
+    );
+  };
+
+  const updateButtonMappingActivator = async (
+    entryId: string,
+    activator: Activator,
+  ) => {
+    if (profile === null) {
+      return;
+    }
+    const next = normalizeActivator(activator);
+    const saved = await persist(
+      withButtonMappingActivator(profile, entryId, next),
+    );
+    if (!saved) {
+      throw new Error("save_profile failed");
+    }
   };
 
   const addCustomMapping = (entry: CustomMappingEntry) => {
@@ -153,11 +203,33 @@ export const useProfileMutations = (
     );
   };
 
+  const selectButtonMappingCatalogValue = (
+    entryId: string,
+    slot: ActionSlot,
+    value: string,
+    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
+  ) => {
+    applyCatalogSelection(
+      { kind: "button_mapping", id: entryId },
+      slot,
+      value,
+      profile,
+      setEditor,
+      updateMappingSlot,
+    );
+  };
+
   return {
     mappings: {
       updateSlot: updateMappingSlot,
       updateButtonSlot,
       updateButtonFlags,
+    },
+    buttonMappings: {
+      add: addButtonMapping,
+      remove: removeButtonMapping,
+      updateFlags: updateButtonMappingFlags,
+      updateActivator: updateButtonMappingActivator,
     },
     customMappings: {
       add: addCustomMapping,
@@ -175,6 +247,7 @@ export const useProfileMutations = (
     catalogSelection: {
       selectButton: selectCatalogValue,
       selectCustom: selectCustomCatalogValue,
+      selectButtonMapping: selectButtonMappingCatalogValue,
     },
   };
 };

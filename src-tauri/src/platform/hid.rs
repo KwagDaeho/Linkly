@@ -33,7 +33,7 @@ pub fn find_huge(api: &HidApi) -> Option<DeviceInfo> {
         .map(|d| DeviceInfo {
             vendor_id: d.vendor_id(),
             product_id: d.product_id(),
-            product_name: d.product_string().unwrap_or("HUGE TrackBall").to_string(),
+            product_name: d.product_string().unwrap_or("Trackball").to_string(),
             manufacturer: d.manufacturer_string().unwrap_or("ELECOM").to_string(),
             path: d.path().to_string_lossy().to_string(),
             is_huge: true,

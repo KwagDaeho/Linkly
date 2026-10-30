@@ -19,7 +19,13 @@ export const isCustomOsMouseLine = (line: InputEventLine): boolean => {
 
 export const eventViewerChannel = (line: InputEventLine): EventViewerChannel => {
   const kind = line.kind;
-  if (kind === "keyDown" || kind === "keyUp" || kind === "flagsChanged") {
+  if (
+    kind === "keyDown" ||
+    kind === "keyUp" ||
+    kind === "flagsChanged" ||
+    kind === "longPress" ||
+    kind === "linkRemap"
+  ) {
     return "keyboard";
   }
   if (isCustomOsMouseLine(line)) {

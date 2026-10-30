@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use crate::domain::device::ButtonId;
 
 use super::action::{Action, MouseClickButton};
-use super::activator::CustomMappingEntry;
+use super::activator::{ButtonMappingEntry, CustomMappingEntry};
 use super::ball_scroll::BallScrollSettings;
 use super::binding::ButtonBinding;
 use super::pointer::PointerSettings;
@@ -26,6 +26,9 @@ pub struct Profile {
     /// Modifier/key + HUGE button combos with their own bindings.
     #[serde(default)]
     pub custom_mappings: Vec<CustomMappingEntry>,
+    /// Captured input → binding rows (UI list mappings).
+    #[serde(default)]
+    pub button_mappings: Vec<ButtonMappingEntry>,
     /// When true, remap engine is active.
     pub enabled: bool,
     /// Launch with the main window hidden (menu bar / tray only).
@@ -61,6 +64,7 @@ impl Default for Profile {
             pointer: PointerSettings::default(),
             ball_scroll: BallScrollSettings::default(),
             custom_mappings: Vec::new(),
+            button_mappings: Vec::new(),
             enabled: true,
             start_minimized: false,
             long_press_ms: default_long_press_ms(),

@@ -19,16 +19,20 @@ export const useEditor = (): EditorContextValue => {
 };
 
 export const useEditorState = (): EditorContextValue => {
-  const { profile, ballScroll, customMappings, catalogSelection } =
+  const { profile, ballScroll, buttonMappings, customMappings, catalogSelection } =
     useProfileCtx();
   const [editor, setEditor] = useState<EditorMode | null>(null);
   useKeyCapture(
     editor,
     setEditor,
     profile,
-    (slot, activator) => {
-      ballScroll.assignActivator(slot, activator);
-      return true;
+    async (slot, activator) => {
+      try {
+        await ballScroll.assignActivator(slot, activator);
+        return true;
+      } catch {
+        return false;
+      }
     },
     (entryId, combo) => {
       if (combo === null) {
@@ -36,6 +40,14 @@ export const useEditorState = (): EditorContextValue => {
       }
       customMappings.updateActivator(entryId, combo);
       return true;
+    },
+    async (entryId, activator) => {
+      try {
+        await buttonMappings.updateActivator(entryId, activator);
+        return true;
+      } catch {
+        return false;
+      }
     },
   );
   const selectButton = (
@@ -48,11 +60,19 @@ export const useEditorState = (): EditorContextValue => {
   const selectCustom = (entryId: string, slot: ActionSlot, value: string) => {
     catalogSelection.selectCustom(entryId, slot, value, setEditor);
   };
+  const selectButtonMapping = (
+    entryId: string,
+    slot: ActionSlot,
+    value: string,
+  ) => {
+    catalogSelection.selectButtonMapping(entryId, slot, value, setEditor);
+  };
   return {
     editor,
     setEditor,
     catalogSelection: {
       selectButton,
+      selectButtonMapping,
       selectCustom,
     },
   };

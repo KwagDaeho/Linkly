@@ -3,7 +3,8 @@
 use core_graphics::event::CGEventFlags;
 
 use crate::domain::device::ButtonId;
-use crate::domain::profile::{Action, MacroStep, MouseClickButton, SystemCommand};
+use crate::domain::ball_scroll;
+use crate::domain::profile::{Action, Activator, MacroStep, MouseClickButton, SystemCommand};
 
 use super::keyboard::{
     keystroke, keystroke_isolated, media_mute, media_next, media_play_pause, media_previous,
@@ -310,6 +311,20 @@ pub fn press_action_forced(
     press_action_with(id, action, pointer, true);
 }
 
+fn notify_ball_scroll_mouse(button: &MouseClickButton, down: bool) {
+    if !ball_scroll::synthetic_mouse_matches_armed(button) {
+        return;
+    }
+    let activator = Activator::Mouse {
+        button: button.clone(),
+    };
+    if down {
+        ball_scroll::on_synthetic_down(&activator);
+    } else {
+        ball_scroll::on_synthetic_up(&activator);
+    }
+}
+
 fn press_action_with(
     id: ButtonId,
     action: &Action,
@@ -324,6 +339,7 @@ fn press_action_with(
             if let Some(btn) = default_mouse_button(id) {
                 if !os_owns_native_click(id, force_synth) {
                     mouse_down(&btn);
+                    notify_ball_scroll_mouse(&btn, true);
                 }
             }
         }
@@ -333,6 +349,7 @@ fn press_action_with(
                 return;
             }
             mouse_down(button);
+            notify_ball_scroll_mouse(button, true);
         }
         Action::DoubleClick => double_click(),
         Action::KeyStroke { keys } => keystroke(keys),
@@ -363,6 +380,7 @@ fn release_action_with(id: ButtonId, action: &Action, force_synth: bool) {
         Action::Default => {
             if let Some(btn) = default_mouse_button(id) {
                 if !os_owns_native_click(id, force_synth) {
+                    notify_ball_scroll_mouse(&btn, false);
                     mouse_up(&btn);
                 }
             }
@@ -371,6 +389,7 @@ fn release_action_with(id: ButtonId, action: &Action, force_synth: bool) {
             if skip_native_mouse_click(id, button, force_synth) {
                 return;
             }
+            notify_ball_scroll_mouse(button, false);
             mouse_up(button);
         }
     }

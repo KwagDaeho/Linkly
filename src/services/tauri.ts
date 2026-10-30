@@ -3,6 +3,7 @@
  * Command strings / payloads match `src-tauri` + current App.tsx usage.
  */
 import { invoke } from "@tauri-apps/api/core";
+import { wireProfileForBackend } from "@/domain/profile/wireProfile";
 import type {
   ButtonMeta,
   CaptureSession,
@@ -16,7 +17,7 @@ export const getProfile = async (): Promise<Profile> => {
   return invoke<Profile>("get_profile");
 };
 export const saveProfile = async (profile: Profile): Promise<void> => {
-  await invoke("save_profile", { profile });
+  await invoke("save_profile", { profile: wireProfileForBackend(profile) });
 };
 export const getDeviceInfo = async (): Promise<DeviceInfo | null> => {
   return invoke<DeviceInfo | null>("get_connected");

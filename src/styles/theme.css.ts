@@ -14,6 +14,11 @@ globalStyle(":root, [data-theme='light']", {
     "--accent": "#c07bc4",
     "--accent-ink": "#ffffff",
     "--accent-soft": "rgba(192, 123, 196, 0.16)",
+    "--interaction-hover-surface":
+      "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
+    "--interaction-hover-border": "var(--accent)",
+    "--interaction-hover-button":
+      "color-mix(in srgb, var(--accent) 86%, white)",
     "--ok": "#2f8a55",
     "--ok-glow": "rgba(47, 138, 85, 0.18)",
     "--warn-bg": "#f8e8ff",
@@ -40,6 +45,11 @@ globalStyle("[data-theme='dark']", {
     "--accent": "#c07bc4",
     "--accent-ink": "#1a121c",
     "--accent-soft": "rgba(192, 123, 196, 0.22)",
+    "--interaction-hover-surface":
+      "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
+    "--interaction-hover-border": "var(--accent)",
+    "--interaction-hover-button":
+      "color-mix(in srgb, var(--accent) 86%, white)",
     "--ok": "#5dcb87",
     "--ok-glow": "rgba(93, 203, 135, 0.2)",
     "--warn-bg": "#3a2a42",
@@ -131,6 +141,10 @@ globalStyle("button:active:not(:disabled)", {
   transform: "translateY(1px)",
 });
 
+globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger])", {
+  background: "var(--interaction-hover-button)",
+});
+
 globalStyle("select, input[type='number']", {
   width: "100%",
   borderRadius: 7,
@@ -156,7 +170,11 @@ globalStyle("select", {
 });
 
 globalStyle("select:hover:not(:disabled)", {
-  borderColor: "var(--accent)",
+  borderColor: "var(--interaction-hover-border)",
+});
+
+globalStyle("input[type='number']:hover:not(:disabled)", {
+  borderColor: "var(--interaction-hover-border)",
 });
 
 globalStyle("select:disabled", {
@@ -168,11 +186,85 @@ globalStyle("select:disabled", {
 
 globalStyle("select:focus, input[type='number']:focus", {
   outline: "none",
-  borderColor: "var(--accent)",
+  borderColor: "var(--interaction-hover-border)",
   boxShadow: "0 0 0 3px var(--accent-soft)",
 });
 
+const rangeThumbSize = "0.875rem";
+const rangeThumbBorder = "2px solid var(--line)";
+const rangeTrackHeight = "4px";
+
 globalStyle("input[type='range']", {
   width: "100%",
-  accentColor: "var(--accent)",
+  height: "1.35rem",
+  margin: 0,
+  padding: 0,
+  appearance: "none",
+  WebkitAppearance: "none",
+  background: "transparent",
+  cursor: "pointer",
+});
+
+globalStyle("input[type='range']:disabled", {
+  opacity: 0.45,
+  cursor: "not-allowed",
+});
+
+globalStyle("input[type='range']::-webkit-slider-runnable-track", {
+  height: rangeTrackHeight,
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--muted) 32%, transparent)",
+});
+
+globalStyle("input[type='range']::-webkit-slider-thumb", {
+  appearance: "none",
+  WebkitAppearance: "none",
+  width: rangeThumbSize,
+  height: rangeThumbSize,
+  marginTop: `calc((${rangeTrackHeight} - ${rangeThumbSize}) / 2)`,
+  borderRadius: "50%",
+  border: rangeThumbBorder,
+  background: "#fff",
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+  transition:
+    "border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease",
+});
+
+globalStyle("input[type='range']:hover:not(:disabled)::-webkit-slider-thumb", {
+  borderColor: "var(--interaction-hover-border)",
+});
+
+globalStyle(
+  "input[type='range']:active:not(:disabled)::-webkit-slider-thumb",
+  {
+    background: "var(--interaction-hover-border)",
+    borderColor: "var(--interaction-hover-border)",
+  },
+);
+
+globalStyle("input[type='range']::-moz-range-track", {
+  height: rangeTrackHeight,
+  borderRadius: 999,
+  background: "color-mix(in srgb, var(--muted) 32%, transparent)",
+  border: 0,
+});
+
+globalStyle("input[type='range']::-moz-range-thumb", {
+  width: rangeThumbSize,
+  height: rangeThumbSize,
+  borderRadius: "50%",
+  border: rangeThumbBorder,
+  background: "#fff",
+  boxShadow: "0 1px 2px rgba(0, 0, 0, 0.2)",
+  transition:
+    "border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease",
+});
+
+globalStyle("input[type='range']:hover:not(:disabled)::-moz-range-thumb", {
+  borderColor: "var(--interaction-hover-border)",
+});
+
+globalStyle("input[type='range']:active:not(:disabled)::-moz-range-thumb", {
+  background: "var(--interaction-hover-border)",
+  borderColor: "var(--interaction-hover-border)",
 });

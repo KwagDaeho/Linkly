@@ -37,7 +37,7 @@ export const row = style({
   cursor: "pointer",
   selectors: {
     "&:hover": {
-      background: "color-mix(in srgb, var(--accent) 18%, transparent)",
+      background: "var(--interaction-hover-surface)",
     },
   },
 });

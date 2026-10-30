@@ -109,7 +109,9 @@ globalStyle(`${root} input[type="checkbox"]::after`, {
   left: "0.125rem",
   width: "0.625rem",
   height: "0.625rem",
+  boxSizing: "border-box",
   borderRadius: "50%",
+  border: "1.5px solid #fff",
   background: "#fff",
   boxShadow: "0 1px 1px rgba(0, 0, 0, 0.18)",
   transition: "transform 0.15s ease",
@@ -122,6 +124,24 @@ globalStyle(`${root} input[type="checkbox"]:checked`, {
 
 globalStyle(`${root} input[type="checkbox"]:checked::after`, {
   transform: "translateX(0.875rem)",
+});
+
+globalStyle(`${root}:hover input[type="checkbox"]:not(:disabled):not(:checked)::after`, {
+  transform: "translateX(0.125rem)",
+});
+
+globalStyle(`${root}:hover input[type="checkbox"]:not(:disabled):checked::after`, {
+  transform: "translateX(0.75rem)",
+});
+
+globalStyle("@media (prefers-reduced-motion: reduce)", {
+  [`${root}:hover input[type="checkbox"]:not(:disabled):not(:checked)::after`]:
+    {
+      transform: "none",
+    },
+  [`${root}:hover input[type="checkbox"]:not(:disabled):checked::after`]: {
+    transform: "translateX(0.875rem)",
+  },
 });
 
 globalStyle(`${root} input[type="checkbox"]:focus-visible`, {

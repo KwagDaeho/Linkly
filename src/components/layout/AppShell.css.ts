@@ -63,6 +63,12 @@ export const tabPill = style({
   background: "var(--accent)",
   pointerEvents: "none",
   transition: `left ${tabTransitionMs}ms ${tabTransitionEase}, top ${tabTransitionMs}ms ${tabTransitionEase}, width ${tabTransitionMs}ms ${tabTransitionEase}, height ${tabTransitionMs}ms ${tabTransitionEase}`,
+  selectors: {
+    '&[data-nudge="true"]': {
+      transition:
+        "left 0.15s ease, top 0.15s ease, width 0.15s ease, height 0.15s ease",
+    },
+  },
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       transition: "none",

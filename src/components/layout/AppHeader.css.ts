@@ -146,3 +146,18 @@ export const fontScaleButtonDisabled = style({
   opacity: 0.35,
   cursor: "not-allowed",
 });
+
+globalStyle(`${langButton}:hover:not(:disabled)`, {
+  background: "var(--interaction-hover-surface)",
+  color: "var(--interaction-hover-border)",
+});
+
+globalStyle(`${themeButton}:hover:not(:disabled)`, {
+  background: "var(--interaction-hover-surface)",
+  color: "var(--interaction-hover-border)",
+});
+
+globalStyle(`${fontScaleButton}:hover:not(:disabled)`, {
+  background: "var(--interaction-hover-surface)",
+  color: "var(--interaction-hover-border)",
+});

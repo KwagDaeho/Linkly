@@ -60,6 +60,7 @@ export const Accordion = ({
         <button
           type="button"
           className={styles.headingToggle}
+          data-accordion-heading=""
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpenState(!open)}

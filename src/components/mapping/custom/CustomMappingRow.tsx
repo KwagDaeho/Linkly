@@ -45,7 +45,7 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
       />
       <div className={styles.remove}>
         <Button
-          variant="ghost"
+          variant="remove"
           size="tiny"
           onClick={() => void customMappings.remove(entry.id)}
         >

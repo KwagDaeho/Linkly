@@ -59,7 +59,7 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
       />
       <div className={styles.remove}>
         <Button
-          variant="ghost"
+          variant="remove"
           size="tiny"
           onClick={() => void buttonMappings.remove(entry.id)}
         >

@@ -75,5 +75,6 @@ globalStyle(`${footer} a`, {
 });
 
 globalStyle(`${footer} a:hover`, {
+  color: "var(--interaction-hover-border)",
   textDecoration: "underline",
 });

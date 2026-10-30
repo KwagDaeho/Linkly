@@ -13,7 +13,12 @@ interface MappingTriggerButtonProps {
 export const MappingTriggerButton = (props: MappingTriggerButtonProps) => {
   const keys = props.keys;
   return (
-    <button type="button" className={styles.trigger} onClick={props.onClick}>
+    <button
+      type="button"
+      className={styles.trigger}
+      data-mapping-trigger=""
+      onClick={props.onClick}
+    >
       {keys === null || keys.length === 0 ? (
         <span className={styles.unsetChip}>{props.unsetLabel}</span>
       ) : (

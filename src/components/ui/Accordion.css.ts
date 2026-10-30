@@ -62,9 +62,6 @@ export const headingToggle = style([
     padding: `${headingPadY}px ${headingPadY * 2}px ${headingPadY}px 0`,
     minHeight: "unset",
     selectors: {
-      "&:hover": {
-        background: "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
-      },
       "&:focus-visible": {
         outline: "2px solid var(--accent)",
         outlineOffset: 2,
@@ -84,6 +81,11 @@ const headingTextBase = {
 export const headingTextH2 = style([headingH2, headingTextBase]);
 
 export const headingTextH3 = style([headingH3, headingTextBase]);
+
+/** Keep subtle hover; global `button:hover` must not apply (see theme.css). */
+globalStyle(`${headingToggle}:hover:not(:disabled)`, {
+  background: "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
+});
 
 export const status = style({
   flexShrink: 0,

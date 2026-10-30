@@ -24,6 +24,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) =>
     props;
   const mergedClassName = cx(
     variant === "ghost" && styles.ghost,
+    variant === "remove" && styles.remove,
     size === "tiny" && styles.tiny,
     className,
   );

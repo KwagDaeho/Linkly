@@ -51,6 +51,29 @@ export const detail = style({
   lineHeight: 1.3,
 });
 
+export const transportRow = style({
+  display: "inline",
+});
+
+export const transportSep = style({
+  color: "var(--muted)",
+  opacity: 0.45,
+});
+
+export const transportChip = style({
+  fontWeight: 500,
+});
+
+export const transportActive = style({
+  color: "var(--text)",
+  opacity: 1,
+});
+
+export const transportInactive = style({
+  color: "var(--muted)",
+  opacity: 0.45,
+});
+
 export const empty = style({
   margin: 0,
   fontSize: "0.84rem",

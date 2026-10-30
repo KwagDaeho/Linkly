@@ -13,6 +13,11 @@ export const en = {
   inputDevicesTitle: "Input devices",
   inputDevicesEmpty: "No input devices detected.",
   inputDeviceProfileTarget: "profile active",
+  inputDeviceTransportUsb: "USB",
+  inputDeviceTransportBluetooth: "Bluetooth",
+  inputDeviceTransportBluetoothLowEnergy: "Bluetooth LE",
+  inputDeviceTransportBuiltIn: "Built-in",
+  inputDeviceTransportVirtual: "Virtual",
   accessibilityTitle: "Accessibility permission required",
   accessibilityStep1: "Click «Grant access».",
   accessibilityStep2:

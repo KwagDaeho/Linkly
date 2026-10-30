@@ -4,7 +4,7 @@ use crate::domain::engine;
 use tauri::State;
 
 #[tauri::command]
-pub fn list_devices(state: State<'_, AppState>) -> Vec<device::DeviceInfo> {
+pub fn list_devices(state: State<'_, AppState>) -> Vec<device::InputDeviceStatus> {
     state.engine.input_devices()
 }
 

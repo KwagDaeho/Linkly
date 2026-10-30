@@ -6,4 +6,6 @@ pub mod inject;
 pub mod lifecycle;
 pub mod suppress;
 pub mod hid;
+#[cfg(target_os = "macos")]
+pub mod hid_macos;
 pub mod permissions;

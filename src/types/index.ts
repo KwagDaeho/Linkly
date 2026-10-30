@@ -40,6 +40,8 @@ export type {
 export type { CatalogSelectionResult } from "./catalog";
 export type {
   DeviceInfo,
+  HidTransport,
+  InputDeviceStatus,
   ButtonMeta,
   InputEventLine,
   LastReport,

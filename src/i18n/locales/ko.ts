@@ -13,6 +13,11 @@ export const ko = {
   inputDevicesTitle: "입력 디바이스",
   inputDevicesEmpty: "감지된 입력 디바이스가 없습니다.",
   inputDeviceProfileTarget: "프로필 적용 중",
+  inputDeviceTransportUsb: "USB",
+  inputDeviceTransportBluetooth: "Bluetooth",
+  inputDeviceTransportBluetoothLowEnergy: "Bluetooth LE",
+  inputDeviceTransportBuiltIn: "내장",
+  inputDeviceTransportVirtual: "가상",
   accessibilityTitle: "손쉬운 사용 권한이 필요합니다",
   accessibilityStep1: "«권한 요청»을 클릭해주세요.",
   accessibilityStep2:

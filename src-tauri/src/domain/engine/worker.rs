@@ -12,7 +12,10 @@ use crate::domain::ball_scroll;
 use crate::domain::button_mapping::{self, ButtonMaps};
 use crate::domain::custom_mapping::{self, CustomMaps};
 use crate::domain::watch;
-use crate::domain::device::{ButtonId, ButtonState, DeviceInfo, ParsedReport};
+use crate::domain::device::{
+    device_identity_key, ButtonId, ButtonState, DeviceIdentityKey, DeviceInfo, InputDeviceStatus,
+    ParsedReport, is_wireless_huge,
+};
 use crate::domain::engine::input::{
     binding_of, fire_due_key_repeats, fire_due_long_presses, fire_due_scroll_repeats,
     handle_button_transitions, pointer_takeover_active, take_due_scroll_repeats,
@@ -22,7 +25,11 @@ use crate::domain::engine::input::{
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{Action, Profile};
 use crate::domain::remap;
-use crate::platform::hid::{collect_input_devices, find_huge, open_huge_device};
+use crate::persistence::input_device_store;
+use crate::platform::hid::{
+    build_input_device_statuses, collect_input_snapshot, find_huge, open_huge_device,
+    scan_input_snapshot,
+};
 use crate::platform::{capture, inject, permissions, suppress};
 
 pub(crate) fn run(
@@ -30,7 +37,9 @@ pub(crate) fn run(
     running: Arc<AtomicBool>,
     last_report: Arc<Mutex<Option<LastReport>>>,
     connected: Arc<Mutex<Option<DeviceInfo>>>,
-    input_devices: Arc<Mutex<Vec<DeviceInfo>>>,
+    known_input_devices: Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
+    input_devices: Arc<Mutex<Vec<InputDeviceStatus>>>,
+    huge_rf_last_input: Arc<Mutex<Option<Instant>>>,
 ) {
     let mut prev = ButtonState::default();
     let mut prev_raw = ButtonState::default();
@@ -52,9 +61,26 @@ pub(crate) fn run(
 
     while running.load(Ordering::SeqCst) {
         // Keep UI connection status even when remap is off (enumerate only).
-        *input_devices.lock() = collect_input_devices(&api);
+        let snapshot = scan_input_snapshot(&mut api);
         let device_info = find_huge(&api);
         *connected.lock() = device_info.clone();
+
+        let profile_enabled = profile.lock().enabled;
+        let profile_target = if profile_enabled {
+            device_info.as_ref()
+        } else {
+            None
+        };
+        {
+            let mut known = known_input_devices.lock();
+            let (mut statuses, dirty) =
+                build_input_device_statuses(&mut known, &snapshot, profile_target);
+            apply_wireless_huge_rf_presence(&mut statuses, device_info.as_ref(), &huge_rf_last_input);
+            *input_devices.lock() = statuses;
+            if dirty {
+                let _ = input_device_store::save_known(&known);
+            }
+        }
 
         let profile_snap = profile.lock().clone();
         ball_scroll::sync_from_profile(&profile_snap);
@@ -79,7 +105,6 @@ pub(crate) fn run(
             prev = ButtonState::default();
             suppress::clear_suppress();
             std::thread::sleep(Duration::from_millis(400));
-            let _ = api.refresh_devices();
             continue;
         }
 
@@ -90,7 +115,6 @@ pub(crate) fn run(
 
         let Some(info) = device_info else {
             std::thread::sleep(Duration::from_millis(800));
-            let _ = api.refresh_devices();
             continue;
         };
 
@@ -108,7 +132,6 @@ pub(crate) fn run(
             Err(err) => {
                 log::warn!("open huge failed: {err}");
                 std::thread::sleep(Duration::from_millis(800));
-                let _ = api.refresh_devices();
                 continue;
             }
         };
@@ -123,6 +146,7 @@ pub(crate) fn run(
         );
 
         let mut buf = [0u8; 64];
+        let mut last_input_scan = Instant::now();
         while running.load(Ordering::SeqCst) {
             let profile_snap = profile.lock().clone();
             ball_scroll::sync_from_profile(&profile_snap);
@@ -134,12 +158,25 @@ pub(crate) fn run(
                 capture::ensure_watch_tap();
             }
             if !profile_snap.enabled {
+                *huge_rf_last_input.lock() = None;
                 break;
             }
             suppress::sync_scroll_transform(true);
 
             match device.read_timeout(&mut buf, 40) {
                 Ok(0) => {
+                    if last_input_scan.elapsed() >= Duration::from_millis(800) {
+                        sync_input_device_registry(
+                            &mut api,
+                            &profile,
+                            &connected,
+                            &known_input_devices,
+                            &input_devices,
+                            &huge_rf_last_input,
+                            true,
+                        );
+                        last_input_scan = Instant::now();
+                    }
                     let now = Instant::now();
                     custom_mapping::process_os_trigger_queue(&profile_snap, &mut custom_maps);
                     button_mapping::process_os_trigger_queue(&profile_snap, &mut button_maps);
@@ -210,6 +247,9 @@ pub(crate) fn run(
                     continue;
                 }
                 Ok(n) => {
+                    if is_wireless_huge(info.vendor_id, info.product_id) {
+                        *huge_rf_last_input.lock() = Some(Instant::now());
+                    }
                     let data = &buf[..n];
                     let hex = data
                         .iter()
@@ -510,7 +550,6 @@ pub(crate) fn run(
         // Drop device → release exclusive claim so OS can take it if remap off.
         drop(device);
         std::thread::sleep(Duration::from_millis(200));
-        let _ = api.refresh_devices();
     }
 }
 
@@ -611,4 +650,67 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
         }
     }
     ball_scroll::note_huge_edges(prev, state);
+}
+
+fn sync_input_device_registry(
+    api: &mut HidApi,
+    profile: &Arc<Mutex<Profile>>,
+    connected: &Arc<Mutex<Option<DeviceInfo>>>,
+    known_input_devices: &Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
+    input_devices: &Arc<Mutex<Vec<InputDeviceStatus>>>,
+    huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
+    refresh_list: bool,
+) {
+    let snapshot = if refresh_list {
+        scan_input_snapshot(api)
+    } else {
+        collect_input_snapshot(api)
+    };
+    let device_info = find_huge(api);
+    *connected.lock() = device_info.clone();
+    let profile_enabled = profile.lock().enabled;
+    let profile_target = if profile_enabled {
+        device_info.as_ref()
+    } else {
+        None
+    };
+    let mut known = known_input_devices.lock();
+    let (mut statuses, dirty) = build_input_device_statuses(&mut known, &snapshot, profile_target);
+    apply_wireless_huge_rf_presence(&mut statuses, device_info.as_ref(), huge_rf_last_input);
+    *input_devices.lock() = statuses;
+    if dirty {
+        let _ = input_device_store::save_known(&known);
+    }
+}
+
+const WIRELESS_HUGE_RF_STALE: Duration = Duration::from_secs(45);
+
+fn apply_wireless_huge_rf_presence(
+    statuses: &mut [InputDeviceStatus],
+    device_info: Option<&DeviceInfo>,
+    huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
+) {
+    let Some(info) = device_info else {
+        return;
+    };
+    if !is_wireless_huge(info.vendor_id, info.product_id) {
+        return;
+    }
+    let recent = huge_rf_last_input
+        .lock()
+        .map(|t| t.elapsed() < WIRELESS_HUGE_RF_STALE)
+        .unwrap_or(false);
+    if !recent {
+        return;
+    }
+    let key = device_identity_key(info);
+    for row in statuses.iter_mut() {
+        if (row.vendor_id, row.product_id) != key {
+            continue;
+        }
+        row.connected = true;
+        if row.active_transport.is_none() {
+            row.active_transport = Some(row.transport);
+        }
+    }
 }

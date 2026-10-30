@@ -1,15 +1,14 @@
 import { Panel, Muted } from "@/components/ui";
 import { useInputDevices } from "@/hooks/useInputDevices";
 import { usePrefs } from "@/hooks/prefs";
-import { useSession } from "@/hooks/session";
 import { hexPid } from "@/utils/format";
+import { buildTransportChips } from "@/utils/deviceTransportDisplay";
 import { cx } from "@/utils/cx";
 
 import * as styles from "./ConnectedInputDevices.css";
 
 export const ConnectedInputDevices = () => {
   const { i18n } = usePrefs();
-  const { connected } = useSession();
   const { devices, error } = useInputDevices();
 
   return (
@@ -21,24 +20,55 @@ export const ConnectedInputDevices = () => {
       ) : (
         <ul className={styles.list}>
           {devices.map((device) => {
-            const active =
-              connected !== null &&
-              connected.vendorId === device.vendorId &&
-              connected.productId === device.productId &&
-              connected.productName === device.productName;
-            const id = `${device.path}-${device.vendorId}-${device.productId}`;
+            const id = `${device.vendorId}-${device.productId}`;
+            const chips = buildTransportChips(
+              device.knownTransports ?? [],
+              device.activeTransport,
+              i18n,
+            );
+            const showProfileTarget =
+              device.profileTarget && !device.isHuge;
+            const detailParts = [
+              device.manufacturer,
+              `${hexPid(device.vendorId)}:${hexPid(device.productId)}`,
+              showProfileTarget ? i18n.inputDeviceProfileTarget : null,
+            ].filter(Boolean);
             return (
               <li key={id} className={styles.item}>
                 <span
-                  className={cx(styles.dot, active && styles.dotOn)}
+                  className={cx(styles.dot, device.connected && styles.dotOn)}
                   aria-hidden
                 />
                 <div className={styles.meta}>
                   <strong className={styles.name}>{device.productName}</strong>
                   <Muted as="span" className={styles.detail}>
-                    {device.manufacturer} · {hexPid(device.vendorId)}:
-                    {hexPid(device.productId)}
-                    {active ? ` · ${i18n.inputDeviceProfileTarget}` : ""}
+                    {detailParts.join(" · ")}
+                    {chips.length > 0 ? (
+                      <>
+                        {" · "}
+                        <span className={styles.transportRow}>
+                          {chips.map((chip, index) => (
+                            <span key={chip.transport}>
+                              {index > 0 ? (
+                                <span className={styles.transportSep}>
+                                  {" / "}
+                                </span>
+                              ) : null}
+                              <span
+                                className={cx(
+                                  styles.transportChip,
+                                  chip.active
+                                    ? styles.transportActive
+                                    : styles.transportInactive,
+                                )}
+                              >
+                                {chip.label}
+                              </span>
+                            </span>
+                          ))}
+                        </span>
+                      </>
+                    ) : null}
                   </Muted>
                 </div>
               </li>

@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { invoke } from "@tauri-apps/api/core";
-import type { DeviceInfo } from "@/types";
+import type { InputDeviceStatus } from "@/types";
 
-const POLL_MS = 5000;
+const POLL_MS = 1000;
 
 export const useInputDevices = () => {
-  const [devices, setDevices] = useState<DeviceInfo[]>([]);
+  const [devices, setDevices] = useState<InputDeviceStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -14,7 +14,7 @@ export const useInputDevices = () => {
 
     const refresh = async () => {
       try {
-        const list = await invoke<DeviceInfo[]>("list_devices");
+        const list = await invoke<InputDeviceStatus[]>("list_devices");
         if (!cancelled) {
           setDevices(list);
           setError(null);

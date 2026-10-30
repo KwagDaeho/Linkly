@@ -75,7 +75,55 @@ impl ButtonId {
     }
 }
 
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum HidTransport {
+    #[default]
+    Unknown,
+    Usb,
+    Bluetooth,
+    BluetoothLowEnergy,
+    BuiltIn,
+    Virtual,
+}
+
+impl HidTransport {
+    pub fn from_registry_str(raw: &str) -> Self {
+        let norm: String = raw
+            .chars()
+            .filter(|c| !c.is_whitespace() && *c != '-')
+            .flat_map(|c| c.to_lowercase())
+            .collect();
+        match norm.as_str() {
+            "usb" => Self::Usb,
+            "bluetooth" => Self::Bluetooth,
+            "bluetoothlowenergy" => Self::BluetoothLowEnergy,
+            "builtin" => Self::BuiltIn,
+            "fake" | "virtual" => Self::Virtual,
+            _ => Self::Unknown,
+        }
+    }
+
+    pub fn indicates_physical_link(self) -> bool {
+        matches!(
+            self,
+            Self::Usb | Self::Bluetooth | Self::BluetoothLowEnergy
+        )
+    }
+
+    pub fn display_order(self) -> u8 {
+        match self {
+            Self::Usb => 0,
+            Self::BluetoothLowEnergy => 1,
+            Self::Bluetooth => 2,
+            Self::BuiltIn => 3,
+            Self::Unknown => 4,
+            Self::Virtual => 5,
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DeviceInfo {
     pub vendor_id: u16,
@@ -84,10 +132,143 @@ pub struct DeviceInfo {
     pub manufacturer: String,
     pub path: String,
     pub is_huge: bool,
+    #[serde(default)]
+    pub transport: HidTransport,
+    /// Physical link types ever seen for this VID:PID (USB / Bluetooth / BLE).
+    #[serde(default)]
+    pub known_transports: Vec<HidTransport>,
 }
 
 pub fn is_huge(vendor_id: u16, product_id: u16) -> bool {
     vendor_id == ELECOM_VID && HUGE_PIDS.contains(&product_id)
+}
+
+/// 2.4 GHz dongle (`M-HT1DRBK`); USB receiver stays enumerated when the ball power is off.
+pub fn is_wireless_huge(vendor_id: u16, product_id: u16) -> bool {
+    vendor_id == ELECOM_VID && matches!(product_id, 0x010d | 0x011c)
+}
+
+pub type DeviceIdentityKey = (u16, u16);
+
+pub fn device_identity_key(info: &DeviceInfo) -> DeviceIdentityKey {
+    (info.vendor_id, info.product_id)
+}
+
+fn product_name_rank(name: &str) -> i32 {
+    let n = name.trim();
+    if n.is_empty() {
+        return -100;
+    }
+    let lower = n.to_ascii_lowercase();
+    if lower == "unknown device" {
+        return -50;
+    }
+    const GENERIC: &[&str] = &[
+        "gaming kb",
+        "gaming keyboard",
+        "keyboard",
+        "mouse",
+        "wireless mouse",
+        "usb receiver",
+        "2.4g receiver",
+    ];
+    if GENERIC.iter().any(|g| lower == *g) {
+        return 0;
+    }
+    if n.contains('-') && n.chars().any(|c| c.is_ascii_digit()) {
+        return 30;
+    }
+    if n.len() >= 6 {
+        return 10;
+    }
+    5
+}
+
+/// Pick the more specific marketing / model name when the same VID:PID reports different strings.
+pub fn preferred_product_name(a: &str, b: &str) -> String {
+    let ra = product_name_rank(a);
+    let rb = product_name_rank(b);
+    if ra > rb {
+        a.to_string()
+    } else if rb > ra {
+        b.to_string()
+    } else if a.len() >= b.len() {
+        a.to_string()
+    } else {
+        b.to_string()
+    }
+}
+
+pub fn merge_known_transports(a: &[HidTransport], b: &[HidTransport]) -> Vec<HidTransport> {
+    use std::collections::HashSet;
+    let mut set = HashSet::new();
+    for t in a.iter().chain(b.iter()) {
+        if t.indicates_physical_link() {
+            set.insert(*t);
+        }
+    }
+    let mut out: Vec<_> = set.into_iter().collect();
+    out.sort_by_key(|t| t.display_order());
+    out
+}
+
+pub fn merge_device_info(prev: &DeviceInfo, incoming: &DeviceInfo) -> DeviceInfo {
+    let product_name = preferred_product_name(&prev.product_name, &incoming.product_name);
+    let manufacturer = if incoming.manufacturer.trim().is_empty()
+        || incoming.manufacturer.eq_ignore_ascii_case("unknown")
+    {
+        prev.manufacturer.clone()
+    } else if prev.manufacturer.trim().is_empty()
+        || prev.manufacturer.eq_ignore_ascii_case("unknown")
+    {
+        incoming.manufacturer.clone()
+    } else {
+        incoming.manufacturer.clone()
+    };
+    let known_transports = merge_known_transports(
+        &merge_known_transports(&prev.known_transports, &incoming.known_transports),
+        std::slice::from_ref(&incoming.transport),
+    );
+    DeviceInfo {
+        vendor_id: incoming.vendor_id,
+        product_id: incoming.product_id,
+        product_name,
+        manufacturer,
+        path: incoming.path.clone(),
+        is_huge: prev.is_huge || incoming.is_huge,
+        transport: incoming.transport,
+        known_transports,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preferred_name_favors_model_number() {
+        assert_eq!(
+            preferred_product_name("Gaming KB", "ML-981"),
+            "ML-981"
+        );
+    }
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct InputDeviceStatus {
+    pub vendor_id: u16,
+    pub product_id: u16,
+    pub product_name: String,
+    pub manufacturer: String,
+    pub path: String,
+    pub is_huge: bool,
+    /// Active physical link when `connected`; otherwise last seen (legacy / fallback).
+    pub transport: HidTransport,
+    pub connected: bool,
+    pub profile_target: bool,
+    pub active_transport: Option<HidTransport>,
+    pub known_transports: Vec<HidTransport>,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]

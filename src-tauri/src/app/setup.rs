@@ -1,4 +1,5 @@
 use crate::app::state::AppState;
+use crate::constants::PRODUCT_NAME;
 use crate::domain::watch;
 use crate::platform::capture;
 use tauri::{
@@ -43,10 +44,16 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     capture::register_app_handle(app.handle().clone());
     let profile = app.state::<AppState>().engine.profile();
-    if watch::needs_os_event_watch(&profile) {
+    if watch::needs_os_event_watch(&profile) || crate::platform::input_monitor::enabled() {
         capture::ensure_watch_tap();
     }
-    let show_i = MenuItem::with_id(app, "show", "Open Elecom Huge Custom", true, None::<&str>)?;
+    let show_i = MenuItem::with_id(
+        app,
+        "show",
+        &format!("Open {PRODUCT_NAME}"),
+        true,
+        None::<&str>,
+    )?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
@@ -57,7 +64,7 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let _tray = TrayIconBuilder::with_id("main")
         .icon(icon.clone())
         .menu(&menu)
-        .tooltip("Elecom Huge Custom")
+        .tooltip(PRODUCT_NAME)
         .on_menu_event(|app, event| match event.id.as_ref() {
             "quit" => {
                 app.exit(0);

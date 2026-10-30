@@ -5,21 +5,20 @@ import {
   useMemo,
   useRef,
 } from "react";
-import { ensureGestureCanvasChannel } from "@/domain/gesture";
 import {
-  applyComboTriggerCapture,
   applyKeyCapture,
   captureModeOf,
   captureSessionFor,
   resolveActivatorCapture,
 } from "@/domain/capture";
+import { comboFromDraft } from "@/domain/profile";
 import * as tauri from "@/services/tauri";
 import type {
   Activator,
   ActivatorCapturePayload,
   BallScrollSlot,
-  ComboTriggerCapturePayload,
   EditorMode,
+  Profile,
 } from "@/types";
 
 const blockBrowserKeyEvent = (event: Event) => {
@@ -36,18 +35,21 @@ const blockBrowserKeyEvent = (event: Event) => {
 export const useKeyCapture = (
   editor: EditorMode | null,
   setEditor: Dispatch<SetStateAction<EditorMode | null>>,
+  profile: Profile | null,
   onActivatorAssigned: (slot: BallScrollSlot, activator: Activator) => boolean,
-  onGestureActivatorAssigned: (
+  onComboAssigned: (
     entryId: string,
-    activator: Activator,
+    combo: ReturnType<typeof comboFromDraft>,
   ) => boolean,
 ) => {
   const editorRef = useRef(editor);
   editorRef.current = editor;
+  const profileRef = useRef(profile);
+  profileRef.current = profile;
   const onActivatorAssignedRef = useRef(onActivatorAssigned);
   onActivatorAssignedRef.current = onActivatorAssigned;
-  const onGestureActivatorAssignedRef = useRef(onGestureActivatorAssigned);
-  onGestureActivatorAssignedRef.current = onGestureActivatorAssigned;
+  const onComboAssignedRef = useRef(onComboAssigned);
+  onComboAssignedRef.current = onComboAssigned;
   const captureMode = captureModeOf(editor);
   const captureSession = useMemo(
     () => captureSessionFor(captureMode),
@@ -55,9 +57,6 @@ export const useKeyCapture = (
   );
   useEffect(() => {
     void tauri.applyCaptureSession(captureSession);
-    if (captureMode === "gesture_record") {
-      void ensureGestureCanvasChannel();
-    }
     return () => {
       void tauri.applyCaptureSession(tauri.CAPTURE_SESSION_OFF);
     };
@@ -99,31 +98,7 @@ export const useKeyCapture = (
           });
           unsubs.push(unChord);
         }
-        if (captureMode === "combo_capture") {
-          const unCombo = await listen<ComboTriggerCapturePayload>(
-            "combo-trigger-capture",
-            (event) => {
-              if (cancelled) {
-                return;
-              }
-              const activeEditor = editorRef.current;
-              if (activeEditor === null) {
-                return;
-              }
-              const nextEditor = applyComboTriggerCapture(
-                activeEditor,
-                event.payload,
-              );
-              if (nextEditor === null) {
-                setEditor(null);
-              } else if (nextEditor !== activeEditor) {
-                setEditor(nextEditor);
-              }
-            },
-          );
-          unsubs.push(unCombo);
-        }
-        if (captureMode === "ball_scroll") {
+        if (captureMode === "ball_scroll" || captureMode === "combo_trigger") {
           const unAct = await listen<ActivatorCapturePayload>(
             "activator-capture",
             (event) => {
@@ -150,7 +125,7 @@ export const useKeyCapture = (
                   if (
                     previousEditor === null ||
                     (previousEditor.kind !== "ball_scroll_activator" &&
-                      previousEditor.kind !== "gesture_hold_activator")
+                      previousEditor.kind !== "custom_combo_activator")
                   ) {
                     return previousEditor;
                   }
@@ -158,10 +133,14 @@ export const useKeyCapture = (
                 });
                 return;
               }
-              if (result.kind === "assign_gesture") {
-                const accepted = onGestureActivatorAssignedRef.current(
+              if (result.kind === "assign_combo") {
+                const combo = comboFromDraft(result.chord, result.activator);
+                if (combo === null) {
+                  return;
+                }
+                const accepted = onComboAssignedRef.current(
                   result.entryId,
-                  result.activator,
+                  combo,
                 );
                 if (accepted) {
                   setEditor(null);

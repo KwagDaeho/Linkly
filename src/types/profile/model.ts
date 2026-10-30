@@ -52,26 +52,11 @@ export type ResolvedBallScrollSettings = {
 export type ComboActivator = {
   modifiers: string[];
   keys: string[];
-  button: ButtonId;
+  /** Legacy HUGE-only trigger when `trigger` is absent. */
+  button?: ButtonId;
+  /** Any captured input (key, mouse N, HUGE, …). */
+  trigger?: Activator;
 };
-
-export type GesturePoint = { x: number; y: number };
-
-export type GestureMappingEntry = {
-  id: string;
-  holdActivator: Activator | null;
-  /** 8-way directions (0=E … 7=SE). */
-  templateDirections?: number[];
-  /** Normalized segment length ratios (sum ≈ 1). */
-  templateSegmentLengths?: number[];
-  templatePathLength?: number;
-  /** Legacy point templates — migrated to vectors on load. */
-  template?: GesturePoint[];
-  templatePreview?: GesturePoint[];
-  templateCornerCount?: number;
-  templateBendSignature?: number;
-  minScore?: number;
-} & ButtonBinding;
 
 export type CustomMappingEntry = {
   id: string;
@@ -95,7 +80,6 @@ export type Profile = {
   };
   ballScroll?: BallScrollSettings;
   customMappings?: CustomMappingEntry[];
-  gestureMappings?: GestureMappingEntry[];
   enabled: boolean;
   /** Launch with window closed; stay in menu bar (like Cmd+W). */
   startMinimized?: boolean;

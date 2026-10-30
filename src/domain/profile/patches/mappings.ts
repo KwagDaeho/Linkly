@@ -11,7 +11,6 @@ import { asBinding } from "@/domain/profile";
 import { customMappingsOf } from "@/domain/profile";
 import { resolveBindingFlags } from "@/domain/profile";
 import { withButtonSlot } from "./buttons";
-import { withGestureMappingSlot } from "./gestures";
 
 export const withMappingSlot = (
   profile: Profile,
@@ -19,9 +18,6 @@ export const withMappingSlot = (
   slot: ActionSlot,
   action: Action,
 ): Profile => {
-  if (target.kind === "gesture") {
-    return withGestureMappingSlot(profile, target, slot, action);
-  }
   if (target.kind === "button") {
     return withButtonSlot(profile, target.id, slot, action);
   }

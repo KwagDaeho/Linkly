@@ -6,7 +6,6 @@ mod mouse;
 mod overlay_panel;
 mod pointer;
 mod cursor_badge;
-mod gesture_record_overlay;
 
 pub use action::{
     default_mouse_button, press_action, press_action_forced, release_action, release_action_forced,
@@ -22,18 +21,17 @@ pub use pointer::{
     end_idle_ball_scroll, expire_post_unpin_if_due, expire_restored_cursor_if_due,
     expire_restore_sync_if_due, finish_restore_sync, keep_pinned_cursor,
     maintain_post_unpin_cursor, maintain_restored_cursor, move_by, pin_cursor,
-    pin_cursor_gesture, post_unpin_active, release_ball_scroll_pin,
+    post_unpin_active, release_ball_scroll_pin,
     release_ball_scroll_pin_for_quit, restore_cursor_active, restore_pinned_cursor,
     restore_sync_pin, scroll_ball, scroll_by_units_ex, scroll_notches_ex, set_shared_pointer_mode,
     shared_pointer_mode, sync_cursor_from_system, tick_restore_cursor, POST_UNPIN_BALL_IGNORE,
 };
-pub use gesture_record_overlay::{
-    append_cursor_point as append_gesture_record_cursor_point,
-    append_screen_point as append_gesture_record_screen_point,
-    clear_stroke as clear_gesture_record_overlay_stroke,
-    set_active as set_gesture_record_overlay_active,
-    shutdown as shutdown_gesture_record_overlay,
-};
+
+/// Synchronous overlay teardown during app exit (must run on the main thread).
+pub fn tear_down_overlays_on_main() {
+    pointer::release_ball_scroll_pin_for_quit();
+    cursor_badge::tear_down_on_main();
+}
 // Extra scroll helpers kept public for API parity with the former monolith.
 #[allow(unused_imports)]
 pub use pointer::{

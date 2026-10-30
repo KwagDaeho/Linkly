@@ -2,7 +2,6 @@ import { CHORD_MODIFIERS } from "@/domain/profile";
 import type {
   ActivatorCapturePayload,
   ActivatorCaptureResult,
-  ComboTriggerCapturePayload,
   EditorMode,
   KeyCapturePayload,
 } from "@/types";
@@ -39,46 +38,40 @@ export const applyKeyCapture = (
   }
   if (
     captureMode === "combo_capture" &&
-    editor.kind === "custom_combo_activator"
+    editor.kind === "custom_combo_activator" &&
+    editor.phase === "capture"
   ) {
     if (escape) return null;
     if (keys.length === 0) return editor;
-    if (editor.phase !== "capture") return editor;
+    const hasMain = keys.some((k) => !CHORD_MODIFIERS.has(k));
     return {
       ...editor,
       draftChord: keys,
-      draftButton: null,
+      draftTrigger: null,
+      phase: hasMain ? "trigger" : "capture",
       rejected: null,
     };
   }
   return editor;
 };
-export const applyComboTriggerCapture = (
-  editor: EditorMode,
-  payload: ComboTriggerCapturePayload,
-): EditorMode | null => {
-  const { escape, combo } = payload;
-  if (escape) return null;
-  if (combo === null || editor.kind !== "custom_combo_activator") return editor;
-  const chord = [...combo.modifiers, ...combo.keys];
-  return {
-    ...editor,
-    draftChord: chord,
-    draftButton: combo.button,
-    phase: "confirm",
-    rejected: null,
-  };
-};
 export const resolveActivatorCapture = (
   editor: EditorMode,
   payload: ActivatorCapturePayload,
 ): ActivatorCaptureResult | null => {
-  if (editor.kind === "gesture_hold_activator") {
+  if (
+    editor.kind === "custom_combo_activator" &&
+    editor.phase === "trigger"
+  ) {
     const { escape, rejected, activator } = payload;
     if (escape) return { kind: "close" };
     if (rejected !== null) return { kind: "reject", rejected };
     if (activator !== null) {
-      return { kind: "assign_gesture", entryId: editor.entryId, activator };
+      return {
+        kind: "assign_combo",
+        entryId: editor.entryId,
+        activator,
+        chord: editor.draftChord,
+      };
     }
     return null;
   }

@@ -1,10 +1,10 @@
 #!/bin/zsh
-# Monitors the installed DMG app (elecom-huge) and accumulates logs for post-mortem analysis.
+# Monitors Linkly (or legacy Elecom Huge Custom) and accumulates logs for post-mortem analysis.
 #   scripts/monitor-app.sh stop
 #   scripts/monitor-app.sh status
 #   scripts/monitor-app.sh tail    # follow events log
 #
-# Logs: ~/Library/Logs/Elecom Huge Custom/monitor/
+# Logs: ~/Library/Logs/Linkly/monitor/
 #   metrics.csv     — app CPU/RSS (1/min)
 #   sys-metrics.csv — system CPU/load/memory (1/min)
 
@@ -16,15 +16,39 @@ set -uo pipefail
 setopt null_glob 2>/dev/null || true
 unsetopt typeset_verbose 2>/dev/null || true
 
-LOG_DIR="$HOME/Library/Logs/Elecom Huge Custom/monitor"
+LOG_DIR="$HOME/Library/Logs/Linkly/monitor"
 METRICS="$LOG_DIR/metrics.csv"
 SYS_METRICS="$LOG_DIR/sys-metrics.csv"
 EVENTS="$LOG_DIR/events.log"
 FORENSICS="$LOG_DIR/forensics.log"
 PIDFILE="$LOG_DIR/monitor.pid"
-APP_BIN="/Applications/Elecom Huge Custom.app/Contents/MacOS/elecom-huge"
-PANIC="$HOME/Library/Logs/Elecom Huge Custom/rust-panic.log"
+APP_BIN="/Applications/Linkly.app/Contents/MacOS/linkly"
+APP_BIN_LEGACY="/Applications/Elecom Huge Custom.app/Contents/MacOS/elecom-huge"
+PANIC="$HOME/Library/Logs/Linkly/rust-panic.log"
+PANIC_LEGACY="$HOME/Library/Logs/Elecom Huge Custom/rust-panic.log"
 CRASH_DIR="$HOME/Library/Logs/DiagnosticReports"
+
+app_pid() {
+  local pid
+  pid=$(pgrep -x linkly 2>/dev/null | head -1)
+  if [[ -n "$pid" ]]; then
+    echo "$pid"
+    return 0
+  fi
+  pgrep -x elecom-huge 2>/dev/null | head -1
+}
+
+app_bundle_version() {
+  local plist
+  for plist in \
+    "/Applications/Linkly.app/Contents/Info.plist" \
+    "/Applications/Elecom Huge Custom.app/Contents/Info.plist"; do
+    if [[ -f "$plist" ]]; then
+      plutil -extract CFBundleShortVersionString raw -o - "$plist" 2>/dev/null && return 0
+    fi
+  done
+  echo "?"
+}
 
 INTERVAL=10
 METRIC_EVERY=6          # every 6 ticks ≈ 1 min
@@ -105,7 +129,7 @@ capture_forensics() {
   {
     echo ""
     echo "========== $(date '+%Y-%m-%d %H:%M:%S') — $reason =========="
-    echo "app=$APP_BIN"
+    echo "app=$APP_BIN (legacy=$APP_BIN_LEGACY)"
     echo "pid=${pid:-unknown}"
     if [[ -n "$pid" ]]; then
       ps -p "$pid" -o pid,rss,vsz,pcpu,pmem,etime,state,command 2>/dev/null
@@ -120,12 +144,12 @@ capture_forensics() {
     system_profiler SPUSBDataType 2>/dev/null | grep -iE "elecom|huge|056e" -A2 2>/dev/null | head -20 || echo "(none matched)"
     echo "--- crash reports ---"
     local -a cr
-    cr=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'elecom-huge*' -o -iname 'Elecom*Huge*' \) 2>/dev/null)}")
+    cr=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -name 'elecom-huge*' -o -iname 'Elecom*Huge*' -o -iname 'Linkly*' \) 2>/dev/null)}")
     if (( ${#cr} )); then ls -lt "${cr[@]}" 2>/dev/null | head -5; else echo "(none)"; fi
     echo "--- rust-panic.log ---"
-    if [[ -f "$PANIC" ]]; then tail -30 "$PANIC"; else echo "(none)"; fi
+    if [[ -f "$PANIC" ]]; then tail -30 "$PANIC"; elif [[ -f "$PANIC_LEGACY" ]]; then tail -30 "$PANIC_LEGACY"; else echo "(none)"; fi
     echo "--- unified log (last 2 min) ---"
-    log show --predicate 'process == "elecom-huge"' --last 2m 2>/dev/null | tail -50 || echo "(unavailable)"
+    log show --predicate 'process == "linkly" || process == "elecom-huge"' --last 2m 2>/dev/null | tail -50 || echo "(unavailable)"
     capture_system_forensics
   } >> "$FORENSICS" 2>&1
   event "FORENSICS $reason → $FORENSICS"
@@ -147,17 +171,15 @@ run_loop() {
     rotate_if_large "$EVENTS"
     tick=$(( tick + 1 ))
 
-    local bundle=""
-    if [[ -f "/Applications/Elecom Huge Custom.app/Contents/Info.plist" ]]; then
-      bundle=$(plutil -extract CFBundleShortVersionString raw -o - \
-        "/Applications/Elecom Huge Custom.app/Contents/Info.plist" 2>/dev/null || echo "?")
-    fi
+    local bundle
+    bundle=$(app_bundle_version)
     if [[ -n "$bundle" && "$bundle" != "$last_bundle" ]]; then
       event "APP_VERSION $bundle"
       last_bundle=$bundle
     fi
 
-    local pid=$(pgrep -x elecom-huge 2>/dev/null | head -1)
+    local pid
+    pid=$(app_pid)
 
     if [[ -z "$pid" ]]; then
       if [[ "$was_running" -eq 1 ]]; then
@@ -262,19 +284,21 @@ run_loop() {
       last_rss=$rss_mb
     fi
 
-    if [[ -f "$PANIC" ]]; then
-      local psz=$(wc -c < "$PANIC" | tr -d ' ')
-      if (( psz > last_panic_size )); then
-        event "RUST_PANIC updated ${psz} bytes"
-        capture_forensics "rust_panic" "${pid:-}"
-        last_panic_size=$psz
+    for panic_file in "$PANIC" "$PANIC_LEGACY"; do
+      if [[ -f "$panic_file" ]]; then
+        local psz=$(wc -c < "$panic_file" | tr -d ' ')
+        if (( psz > last_panic_size )); then
+          event "RUST_PANIC updated ${psz} bytes ($panic_file)"
+          capture_forensics "rust_panic" "${pid:-}"
+          last_panic_size=$psz
+        fi
       fi
-    fi
+    done
 
     local crash=""
     if [[ -d "$CRASH_DIR" ]]; then
       local -a crash_files
-      crash_files=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'elecom-huge*' -o -iname 'Elecom*Huge*' \) 2>/dev/null)}")
+      crash_files=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -name 'elecom-huge*' -o -iname 'Elecom*Huge*' -o -iname 'Linkly*' \) 2>/dev/null)}")
       if (( ${#crash_files} )); then
         crash=$(ls -t "${crash_files[@]}" 2>/dev/null | head -1)
       fi
@@ -332,7 +356,8 @@ cmd_status() {
   else
     echo "monitor: not running"
   fi
-  local apid=$(pgrep -x elecom-huge 2>/dev/null | head -1)
+  local apid
+  apid=$(app_pid)
   if [[ -n "$apid" ]]; then
     ps -p "$apid" -o pid,pcpu,rss,etime,command 2>/dev/null
   else

@@ -2,10 +2,9 @@ import { style } from "@vanilla-extract/css";
 
 export const root = style({
   display: "flex",
-  gap: 8,
+  gap: 10,
   flexWrap: "wrap",
 });
-
 export const wrap = style({
   flexWrap: "wrap",
 });

@@ -9,7 +9,6 @@ pub struct CaptureSession {
     pub combo_trigger: bool,
     pub activator_capture: bool,
     pub ui_modal: bool,
-    pub gesture_record: bool,
 }
 
 impl CaptureSession {
@@ -18,7 +17,6 @@ impl CaptureSession {
         combo_trigger: false,
         activator_capture: false,
         ui_modal: false,
-        gesture_record: false,
     };
 }
 

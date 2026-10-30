@@ -5,14 +5,8 @@ import { useProfileMutations } from "./useProfileMutations";
 export const useProfileState = (): ProfileState => {
   const { profile, catalog, bootError, lifecycle, mutateProfile } =
     useProfileLoader();
-  const {
-    mappings,
-    customMappings,
-    gestureMappings,
-    pointer,
-    ballScroll,
-    catalogSelection,
-  } = useProfileMutations(profile, mutateProfile);
+  const { mappings, customMappings, pointer, ballScroll, catalogSelection } =
+    useProfileMutations(profile, mutateProfile);
   return {
     profile,
     catalog,
@@ -20,7 +14,6 @@ export const useProfileState = (): ProfileState => {
     lifecycle,
     mappings,
     customMappings,
-    gestureMappings,
     pointer,
     ballScroll,
     catalogSelection,

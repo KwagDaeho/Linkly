@@ -7,7 +7,6 @@ import type {
   Activator,
   BallScrollSettings,
   BallScrollSlot,
-  ButtonId,
   ComboActivator,
   ResolvedBallScrollSettings,
 } from "@/types";
@@ -71,13 +70,13 @@ export const activatorsEqual = (
 
 export const comboFromDraft = (
   chord: string[],
-  button: ButtonId,
+  trigger: Activator,
 ): ComboActivator | null => {
   const { modifiers, keys } = splitChord(chord);
   if (modifiers.length === 0 && keys.length === 0) {
     return null;
   }
-  return { modifiers, keys, button };
+  return { modifiers, keys, trigger };
 };
 
 export const ballScrollActivatorForSlot = (

@@ -1,12 +1,12 @@
 [package]
-name = "elecom-huge"
+name = "linkly"
 version = "1.3.2"
-description = "Custom software for ELECOM HUGE trackball"
+description = "Linkly — macOS input remapper"
 authors = ["kwagdaeho"]
 edition = "2021"
 
 [lib]
-name = "elecom_huge_lib"
+name = "linkly_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

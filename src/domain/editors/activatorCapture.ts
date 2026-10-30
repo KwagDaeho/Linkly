@@ -6,7 +6,6 @@ export const activatorRejectedMessage = (
     left: string;
     tilt: string;
     ball_scroll?: string;
-    gesture?: string;
   },
 ): string | null => {
   if (rejected === "left") {
@@ -17,9 +16,6 @@ export const activatorRejectedMessage = (
   }
   if (rejected === "ball_scroll" && labels.ball_scroll) {
     return labels.ball_scroll;
-  }
-  if (rejected === "gesture" && labels.gesture) {
-    return labels.gesture;
   }
   return null;
 };

@@ -1,6 +1,7 @@
-import { hugeButtonLabel } from "./activators";
+import { formatActivatorLabel } from "@/domain/input";
 import { formatKeyChord } from "./keys";
 import type { ComboEditorState, Lang } from "@/types";
+
 export const buildComboPreview = (
   editor: ComboEditorState,
   lang: Lang,
@@ -10,11 +11,11 @@ export const buildComboPreview = (
     editor.draftChord.length > 0
       ? formatKeyChord(editor.draftChord, lang)
       : null;
-  const buttonPreview =
-    editor.draftButton !== null
-      ? hugeButtonLabel(editor.draftButton, lang)
+  const triggerPreview =
+    editor.draftTrigger !== null
+      ? formatActivatorLabel(editor.draftTrigger, lang)
       : null;
-  const previewParts = [chordPreview, buttonPreview].filter(
+  const previewParts = [chordPreview, triggerPreview].filter(
     (part): part is string => part !== null,
   );
   if (previewParts.length === 0) {
@@ -22,6 +23,7 @@ export const buildComboPreview = (
   }
   return previewParts.join(" + ");
 };
+
 export const buildComboErrorMessage = (
   rejected: ComboEditorState["rejected"],
   labels: {

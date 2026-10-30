@@ -1,8 +1,6 @@
 use crate::domain::device::ButtonId;
 use crate::domain::profile::{Activator, ComboActivator};
 use crate::platform::app_bus;
-use serde::Serialize;
-
 use super::session;
 use super::types::{ActivatorCapture, CaptureChord, ComboTriggerCapture};
 
@@ -55,34 +53,6 @@ pub fn emit_activator_from_hid(activator: Activator) {
     emit_activator_choice(activator);
 }
 
-#[derive(Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct GestureCanvasPhase {
-    phase: String,
-}
-
-pub fn emit_gesture_canvas_phase(phase: &str) {
-    if !session::gesture_record_active() {
-        return;
-    }
-    if phase == "start" {
-        session::set_gesture_ball_stroke_active(true);
-        #[cfg(target_os = "macos")]
-        {
-            crate::platform::inject::clear_gesture_record_overlay_stroke();
-            crate::platform::inject::append_gesture_record_cursor_point();
-        }
-    } else if phase == "end" {
-        session::set_gesture_ball_stroke_active(false);
-    }
-    app_bus::emit(
-        "gesture-canvas-phase",
-        GestureCanvasPhase {
-            phase: phase.to_string(),
-        },
-    );
-}
-
 pub fn emit_combo_trigger_huge(button: ButtonId) {
     if !session::combo_trigger_capture_active() {
         return;
@@ -91,10 +61,7 @@ pub fn emit_combo_trigger_huge(button: ButtonId) {
     {
         let (modifiers, keys) = super::macos::combo_held_parts();
         if modifiers.is_empty() && keys.is_empty() {
-            if session::ui_modal_active()
-                && !session::gesture_record_active()
-                && button == ButtonId::Left
-            {
+            if session::ui_modal_active() && button == ButtonId::Left {
                 crate::platform::inject::click_at_cursor();
             }
             return;
@@ -107,7 +74,8 @@ pub fn emit_combo_trigger_huge(button: ButtonId) {
                 combo: Some(ComboActivator {
                     modifiers,
                     keys,
-                    button,
+                    button: Some(button),
+                    trigger: Some(Activator::Huge { button }),
                 }),
             },
         );

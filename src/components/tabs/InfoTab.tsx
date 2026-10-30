@@ -1,8 +1,8 @@
 import {
   DeviceStatus,
+  InputEventViewerPanel,
   LaunchSettings,
   PermissionPanel,
-  ProbePanel,
 } from "@/components/info";
 import { useSession } from "@/hooks";
 export const InfoTab = () => {
@@ -10,9 +10,9 @@ export const InfoTab = () => {
   return (
     <>
       <DeviceStatus />
+      <InputEventViewerPanel />
       {!trusted && <PermissionPanel />}
       <LaunchSettings />
-      <ProbePanel />
     </>
   );
 };

@@ -4,17 +4,15 @@ export type CaptureMode =
   | "off"
   | "custom_key"
   | "combo_capture"
-  | "combo_confirm"
   | "macro"
   | "ball_scroll"
-  | "gesture_record";
+  | "combo_trigger";
 
 export type CaptureSession = {
   keyCapture: boolean;
   comboTrigger: boolean;
   activatorCapture: boolean;
   uiModal: boolean;
-  gestureRecord: boolean;
 };
 
 export type KeyCapturePayload = { keys: string[]; escape: boolean };
@@ -35,4 +33,9 @@ export type ActivatorCaptureResult =
   | { kind: "close" }
   | { kind: "reject"; rejected: string }
   | { kind: "assign"; slot: BallScrollSlot; activator: Activator }
-  | { kind: "assign_gesture"; entryId: string; activator: Activator };
+  | {
+      kind: "assign_combo";
+      entryId: string;
+      activator: Activator;
+      chord: string[];
+    };

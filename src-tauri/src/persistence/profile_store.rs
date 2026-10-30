@@ -1,15 +1,27 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::constants::{APP_CONFIG_DIR, PROFILE_FILENAME};
+use crate::constants::{APP_CONFIG_DIR, LEGACY_APP_CONFIG_DIR, PROFILE_FILENAME};
 use crate::domain::profile::Profile;
 
+fn config_root() -> Result<PathBuf, String> {
+    dirs::config_dir().ok_or_else(|| "Could not resolve config directory".to_string())
+}
+
 pub fn profile_path() -> Result<PathBuf, String> {
-    let dir = dirs::config_dir()
-        .ok_or_else(|| "Could not resolve config directory".to_string())?
-        .join(APP_CONFIG_DIR);
+    let base = config_root()?;
+    let dir = base.join(APP_CONFIG_DIR);
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
-    Ok(dir.join(PROFILE_FILENAME))
+    let path = dir.join(PROFILE_FILENAME);
+    if !path.exists() {
+        let legacy = base
+            .join(LEGACY_APP_CONFIG_DIR)
+            .join(PROFILE_FILENAME);
+        if legacy.is_file() {
+            let _ = fs::copy(&legacy, &path);
+        }
+    }
+    Ok(path)
 }
 
 pub fn load_profile() -> Profile {

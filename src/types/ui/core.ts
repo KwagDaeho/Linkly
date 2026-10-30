@@ -1,7 +1,6 @@
 import type { MacroStep } from "../action";
 import type { InstalledAppWithIcon } from "../device";
-import type { ButtonId } from "../profile";
-
+import type { ButtonId, Activator } from "../profile";
 export type PermissionStatus = {
   accessibility: boolean;
   inputMonitoring: boolean;
@@ -13,8 +12,7 @@ export type ActionSlot = "click" | "long_press";
 
 export type MappingTarget =
   | { kind: "button"; id: ButtonId }
-  | { kind: "custom"; id: string }
-  | { kind: "gesture"; id: string };
+  | { kind: "custom"; id: string };
 
 export type EditorMode =
   | {
@@ -46,20 +44,11 @@ export type EditorMode =
       rejected: string | null;
     }
   | {
-      kind: "gesture_hold_activator";
-      entryId: string;
-      rejected: string | null;
-    }
-  | {
-      kind: "gesture_path_recorder";
-      entryId: string;
-    }
-  | {
       kind: "custom_combo_activator";
       entryId: string;
-      phase: "capture" | "confirm";
+      phase: "capture" | "trigger" | "confirm";
       draftChord: string[];
-      draftButton: ButtonId | null;
+      draftTrigger: Activator | null;
       rejected: string | null;
     };
 

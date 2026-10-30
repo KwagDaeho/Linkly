@@ -1,6 +1,2 @@
-export {
-  applyKeyCapture,
-  applyComboTriggerCapture,
-  resolveActivatorCapture,
-} from "./handlers";
+export { applyKeyCapture, resolveActivatorCapture } from "./handlers";
 export { captureModeOf, captureSessionFor } from "./session";

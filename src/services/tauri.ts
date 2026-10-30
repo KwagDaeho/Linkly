@@ -30,6 +30,11 @@ export const isDeviceConnected = async (): Promise<boolean> => {
 export const getLastReport = async (): Promise<LastReport | null> => {
   return invoke<LastReport | null>("get_last_report");
 };
+export const setInputEventMonitorEnabled = async (
+  enabled: boolean,
+): Promise<void> => {
+  await invoke("set_input_event_monitor_enabled", { enabled });
+};
 export const getPermissionStatus = async (): Promise<PermissionStatus> => {
   return invoke<PermissionStatus>("permission_status");
 };
@@ -67,7 +72,6 @@ export const CAPTURE_SESSION_OFF: CaptureSession = {
   comboTrigger: false,
   activatorCapture: false,
   uiModal: false,
-  gestureRecord: false,
 };
 export const applyCaptureSession = async (
   session: CaptureSession,
@@ -92,17 +96,6 @@ export const setComboTriggerCapture = async (
 };
 export const setUiModal = async (active: boolean): Promise<void> => {
   await invoke("set_ui_modal", { active });
-};
-export const setGestureCanvasDrawing = async (
-  active: boolean,
-): Promise<void> => {
-  await invoke("set_gesture_canvas_drawing", { active });
-};
-export const clearGestureCanvasStroke = async (): Promise<void> => {
-  await invoke("clear_gesture_canvas_stroke");
-};
-export const syncGestureRecordCursor = async (): Promise<void> => {
-  await invoke("sync_gesture_record_cursor");
 };
 export const getAppIcon = async (path: string): Promise<string | null> => {
   return invoke<string | null>("get_app_icon", { path });

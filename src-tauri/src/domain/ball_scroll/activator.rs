@@ -23,8 +23,7 @@ pub fn note_huge_edges(prev: ButtonState, state: ButtonState) {
 }
 
 pub fn on_os_down(activator: &Activator, is_repeat: bool) -> bool {
-    if is_modifier_key(activator) {
-        return if is_repeat {
+    if is_modifier_key(activator) {        return if is_repeat {
             false
         } else {
             on_down(activator)
@@ -37,8 +36,7 @@ pub fn on_os_down(activator: &Activator, is_repeat: bool) -> bool {
 }
 
 pub fn on_os_up(activator: &Activator, is_repeat: bool) -> bool {
-    if is_modifier_key(activator) {
-        return if is_repeat {
+    if is_modifier_key(activator) {        return if is_repeat {
             false
         } else {
             on_up(activator)

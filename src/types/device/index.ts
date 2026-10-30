@@ -14,6 +14,8 @@ export type ButtonMeta = {
   hiddenFromMacos: boolean;
 };
 
+export type { InputEventLine } from "./inputEvent";
+
 export type LastReport = {
   hex: string;
   buttons: string[];

@@ -16,9 +16,6 @@ export type {
   ResolvedBallScrollSettings,
   ComboActivator,
   CustomMappingEntry,
-  GestureMappingEntry,
-  GesturePoint,
-  ProfileGestureMappingMutations,
   ProfileState,
   ProfileLifecycle,
   ProfileLoader,
@@ -42,6 +39,7 @@ export type { CatalogSelectionResult } from "./catalog";
 export type {
   DeviceInfo,
   ButtonMeta,
+  InputEventLine,
   LastReport,
   InstalledApp,
   InstalledAppWithIcon,
@@ -65,8 +63,6 @@ export type {
   MacroEditorState,
   OpenAppEditorState,
   ActivatorEditorState,
-  GestureHoldActivatorState,
-  GesturePathRecorderState,
   ComboEditorState,
 } from "./editor";
 export type {

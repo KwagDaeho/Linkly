@@ -1,6 +1,8 @@
+export { Accordion } from "./Accordion";
 export { Button } from "./Button";
 export { ChordError, ChordPreview } from "./ChordPreview";
 export { Controls } from "./Controls";
+export { MappingGroup } from "./MappingGroup";
 export { Modal } from "./Modal";
 export { Muted } from "./Muted";
 export { Panel, panelStyles } from "./Panel";

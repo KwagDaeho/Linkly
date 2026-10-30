@@ -10,7 +10,6 @@ use parking_lot::Mutex;
 
 use crate::domain::ball_scroll;
 use crate::domain::custom_mapping::{self, CustomMaps};
-use crate::domain::gesture_mapping;
 use crate::domain::watch;
 use crate::domain::device::{ButtonId, ButtonState, DeviceInfo, ParsedReport};
 use crate::domain::engine::input::{
@@ -56,7 +55,6 @@ pub(crate) fn run(
         let profile_snap = profile.lock().clone();
         ball_scroll::sync_from_profile(&profile_snap);
         custom_mapping::sync_from_profile(&profile_snap);
-        gesture_mapping::sync_from_profile(&profile_snap);
         if watch::needs_os_event_watch(&profile_snap) {
             capture::ensure_watch_tap();
         }
@@ -121,7 +119,6 @@ pub(crate) fn run(
             let profile_snap = profile.lock().clone();
             ball_scroll::sync_from_profile(&profile_snap);
             custom_mapping::sync_from_profile(&profile_snap);
-            gesture_mapping::sync_from_profile(&profile_snap);
             if watch::needs_os_event_watch(&profile_snap) {
                 capture::ensure_watch_tap();
             }
@@ -214,7 +211,7 @@ pub(crate) fn run(
 
                     let Some(parsed) = ParsedReport::from_bytes(data) else {
                         // Consumer/vendor reports (id 3/4/5…) — never treat as motion/scroll.
-                        *last_report.lock() = Some(LastReport {
+                        let report = LastReport {
                             hex,
                             buttons: vec![],
                             dx: 0,
@@ -226,31 +223,13 @@ pub(crate) fn run(
                                 .duration_since(std::time::UNIX_EPOCH)
                                 .map(|d| d.as_millis())
                                 .unwrap_or(0),
-                        });
+                        };
+                        crate::platform::input_monitor::on_hid_report(&report);
+                        *last_report.lock() = Some(report);
                         continue;
                     };
 
                     let raw_buttons = parsed.buttons;
-
-                    if capture::gesture_record_active() {
-                        if !capture::gesture_canvas_drawing() {
-                            for id in raw_buttons.pressed_edges(prev_raw) {
-                                if id == ButtonId::Left {
-                                    capture::emit_gesture_canvas_phase("start");
-                                }
-                            }
-                        }
-                        for id in raw_buttons.released_edges(prev_raw) {
-                            if id == ButtonId::Left {
-                                capture::emit_gesture_canvas_phase("end");
-                                capture::set_gesture_canvas_drawing(false);
-                            }
-                        }
-                        if !raw_buttons.left && capture::gesture_ball_stroke_active() {
-                            capture::emit_gesture_canvas_phase("end");
-                            capture::set_gesture_canvas_drawing(false);
-                        }
-                    }
 
                     let now = Instant::now();
                     let mut state = raw_buttons;
@@ -275,7 +254,7 @@ pub(crate) fn run(
                         })
                         .map(|id| id.id_str())
                         .collect::<Vec<_>>();
-                    *last_report.lock() = Some(LastReport {
+                    let report = LastReport {
                         hex,
                         buttons,
                         dx: parsed.dx,
@@ -287,7 +266,9 @@ pub(crate) fn run(
                             .duration_since(std::time::UNIX_EPOCH)
                             .map(|d| d.as_millis())
                             .unwrap_or(0),
-                    });
+                    };
+                    crate::platform::input_monitor::on_hid_report(&report);
+                    *last_report.lock() = Some(report);
 
                     let shared = inject::shared_pointer_mode();
 
@@ -328,13 +309,10 @@ pub(crate) fn run(
                     inject::tick_restore_cursor(parsed.dx as f64, parsed.dy as f64);
                     inject::maintain_restored_cursor();
                         let ball_scroll_on = ball_scroll::is_active();
-                        let gesture_on = gesture_mapping::session_active();
-
                         // Shared: OS moves cursor (Dock). Speed ≥ 1 — extras only when
                     // faster than 1× (dx-raw). Skip extras on wheel/pan reports.
                     {
-                        let ignore_ball = ball_scroll::ignore_ball_pointer_motion()
-                            || gesture_mapping::ignore_ball_pointer_motion();
+                        let ignore_ball = ball_scroll::ignore_ball_pointer_motion();
                         let raw_x = if ignore_ball {
                             0.0
                         } else {
@@ -383,26 +361,8 @@ pub(crate) fn run(
                             &profile_snap,
                         );
                         suppress::set_suppress_motion(takeover);
-                        let gesture_record_draw = capture::gesture_record_active()
-                            && capture::gesture_ball_stroke_active();
                         let (out_x, out_y) = if ball_scroll_on {
-                            if gesture_on {
-                                gesture_mapping::record_motion(raw_x, raw_y);
-                            }
                             (0.0, 0.0)
-                        } else if gesture_on || gesture_record_draw {
-                            if gesture_on {
-                                gesture_mapping::record_motion(raw_x, raw_y);
-                            }
-                            if shared && !takeover {
-                                if scrolling {
-                                    (0.0, 0.0)
-                                } else {
-                                    (dx - raw_x, dy - raw_y)
-                                }
-                            } else {
-                                (dx, dy)
-                            }
                         } else if shared && !takeover {
                             if scrolling {
                                 (0.0, 0.0)
@@ -414,16 +374,6 @@ pub(crate) fn run(
                         };
                         if out_x != 0.0 || out_y != 0.0 {
                             inject::move_by(out_x, out_y);
-                        }
-                        let gesture_stroke =
-                            gesture_on || gesture_record_draw;
-                        if gesture_stroke
-                            && (raw_x != 0.0
-                                || raw_y != 0.0
-                                || out_x != 0.0
-                                || out_y != 0.0)
-                        {
-                            inject::append_gesture_record_cursor_point();
                         }
                     }
 
@@ -608,18 +558,6 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
         }
         return;
     }
-    // Gesture record L edges are handled on raw HID buttons in the worker loop.
-    if capture::gesture_record_active() {
-        if !capture::gesture_ball_stroke_active() && !capture::gesture_canvas_drawing() {
-            for id in state.pressed_edges(prev) {
-                if id == ButtonId::Left {
-                    inject::click_at_cursor();
-                    return;
-                }
-            }
-        }
-        return;
-    }
     if capture::ui_modal_active() {
         for id in state.pressed_edges(prev) {
             if id == ButtonId::Left {
@@ -636,6 +574,5 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
         }
         return;
     }
-    gesture_mapping::note_huge_edges(prev, state);
     ball_scroll::note_huge_edges(prev, state);
 }

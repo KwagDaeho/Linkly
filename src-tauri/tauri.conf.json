@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Elecom Huge Custom",
+  "productName": "Linkly",
   "version": "1.3.2",
-  "identifier": "com.kwagdaeho.elecom-huge",
+  "identifier": "com.kwagdaeho.linkly",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -13,7 +13,7 @@
     "windows": [
       {
         "label": "main",
-        "title": "Elecom Huge Custom",
+        "title": "Linkly",
         "width": 820,
         "height": 880,
         "minWidth": 780,

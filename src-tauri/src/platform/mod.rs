@@ -1,7 +1,9 @@
 pub mod app_bus;
 pub mod apps;
 pub mod capture;
-pub mod suppress;
+pub mod input_monitor;
 pub mod inject;
+pub mod lifecycle;
+pub mod suppress;
 pub mod hid;
 pub mod permissions;

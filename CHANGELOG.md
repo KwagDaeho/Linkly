@@ -2,6 +2,15 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Changed
+
+- **Product** — Rebranded to **Linkly** (`com.kwagdaeho.linkly`). Repository: [KwagDaeho/Linkly](https://github.com/KwagDaeho/Linkly).
+- **UI** — Remap tab grouped into **Common** (buttons, pointer/scroll, custom chords) and **Trackball** accordion (ball scroll). Gesture mapping removed from the UI.
+- **Profiles** — On first launch, copies `~/Library/Application Support/elecom-huge/profile.json` into `linkly/` when present.
+- **Docs** — README and GitHub About reflect the general input-remapper direction (HUGE as first supported device).
+
 ## [1.3.2] — 2026-08-24
 
 ### Fixed
@@ -12,7 +21,7 @@ All notable changes to this project are documented here.
 
 ### Changed
 
-- **Diagnostics** — Rust panics append to `~/Library/Logs/Elecom Huge Custom/rust-panic.log`.
+- **Diagnostics** — Rust panics append to `~/Library/Logs/Linkly/rust-panic.log` (Linkly builds; legacy DMG used `Elecom Huge Custom`).
 
 ## [1.3.1] — 2026-08-21
 
@@ -64,4 +73,4 @@ All notable changes to this project are documented here.
 
 ## [1.2.0]
 
-See [release v1.2.0](https://github.com/KwagDaeho/Unofficial-Elecom-Huge-Custom-Mac/releases/tag/v1.2.0).
+See [release v1.2.0](https://github.com/KwagDaeho/Linkly/releases/tag/v1.2.0).

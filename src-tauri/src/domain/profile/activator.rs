@@ -14,7 +14,7 @@ pub enum Activator {
     Huge { button: ButtonId },
 }
 
-/// Keyboard chord + HUGE button trigger for custom button mappings.
+/// Keyboard chord + any captured input (`trigger`) for custom mappings.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ComboActivator {
@@ -22,12 +22,28 @@ pub struct ComboActivator {
     pub modifiers: Vec<String>,
     #[serde(default)]
     pub keys: Vec<String>,
-    pub button: ButtonId,
+    /// Legacy profiles: HUGE button only. Prefer `trigger`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub button: Option<ButtonId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub trigger: Option<Activator>,
 }
 
 impl ComboActivator {
+    pub fn effective_trigger(&self) -> Option<Activator> {
+        if let Some(trigger) = &self.trigger {
+            return Some(trigger.clone());
+        }
+        self.button.map(|button| Activator::Huge { button })
+    }
+
     pub fn is_valid(&self) -> bool {
-        !self.modifiers.is_empty() || !self.keys.is_empty()
+        (!self.modifiers.is_empty() || !self.keys.is_empty())
+            && self.effective_trigger().is_some()
+    }
+
+    pub fn triggers_match(&self, activator: &Activator) -> bool {
+        self.effective_trigger().as_ref() == Some(activator)
     }
 }
 

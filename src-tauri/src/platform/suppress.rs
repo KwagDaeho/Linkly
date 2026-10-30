@@ -32,6 +32,7 @@ static SCROLL_ARM_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
 
 static TAP_RUNNING: AtomicBool = AtomicBool::new(false);
 static TAP_PORT: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
+static TAP_RUNLOOP: AtomicPtr<std::ffi::c_void> = AtomicPtr::new(std::ptr::null_mut());
 static TAP_THREAD: Mutex<Option<JoinHandle<()>>> = Mutex::new(None);
 
 const EVENT_SCROLL_WHEEL: u32 = 22;
@@ -332,6 +333,10 @@ pub fn ensure_started() {
                 match mach.create_runloop_source(0) {
                     Ok(source) => {
                         let rl = CFRunLoop::get_current();
+                        TAP_RUNLOOP.store(
+                            rl.as_CFTypeRef() as *mut std::ffi::c_void,
+                            Ordering::SeqCst,
+                        );
                         rl.add_source(&source, kCFRunLoopCommonModes);
                         CGEventTapEnable(port, true);
                         log::info!("button suppress tap enabled (Dock / shared HID)");
@@ -343,11 +348,29 @@ pub fn ensure_started() {
                     }
                 }
             }
+            TAP_RUNLOOP.store(std::ptr::null_mut(), Ordering::SeqCst);
             TAP_PORT.store(std::ptr::null_mut(), Ordering::SeqCst);
             TAP_RUNNING.store(false, Ordering::SeqCst);
         })
         .expect("spawn suppress tap");
     *TAP_THREAD.lock() = Some(handle);
+}
+
+pub fn stop_tap_thread() {
+    clear_suppress();
+    let rl = TAP_RUNLOOP.load(Ordering::SeqCst);
+    if !rl.is_null() {
+        unsafe {
+            use core_foundation::base::TCFType;
+            use core_foundation::runloop::{CFRunLoop, CFRunLoopRef};
+            let run_loop =
+                CFRunLoop::wrap_under_get_rule(rl as CFRunLoopRef);
+            run_loop.stop();
+        }
+    }
+    if let Some(handle) = TAP_THREAD.lock().take() {
+        let _ = handle.join();
+    }
 }
 
 pub fn stop() {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/app-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Elecom Huge Custom</title>
+    <title>Linkly</title>
     <style>
       html, body, #root { margin: 0; min-height: 100%; background: #f3eef6; color: #1f1a22; font-family: "Avenir Next", "Gill Sans", sans-serif; }
       html[data-theme="dark"], html[data-theme="dark"] body, html[data-theme="dark"] #root { background: #161218; color: #f3eaf6; }
@@ -13,7 +13,7 @@
     <script>
       (function () {
         try {
-          var t = localStorage.getItem("elecom-huge-theme");
+          var t = localStorage.getItem("linkly-theme") || localStorage.getItem("elecom-huge-theme");
           if (t !== "light" && t !== "dark") {
             t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
@@ -23,7 +23,7 @@
     </script>
   </head>
   <body>
-    <div id="root"><div class="boot">Loading Elecom Huge Custom…</div></div>
+    <div id="root"><div class="boot">Loading Linkly…</div></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

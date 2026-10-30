@@ -3,17 +3,13 @@ pub mod state;
 
 use crate::app::state::AppState;
 use crate::commands;
-use crate::constants::BUNDLE_ID;
-use crate::domain::ball_scroll;
-use crate::domain::gesture_mapping;
-use crate::domain::watch;
+use crate::constants::{APP_LOG_DIR_NAME, BUNDLE_ID, PRODUCT_NAME};
 use crate::domain::engine::Engine;
-use crate::platform::suppress;
+use crate::platform::lifecycle;
 use crate::persistence::{instance_lock, profile_store};
 use crate::platform::capture;
 use std::io::Write;
 use std::sync::Arc;
-use std::sync::Once;
 use tauri::{Manager, WindowEvent};
 
 fn install_panic_hook() {
@@ -21,7 +17,7 @@ fn install_panic_hook() {
         let line = format!("{info}\n");
         log::error!("panic: {info}");
         if let Some(path) = dirs::home_dir()
-            .map(|home| home.join("Library/Logs/Elecom Huge Custom/rust-panic.log"))
+            .map(|home| home.join(format!("Library/Logs/{APP_LOG_DIR_NAME}/rust-panic.log")))
         {
             if let Some(parent) = path.parent() {
                 let _ = std::fs::create_dir_all(parent);
@@ -43,7 +39,7 @@ pub fn run() {
     let _ = env_logger::try_init();
 
     let Some(instance_lock) = instance_lock::acquire_instance_lock() else {
-        log::warn!("another Elecom Huge Custom instance is already running — exiting");
+        log::warn!("another {PRODUCT_NAME} instance is already running — exiting");
         // Best-effort: focus the existing app if present.
         let _ = std::process::Command::new("open")
             .args(["-b", BUNDLE_ID])
@@ -93,11 +89,9 @@ pub fn run() {
             commands::set_combo_activator_capture,
             commands::set_combo_trigger_capture,
             commands::set_ui_modal,
-            commands::set_gesture_canvas_drawing,
-            commands::clear_gesture_canvas_stroke,
-            commands::sync_gesture_record_cursor,
             commands::list_installed_apps,
             commands::get_app_icon,
+            commands::set_input_event_monitor_enabled,
         ])
         .setup(|app| setup::setup_app(app))
         .on_window_event(|window, event| {
@@ -111,19 +105,7 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app_handle, event| {
             if matches!(event, tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit) {
-                static ONCE: Once = Once::new();
-                ONCE.call_once(|| {
-                    if let Some(state) = app_handle.try_state::<AppState>() {
-                        state.engine.request_stop();
-                    }
-                    ball_scroll::shutdown();
-                    gesture_mapping::shutdown();
-                    capture::apply_capture_session(capture::CaptureSession::OFF);
-                    suppress::clear_suppress();
-                    if let Some(state) = app_handle.try_state::<AppState>() {
-                        state.engine.join_worker();
-                    }
-                });
+                lifecycle::on_app_exit(app_handle);
             }
         });
 }

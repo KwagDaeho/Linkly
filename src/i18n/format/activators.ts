@@ -5,6 +5,7 @@ import type {
   Lang,
   MouseClickButton,
 } from "@/types";
+import { comboEffectiveTrigger } from "@/domain/input";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
 import { buttonLabel, entryLabel } from "../translate";
 import {
@@ -62,6 +63,9 @@ export const formatComboActivator = (
   for (const key of combo.keys) {
     parts.push(formatKeyChord([key], lang));
   }
-  parts.push(hugeButtonLabel(combo.button, lang));
+  const trigger = comboEffectiveTrigger(combo);
+  if (trigger !== null) {
+    parts.push(formatActivator(trigger, lang));
+  }
   return parts.join(" + ");
 };

@@ -8,11 +8,6 @@ import {
   withCustomMappingAdded,
   withCustomMappingFlags,
   withCustomMappingRemoved,
-  withGestureMappingAdded,
-  withGestureMappingFlags,
-  withGestureMappingHoldActivator,
-  withGestureMappingRemoved,
-  withGestureMappingTemplate,
   withMappingSlot,
   withPointerPatch,
 } from "@/domain/profile";
@@ -29,8 +24,6 @@ import type {
   ComboActivator,
   CustomMappingEntry,
   EditorMode,
-  GestureMappingEntry,
-  GesturePoint,
   MappingTarget,
   Profile,
   ProfileMutateFn,
@@ -128,57 +121,6 @@ export const useProfileMutations = (
     );
   };
 
-  const addGestureMapping = (entry: GestureMappingEntry) => {
-    mutateProfile((loadedProfile) =>
-      withGestureMappingAdded(loadedProfile, entry),
-    );
-  };
-
-  const removeGestureMapping = (entryId: string) => {
-    mutateProfile((loadedProfile) =>
-      withGestureMappingRemoved(loadedProfile, entryId),
-    );
-  };
-
-  const updateGestureMappingFlags = (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withGestureMappingFlags(loadedProfile, entryId, patch),
-    );
-  };
-
-  const updateGestureHoldActivator = (
-    entryId: string,
-    holdActivator: Activator,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withGestureMappingHoldActivator(
-        loadedProfile,
-        entryId,
-        normalizeActivator(holdActivator),
-      ),
-    );
-  };
-
-  const updateGestureTemplate = (
-    entryId: string,
-    template: GesturePoint[],
-    templatePathLength: number,
-    templatePreview: GesturePoint[],
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withGestureMappingTemplate(
-        loadedProfile,
-        entryId,
-        template,
-        templatePathLength,
-        templatePreview,
-      ),
-    );
-  };
-
   const selectCatalogValue = (
     buttonId: ButtonId,
     slot: ActionSlot,
@@ -211,22 +153,6 @@ export const useProfileMutations = (
     );
   };
 
-  const selectGestureCatalogValue = (
-    entryId: string,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => {
-    applyCatalogSelection(
-      { kind: "gesture", id: entryId },
-      slot,
-      value,
-      profile,
-      setEditor,
-      updateMappingSlot,
-    );
-  };
-
   return {
     mappings: {
       updateSlot: updateMappingSlot,
@@ -239,13 +165,6 @@ export const useProfileMutations = (
       updateFlags: updateCustomMappingFlags,
       updateActivator: updateCustomMappingActivator,
     },
-    gestureMappings: {
-      add: addGestureMapping,
-      remove: removeGestureMapping,
-      updateFlags: updateGestureMappingFlags,
-      updateHoldActivator: updateGestureHoldActivator,
-      updateTemplate: updateGestureTemplate,
-    },
     pointer: {
       update: updatePointer,
     },
@@ -256,7 +175,6 @@ export const useProfileMutations = (
     catalogSelection: {
       selectButton: selectCatalogValue,
       selectCustom: selectCustomCatalogValue,
-      selectGesture: selectGestureCatalogValue,
     },
   };
 };

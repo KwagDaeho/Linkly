@@ -124,11 +124,6 @@ pub fn pin_cursor() {
     pin_cursor_with_badge(super::cursor_badge::show);
 }
 
-/// Gesture hold: show the purple badge but keep the cursor free (unlike ball-scroll pin).
-pub fn pin_cursor_gesture() {
-    super::cursor_badge::show_gesture();
-}
-
 fn pin_cursor_with_badge(show_badge: fn()) {
     RESTORE_CURSOR.lock().take();
     let p = cursor_pos();
@@ -161,18 +156,14 @@ pub fn restore_pinned_cursor() {
         *RESTORE_CURSOR.lock() = Some((p, Instant::now()));
         settle_cursor_at(p);
         post_zero_delta_mouse_at(p);
-    } else if !crate::domain::ball_scroll::is_active()
-        && !crate::domain::gesture_mapping::session_active()
-    {
+    } else if !crate::domain::ball_scroll::is_active() {
         crate::platform::suppress::set_suppress_motion(false);
     }
 }
 
 fn finish_restore_cursor() {
     RESTORE_CURSOR.lock().take();
-    if !crate::domain::ball_scroll::is_active()
-        && !crate::domain::gesture_mapping::session_active()
-    {
+    if !crate::domain::ball_scroll::is_active() {
         crate::platform::suppress::set_suppress_motion(false);
     }
 }

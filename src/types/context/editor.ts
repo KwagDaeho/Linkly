@@ -5,7 +5,6 @@ import type { ButtonId } from "../profile";
 export type EditorCatalogSelection = {
   selectButton: (buttonId: ButtonId, slot: ActionSlot, value: string) => void;
   selectCustom: (entryId: string, slot: ActionSlot, value: string) => void;
-  selectGesture: (entryId: string, slot: ActionSlot, value: string) => void;
 };
 
 export type EditorContextValue = {

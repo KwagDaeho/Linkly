@@ -10,8 +10,6 @@ import type {
   ButtonId,
   ComboActivator,
   CustomMappingEntry,
-  GestureMappingEntry,
-  GesturePoint,
   Profile,
 } from "./model";
 
@@ -68,22 +66,6 @@ export type ProfileBallScrollMutations = {
   assignActivator: (slot: BallScrollSlot, activator: Activator) => void;
 };
 
-export type ProfileGestureMappingMutations = {
-  add: (entry: GestureMappingEntry) => void;
-  remove: (entryId: string) => void;
-  updateFlags: (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => void;
-  updateHoldActivator: (entryId: string, holdActivator: Activator) => void;
-  updateTemplate: (
-    entryId: string,
-    template: GesturePoint[],
-    templatePathLength: number,
-    templatePreview: GesturePoint[],
-  ) => void;
-};
-
 export type ProfileCatalogMutations = {
   selectButton: (
     buttonId: ButtonId,
@@ -97,18 +79,11 @@ export type ProfileCatalogMutations = {
     value: string,
     setEditor: Dispatch<SetStateAction<EditorMode | null>>,
   ) => void;
-  selectGesture: (
-    entryId: string,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => void;
 };
 
 export type ProfileMutations = {
   mappings: ProfileMappingMutations;
   customMappings: ProfileCustomMappingMutations;
-  gestureMappings: ProfileGestureMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
   catalogSelection: ProfileCatalogMutations;
@@ -121,7 +96,6 @@ export type ProfileState = {
   lifecycle: ProfileLifecycle;
   mappings: ProfileMappingMutations;
   customMappings: ProfileCustomMappingMutations;
-  gestureMappings: ProfileGestureMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
   catalogSelection: ProfileCatalogMutations;

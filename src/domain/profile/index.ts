@@ -18,15 +18,6 @@ export {
   newCustomMappingEntry,
 } from "./custom";
 export {
-  ballScrollHoldConflictsWithGesture,
-  gestureEntryIsValid,
-  gestureHoldConflictsWithBallScroll,
-  gestureHoldLabel,
-  gestureMappingsOf,
-  gesturePreviewPoints,
-  newGestureMappingEntry,
-} from "./gesture";
-export {
   invertHorizontalScrollEnabled,
   invertVerticalScrollEnabled,
   pointerSpeedX,

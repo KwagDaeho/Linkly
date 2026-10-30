@@ -16,11 +16,17 @@ pub(crate) fn combo_matches(combo: &ComboActivator, mods: &[String], keys: &[Str
 }
 
 pub(crate) fn find_match(id: ButtonId) -> Option<CustomMappingEntry> {
+    find_match_trigger(&Activator::Huge { button: id })
+}
+
+pub(crate) fn find_match_trigger(trigger: &Activator) -> Option<CustomMappingEntry> {
     let mods = effective_sorted_modifiers();
     let keys = effective_sorted_keys();
     state::entries()
         .iter()
-        .find(|e| e.activator.button == id && combo_matches(&e.activator, &mods, &keys))
+        .find(|e| {
+            e.activator.triggers_match(trigger) && combo_matches(&e.activator, &mods, &keys)
+        })
         .cloned()
 }
 
@@ -29,7 +35,10 @@ pub(crate) fn find_match_with_flags(id: ButtonId, event_flags: u64) -> Option<Cu
     let keys = effective_sorted_keys();
     state::entries()
         .iter()
-        .find(|e| e.activator.button == id && combo_matches(&e.activator, &mods, &keys))
+        .find(|e| {
+            e.activator.triggers_match(&Activator::Huge { button: id })
+                && combo_matches(&e.activator, &mods, &keys)
+        })
         .cloned()
 }
 
@@ -38,7 +47,10 @@ fn chord_matches_any(id: ButtonId) -> bool {
     let keys = effective_sorted_keys();
     state::entries()
         .iter()
-        .any(|e| e.activator.button == id && combo_matches(&e.activator, &mods, &keys))
+        .any(|e| {
+            e.activator.triggers_match(&Activator::Huge { button: id })
+                && combo_matches(&e.activator, &mods, &keys)
+        })
 }
 
 pub fn is_reserved_huge(id: ButtonId) -> bool {
@@ -62,7 +74,7 @@ fn chord_ready_for_button(id: ButtonId) -> bool {
     }
     let keys = effective_sorted_keys();
     state::entries().iter().any(|entry| {
-        if entry.activator.button != id {
+        if !entry.activator.triggers_match(&Activator::Huge { button: id }) {
             return false;
         }
         if normalize_combo_modifiers(&entry.activator.modifiers) != mods {
@@ -144,7 +156,10 @@ pub fn should_swallow_os_key(name: &str) -> bool {
     let active = ACTIVE_BUTTONS.lock();
     if active.iter().any(|button| {
         state::entries().iter().any(|entry| {
-            entry.activator.button == *button
+            entry
+                .activator
+                .effective_trigger()
+                .is_some_and(|t| t == Activator::Huge { button: *button })
                 && entry.activator.keys.iter().any(|k| k == name)
         })
     }) {
@@ -169,7 +184,10 @@ pub fn should_swallow_os_key(name: &str) -> bool {
         if !entry.activator.keys.iter().any(|k| k == name) {
             return false;
         }
-        if !button_state.is_down(entry.activator.button) {
+        let Some(Activator::Huge { button }) = entry.activator.effective_trigger() else {
+            return false;
+        };
+        if !button_state.is_down(button) {
             return false;
         }
         combo_matches(&entry.activator, &mods, &keys)

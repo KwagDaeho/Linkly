@@ -70,7 +70,7 @@ pub fn shutdown() {
     *IGNORE_BALL_MOTION_UNTIL.lock() = None;
     if WAS_ACTIVE.swap(false, Ordering::SeqCst) {
         suppress::set_suppress_motion(false);
-        inject::release_ball_scroll_pin();
+        inject::release_ball_scroll_pin_for_quit();
     }
 }
 
@@ -142,9 +142,9 @@ pub(crate) fn emit_active() {
     let latch = latch_on();
     app_bus::emit("ball-scroll-active", Payload { active, latch });
     let tip = if latch {
-        "Elecom Huge Custom — ball scroll"
+        "Linkly — ball scroll"
     } else {
-        "Elecom Huge Custom"
+        "Linkly"
     };
     app_bus::set_tray_tooltip(tip);
 }

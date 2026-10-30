@@ -35,32 +35,35 @@ const cargoVersion = cargoMatch?.[1];
 const readme = readFileSync(readmePath, "utf8");
 
 const versionTag = `v${version}`;
-const dmgName = `Unofficial-Elecom-Huge-Custom-Mac-${version}-aarch64.dmg`;
+const dmgNameLinkly = `Linkly-${version}-aarch64.dmg`;
+const dmgNameLegacy = `Unofficial-Elecom-Huge-Custom-Mac-${version}-aarch64.dmg`;
 const { contact } = appMeta;
-
-const contactLine = `Email: [${contact.email}](mailto:${contact.email}) · Kakao: [${contact.kakaoDisplay}](${contact.kakaoUrl}) · GitHub: [${contact.githubRepo}](${contact.githubUrl})`;
 
 /** @param {string} source */
 function syncReadme(source) {
   const badgeUrl = `https://img.shields.io/badge/Download-macOS%20DMG%20(${encodeURIComponent(versionTag)})-0A7EA4?style=for-the-badge&logo=apple&logoColor=white`;
-  const dmgUrl = `${contact.githubUrl}/releases/download/${versionTag}/${dmgName}`;
 
   let next = source;
 
-  // Badge URL contains `(vX.Y.Z)` — do not use `[^)]*` on the whole markdown link.
   next = next.replace(
     /https:\/\/img\.shields\.io\/badge\/Download-macOS%20DMG%20\(v[\d.]+\)-0A7EA4\?style=for-the-badge&logo=apple&logoColor=white/g,
-    `https://img.shields.io/badge/Download-macOS%20DMG%20(${encodeURIComponent(versionTag)})-0A7EA4?style=for-the-badge&logo=apple&logoColor=white`,
+    badgeUrl,
   );
 
   next = next.replace(
-    /https:\/\/github\.com\/KwagDaeho\/Unofficial-Elecom-Huge-Custom-Mac\/releases\/download\/v[\d.]+\/Unofficial-Elecom-Huge-Custom-Mac-[\d.]+-aarch64\.dmg/g,
-    dmgUrl,
+    /https:\/\/github\.com\/KwagDaeho\/Linkly\/releases\/download\/v[\d.]+\/Linkly-[\d.]+-aarch64\.dmg/g,
+    `${contact.githubUrl}/releases/download/${versionTag}/${dmgNameLinkly}`,
   );
 
+  next = next.replace(
+    /https:\/\/github\.com\/KwagDaeho\/Linkly\/releases\/download\/v[\d.]+\/Unofficial-Elecom-Huge-Custom-Mac-[\d.]+-aarch64\.dmg/g,
+    `${contact.githubUrl}/releases/download/${versionTag}/${dmgNameLegacy}`,
+  );
+
+  next = next.replace(/Linkly-[\d.]+-aarch64\.dmg/g, dmgNameLinkly);
   next = next.replace(
     /Unofficial-Elecom-Huge-Custom-Mac-[\d.]+-aarch64\.dmg/g,
-    dmgName,
+    dmgNameLegacy,
   );
 
   next = next.replace(/git checkout v[\d.]+/g, `git checkout ${versionTag}`);
@@ -84,8 +87,6 @@ function syncReadme(source) {
   next = next.replace(/### 지원 범위 \(v[\d.]+\)/g, `### 지원 범위 (${versionTag})`);
 
   next = next.replace(/\| v[\d.]+ DMG \|/g, `| ${versionTag} DMG |`);
-
-  next = next.replace(/^Email: .+$/m, contactLine);
 
   return next;
 }

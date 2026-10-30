@@ -1,7 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use super::types::CaptureSession;
-
 static CAPTURE_ACTIVE: AtomicBool = AtomicBool::new(false);
 static KEY_CAPTURE_WANTED: AtomicBool = AtomicBool::new(false);
 static ACTIVATOR_CAPTURE: AtomicBool = AtomicBool::new(false);
@@ -9,9 +8,6 @@ static ACTIVATOR_CAPTURE_WANTED: AtomicBool = AtomicBool::new(false);
 static COMBO_ACTIVATOR_CAPTURE: AtomicBool = AtomicBool::new(false);
 static COMBO_TRIGGER_CAPTURE: AtomicBool = AtomicBool::new(false);
 static UI_MODAL_ACTIVE: AtomicBool = AtomicBool::new(false);
-static GESTURE_RECORD_ACTIVE: AtomicBool = AtomicBool::new(false);
-static GESTURE_CANVAS_DRAWING: AtomicBool = AtomicBool::new(false);
-static GESTURE_BALL_STROKE_ACTIVE: AtomicBool = AtomicBool::new(false);
 pub(crate) static TAP_STARTED: AtomicBool = AtomicBool::new(false);
 pub(crate) static KEY_CAPTURE_TAP_PORT: std::sync::atomic::AtomicPtr<std::ffi::c_void> =
     std::sync::atomic::AtomicPtr::new(std::ptr::null_mut());
@@ -36,24 +32,10 @@ fn refresh_activator_capture() {
 /// Atomically apply the full capture session (avoids FE race between invoke calls).
 pub fn apply_capture_session(session: CaptureSession) {
     let combo_was = COMBO_TRIGGER_CAPTURE.load(Ordering::SeqCst);
-    let gesture_was = GESTURE_RECORD_ACTIVE.load(Ordering::SeqCst);
     KEY_CAPTURE_WANTED.store(session.key_capture, Ordering::SeqCst);
     ACTIVATOR_CAPTURE_WANTED.store(session.activator_capture, Ordering::SeqCst);
     COMBO_TRIGGER_CAPTURE.store(session.combo_trigger, Ordering::SeqCst);
     UI_MODAL_ACTIVE.store(session.ui_modal, Ordering::SeqCst);
-
-    if gesture_was && !session.gesture_record {
-        GESTURE_CANVAS_DRAWING.store(false, Ordering::SeqCst);
-        GESTURE_BALL_STROKE_ACTIVE.store(false, Ordering::SeqCst);
-        super::emit::emit_gesture_canvas_phase("end");
-        #[cfg(target_os = "macos")]
-        crate::platform::inject::set_gesture_record_overlay_active(false);
-    }
-
-    GESTURE_RECORD_ACTIVE.store(session.gesture_record, Ordering::SeqCst);
-
-    #[cfg(target_os = "macos")]
-    crate::platform::inject::set_gesture_record_overlay_active(session.gesture_record);
 
     if session.combo_trigger != combo_was {
         #[cfg(target_os = "macos")]
@@ -96,29 +78,6 @@ pub fn set_combo_trigger_capture(active: bool) {
 
 pub fn set_ui_modal(active: bool) {
     UI_MODAL_ACTIVE.store(active, Ordering::SeqCst);
-}
-
-pub fn gesture_record_active() -> bool {
-    GESTURE_RECORD_ACTIVE.load(Ordering::SeqCst)
-}
-
-pub fn set_gesture_canvas_drawing(active: bool) {
-    GESTURE_CANVAS_DRAWING.store(active, Ordering::SeqCst);
-    if active {
-        GESTURE_BALL_STROKE_ACTIVE.store(false, Ordering::SeqCst);
-    }
-}
-
-pub fn gesture_canvas_drawing() -> bool {
-    GESTURE_CANVAS_DRAWING.load(Ordering::SeqCst)
-}
-
-pub fn set_gesture_ball_stroke_active(active: bool) {
-    GESTURE_BALL_STROKE_ACTIVE.store(active, Ordering::SeqCst);
-}
-
-pub fn gesture_ball_stroke_active() -> bool {
-    GESTURE_BALL_STROKE_ACTIVE.load(Ordering::SeqCst)
 }
 
 pub fn combo_trigger_capture_active() -> bool {

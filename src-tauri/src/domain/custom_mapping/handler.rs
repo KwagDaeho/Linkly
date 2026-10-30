@@ -8,7 +8,7 @@ use crate::domain::engine::input::{
     fire_due_key_repeats_for, take_due_scroll_repeats_for,
     ActionRepeat, PendingHold, ScrollRepeat,
 };
-use crate::domain::profile::{Action, ButtonBinding, Profile};
+use crate::domain::profile::{Action, Activator, ButtonBinding, ComboActivator, Profile};
 use crate::domain::remap;
 use crate::platform::inject;
 
@@ -17,6 +17,13 @@ use super::state::entry_by_id;
 use super::state::{
     self, effective_sorted_modifiers, sync_active_buttons, ACTIVE_BUTTONS, CHORD_REEVAL,
 };
+
+fn combo_huge_button(combo: &ComboActivator) -> ButtonId {
+    match combo.effective_trigger() {
+        Some(Activator::Huge { button }) => button,
+        _ => ButtonId::Left,
+    }
+}
 
 pub struct CustomMaps {
     pub pending: HashMap<String, PendingHold>,
@@ -43,7 +50,7 @@ impl CustomMaps {
     pub fn clear(&mut self) {
         for (id, action) in self.held.drain() {
             if let Some(entry) = entry_by_id(&id) {
-                inject::release_action(entry.activator.button, &action);
+                inject::release_action(combo_huge_button(&entry.activator), &action);
             }
         }
         self.pending.clear();
@@ -208,7 +215,7 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
                 return None;
             }
             let button = entry_by_id(entry_id)
-                .map(|e| e.activator.button)
+                .map(|e| combo_huge_button(&e.activator))
                 .unwrap_or(ButtonId::Left);
             let mods = super::state::effective_sorted_modifiers();
             inject::with_chord_action(&mods, || {
@@ -229,7 +236,7 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
         &profile.pointer,
         |entry_id| {
             entry_by_id(entry_id)
-                .map(|e| e.activator.button)
+                .map(|e| combo_huge_button(&e.activator))
                 .unwrap_or(ButtonId::Left)
         },
     );
@@ -240,7 +247,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         let Some(entry) = entry_by_id(entry_id) else {
             continue;
         };
-        let id = entry.activator.button;
+        let id = combo_huge_button(&entry.activator);
         if action_needs_pointer_takeover(id, action) {
             return true;
         }
@@ -249,7 +256,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         let Some(entry) = entry_by_id(entry_id) else {
             continue;
         };
-        let id = entry.activator.button;
+        let id = combo_huge_button(&entry.activator);
         if is_physical_mouse_button(id)
             || action_needs_pointer_takeover(id, &hold.click)
             || (hold.long_fired && action_needs_pointer_takeover(id, &hold.long_press))
@@ -258,7 +265,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         }
     }
     for entry in state::entries().iter() {
-        let id = entry.activator.button;
+        let id = combo_huge_button(&entry.activator);
         if !down.is_down(id) {
             continue;
         }

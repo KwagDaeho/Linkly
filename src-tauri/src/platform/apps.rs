@@ -167,7 +167,7 @@ fn resolve_icns_path(app_path: &Path) -> Option<PathBuf> {
 
 fn sips_icns_to_png(icns: &Path) -> Option<Vec<u8>> {
     let out = std::env::temp_dir().join(format!(
-        "elecom-huge-icon-{}.png",
+        "linkly-icon-{}.png",
         simple_hash(&icns.to_string_lossy())
     ));
     let status = Command::new("sips")

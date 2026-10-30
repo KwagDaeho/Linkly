@@ -1,10 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { useKeyCapture } from "@/hooks/capture/useKeyCapture";
 import { useProfileCtx } from "@/hooks/profile";
-import {
-  ballScrollHoldConflictsWithGesture,
-  gestureHoldConflictsWithBallScroll,
-} from "@/domain/profile";
 import type {
   ActionSlot,
   ButtonId,
@@ -23,51 +19,22 @@ export const useEditor = (): EditorContextValue => {
 };
 
 export const useEditorState = (): EditorContextValue => {
-  const { profile, ballScroll, gestureMappings, catalogSelection } =
+  const { profile, ballScroll, customMappings, catalogSelection } =
     useProfileCtx();
   const [editor, setEditor] = useState<EditorMode | null>(null);
   useKeyCapture(
     editor,
     setEditor,
+    profile,
     (slot, activator) => {
-      if (
-        slot === "hold" &&
-        profile !== null &&
-        ballScrollHoldConflictsWithGesture(profile, activator)
-      ) {
-        setEditor((previousEditor) => {
-          if (
-            previousEditor === null ||
-            previousEditor.kind !== "ball_scroll_activator" ||
-            previousEditor.slot !== "hold"
-          ) {
-            return previousEditor;
-          }
-          return { ...previousEditor, rejected: "gesture" };
-        });
-        return false;
-      }
       ballScroll.assignActivator(slot, activator);
       return true;
     },
-    (entryId, activator) => {
-      if (
-        profile !== null &&
-        gestureHoldConflictsWithBallScroll(profile, activator)
-      ) {
-        setEditor((previousEditor) => {
-          if (
-            previousEditor === null ||
-            previousEditor.kind !== "gesture_hold_activator" ||
-            previousEditor.entryId !== entryId
-          ) {
-            return previousEditor;
-          }
-          return { ...previousEditor, rejected: "ball_scroll" };
-        });
+    (entryId, combo) => {
+      if (combo === null) {
         return false;
       }
-      gestureMappings.updateHoldActivator(entryId, activator);
+      customMappings.updateActivator(entryId, combo);
       return true;
     },
   );
@@ -81,16 +48,12 @@ export const useEditorState = (): EditorContextValue => {
   const selectCustom = (entryId: string, slot: ActionSlot, value: string) => {
     catalogSelection.selectCustom(entryId, slot, value, setEditor);
   };
-  const selectGesture = (entryId: string, slot: ActionSlot, value: string) => {
-    catalogSelection.selectGesture(entryId, slot, value, setEditor);
-  };
   return {
     editor,
     setEditor,
     catalogSelection: {
       selectButton,
       selectCustom,
-      selectGesture,
     },
   };
 };

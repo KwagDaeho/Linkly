@@ -1,7 +1,5 @@
 export * from "./actionCategories";
 export * from "./contact";
-export * from "./gesture";
-export * from "./gestureCanvas";
 export * from "./pointer";
 export * from "./polling";
 export * from "./sentinels";

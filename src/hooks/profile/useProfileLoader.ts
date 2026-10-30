@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { migrateProfileInputs } from "@/domain/input";
 import { normalizeTiltPanStreamFlags } from "@/domain/profile";
 import * as tauri from "@/services/tauri";
 import type { ButtonMeta, Profile, ProfileLoader } from "@/types";
@@ -15,7 +16,9 @@ export const useProfileLoader = (): ProfileLoader => {
       setProfile(loadedProfile);
       setCatalog(buttonCatalog);
       setBootError("");
-      const normalizedProfile = normalizeTiltPanStreamFlags(loadedProfile);
+      const normalizedProfile = normalizeTiltPanStreamFlags(
+        migrateProfileInputs(loadedProfile),
+      );
       if (normalizedProfile !== loadedProfile) {
         void tauri
           .saveProfile(normalizedProfile)
@@ -38,10 +41,14 @@ export const useProfileLoader = (): ProfileLoader => {
     }
   };
   const mutateProfile = (applyPatch: (loadedProfile: Profile) => Profile) => {
-    if (profile === null) {
-      return;
-    }
-    void persist(applyPatch(profile));
+    setProfile((current) => {
+      if (current === null) {
+        return null;
+      }
+      const next = applyPatch(current);
+      void persist(next);
+      return next;
+    });
   };
   const lifecycle = {
     persist,

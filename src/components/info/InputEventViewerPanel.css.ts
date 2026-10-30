@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { globalStyle, style } from "@vanilla-extract/css";
 
 export const toolbar = style({
   display: "flex",
@@ -90,8 +90,19 @@ export const summary = style({
 
 export const windowRoot = style({
   padding: 16,
-  minHeight: "100vh",
+  flex: 1,
+  minHeight: 0,
+  height: "100%",
   boxSizing: "border-box",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
+});
+
+export const viewerShell = style({
+  height: "100%",
+  minHeight: 0,
+  overflow: "hidden",
   display: "flex",
   flexDirection: "column",
 });
@@ -101,6 +112,7 @@ export const windowPanel = style({
   display: "flex",
   flexDirection: "column",
   minHeight: 0,
+  overflow: "hidden",
 });
 
 export const windowHead = style({
@@ -109,6 +121,7 @@ export const windowHead = style({
   justifyContent: "flex-end",
   gap: 8,
   marginBottom: 10,
+  flexShrink: 0,
 });
 
 export const windowActions = style({
@@ -123,6 +136,7 @@ export const memoInput = style({
   boxSizing: "border-box",
   margin: "0 0 10px",
   padding: "10px 12px",
+  flexShrink: 0,
   border: "1px solid var(--line)",
   borderRadius: "var(--radius)",
   background: "var(--panel-solid)",
@@ -142,11 +156,25 @@ export const memoInput = style({
   },
 });
 
+export const logScrollWrap = style({
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
+});
+
+globalStyle(`${logScrollWrap} > div`, {
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
+});
+
 export const logTall = style([
   log,
   {
     flex: 1,
-    minHeight: 360,
+    minHeight: 0,
     maxHeight: "none",
   },
 ]);

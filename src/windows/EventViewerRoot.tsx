@@ -1,5 +1,7 @@
 import type { EventViewerChannel } from "@/domain/input/eventViewer";
 
+import * as styles from "@/components/info/InputEventViewerPanel.css";
+
 import { EventViewerWindow } from "./EventViewerWindow";
 
 const parseChannel = (hash: string): EventViewerChannel | null => {
@@ -15,5 +17,9 @@ export const EventViewerRoot = () => {
   if (channel === null) {
     return null;
   }
-  return <EventViewerWindow channel={channel} />;
+  return (
+    <div className={styles.viewerShell}>
+      <EventViewerWindow channel={channel} />
+    </div>
+  );
 };

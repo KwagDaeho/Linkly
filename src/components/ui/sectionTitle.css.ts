@@ -2,7 +2,7 @@ import { style } from "@vanilla-extract/css";
 
 import { staticSectionPadLeft } from "./panelLayout";
 
-/** h2 — Common/Trackball, 일반·이벤트·입력 디바이스 등 */
+/** h2 — Trigger/Trackball, 시스템·이벤트·입력 디바이스 등 */
 export const headingH2 = style({
   margin: 0,
   fontSize: "1.125rem",

@@ -9,6 +9,10 @@ import { useInputEventStream } from "@/hooks/useInputEventStream";
 import { usePrefs } from "@/hooks/prefs";
 import * as tauri from "@/services/tauri";
 import { Button, Panel } from "@/components/ui";
+import {
+  OverlayScrollArea,
+  overlayScrollAreaStyles,
+} from "@/components/layout/OverlayScrollArea";
 
 import * as styles from "@/components/info/InputEventViewerPanel.css";
 
@@ -28,7 +32,7 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
   const { i18n } = usePrefs();
   const [memo, setMemo] = useState("");
   const { historyByChannel, clear } = useInputEventStream(true, channel);
-  const logRef = useRef<HTMLDivElement>(null);
+  const logScrollRef = useRef<HTMLDivElement>(null);
   const history = historyByChannel[channel];
   const logLabel =
     channel === "keyboard" ? i18n.inputEventKeyboard : i18n.inputEventMouse;
@@ -41,9 +45,23 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
   }, [channel]);
 
   useEffect(() => {
-    const node = logRef.current;
-    if (node) {
-      node.scrollTop = node.scrollHeight;
+    const root = document.getElementById("root");
+    if (root === null) {
+      return;
+    }
+    const prevOverflow = root.style.overflowY;
+    root.style.overflowY = "hidden";
+    return () => {
+      root.style.overflowY = prevOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    const viewport = logScrollRef.current?.querySelector<HTMLElement>(
+      `.${overlayScrollAreaStyles.viewport}`,
+    );
+    if (viewport) {
+      viewport.scrollTop = viewport.scrollHeight;
     }
   }, [history.length]);
 
@@ -73,17 +91,26 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
             aria-label={i18n.inputEventMemoPlaceholder}
           />
         ) : null}
-        <div ref={logRef} className={styles.logTall} role="log" aria-label={logLabel}>
-          {history.length === 0 ? (
-            <p className={styles.logEmpty}>{i18n.inputEventRowEmpty}</p>
-          ) : (
-            history.map((line, index) => (
-              <div key={`${line.tsMs}-${index}`} className={styles.row}>
-                <span className={styles.time}>{formatTime(line.tsMs)}</span>
-                <span className={styles.summary}>{formatEventRowText(line)}</span>
-              </div>
-            ))
-          )}
+        <div ref={logScrollRef} className={styles.logScrollWrap}>
+          <OverlayScrollArea
+            className={styles.logTall}
+            contentKey={`${channel}-${history.length}`}
+          >
+            <div role="log" aria-label={logLabel}>
+              {history.length === 0 ? (
+                <p className={styles.logEmpty}>{i18n.inputEventRowEmpty}</p>
+              ) : (
+                history.map((line, index) => (
+                  <div key={`${line.tsMs}-${index}`} className={styles.row}>
+                    <span className={styles.time}>{formatTime(line.tsMs)}</span>
+                    <span className={styles.summary}>
+                      {formatEventRowText(line)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </OverlayScrollArea>
         </div>
       </Panel>
     </main>

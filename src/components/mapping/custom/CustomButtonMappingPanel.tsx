@@ -1,6 +1,6 @@
 import { customMappingsOf, newCustomMappingEntry } from "@/domain/profile";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { Button, Muted, Panel, SettingsList, SettingsRow } from "@/components/ui";
+import { Button, Muted, Panel } from "@/components/ui";
 import { CustomMappingRow } from "./CustomMappingRow";
 import { buttonGrid } from "../button/ButtonMappingPanel.css";
 import * as styles from "./CustomButtonMappingPanel.css";
@@ -14,16 +14,14 @@ export const CustomButtonMappingPanel = () => {
   const entries = customMappingsOf(profile);
   return (
     <Panel>
-      <SettingsList>
-        <SettingsRow className={styles.toolbarRow}>
-          <Button
-            size="tiny"
-            onClick={() => void customMappings.add(newCustomMappingEntry())}
-          >
-            {i18n.customMappingAdd}
-          </Button>
-        </SettingsRow>
-      </SettingsList>
+      <div className={styles.toolbar}>
+        <Button
+          className={styles.addButton}
+          onClick={() => void customMappings.add(newCustomMappingEntry())}
+        >
+          {i18n.customMappingAdd}
+        </Button>
+      </div>
       {entries.length === 0 ? (
         <Muted className={styles.empty}>{i18n.customMappingEmpty}</Muted>
       ) : (

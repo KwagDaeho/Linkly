@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 import {
   formatEventRowText,
@@ -25,15 +26,11 @@ const formatTime = (tsMs: number): string => {
 
 export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) => {
   const { i18n } = usePrefs();
-  const { historyByChannel, latestByChannel, clear } = useInputEventStream(
-    true,
-    channel,
-  );
+  const [memo, setMemo] = useState("");
+  const { historyByChannel, clear } = useInputEventStream(true, channel);
   const logRef = useRef<HTMLDivElement>(null);
   const history = historyByChannel[channel];
-  const latest = latestByChannel[channel];
-  const latestText = latest ? formatEventRowText(latest) : "";
-  const title =
+  const logLabel =
     channel === "keyboard" ? i18n.inputEventKeyboard : i18n.inputEventMouse;
 
   useEffect(() => {
@@ -50,24 +47,33 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
     }
   }, [history.length]);
 
+  const closeWindow = () => {
+    void getCurrentWebviewWindow().close();
+  };
+
   return (
     <main className={styles.windowRoot}>
       <Panel>
         <div className={styles.windowHead}>
-          <h1 className={styles.windowTitle}>{title}</h1>
-          <Button variant="ghost" onClick={clear}>
-            {i18n.inputEventClear}
-          </Button>
+          <div className={styles.windowActions}>
+            <Button variant="ghost" onClick={clear}>
+              {i18n.inputEventClear}
+            </Button>
+            <Button onClick={closeWindow}>{i18n.inputEventClose}</Button>
+          </div>
         </div>
-        <input
-          type="text"
-          className={styles.rowInput}
-          readOnly
-          value={latestText}
-          placeholder={i18n.inputEventRowEmpty}
-          aria-label={title}
-        />
-        <div ref={logRef} className={styles.logTall} role="log" aria-label={title}>
+        {channel === "keyboard" ? (
+          <input
+            type="text"
+            className={styles.memoInput}
+            value={memo}
+            onChange={(event) => setMemo(event.target.value)}
+            placeholder={i18n.inputEventMemoPlaceholder}
+            spellCheck={false}
+            aria-label={i18n.inputEventMemoPlaceholder}
+          />
+        ) : null}
+        <div ref={logRef} className={styles.logTall} role="log" aria-label={logLabel}>
           {history.length === 0 ? (
             <p className={styles.logEmpty}>{i18n.inputEventRowEmpty}</p>
           ) : (

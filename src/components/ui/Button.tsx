@@ -8,27 +8,30 @@ import * as styles from "./Button.css";
 interface ButtonProps
   extends Omit<
     ButtonHTMLAttributes<HTMLButtonElement>,
-    "type" | "className" | "onClick" | "children"
+    "type" | "onClick" | "children"
   > {
   children: ReactNode;
   variant?: ButtonVariant;
   size?: ButtonSize;
   onClick?: () => void;
+  className?: string;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
   const variant = props.variant !== undefined ? props.variant : "default";
   const size = props.size !== undefined ? props.size : "default";
-  const className = cx(
+  const { children, variant: _variant, size: _size, onClick, className, ...rest } =
+    props;
+  const mergedClassName = cx(
     variant === "ghost" && styles.ghost,
     size === "tiny" && styles.tiny,
+    className,
   );
-  const { children, variant: _variant, size: _size, onClick, ...rest } = props;
   return (
     <button
       ref={ref}
       type="button"
-      className={className || undefined}
+      className={mergedClassName || undefined}
       onClick={onClick}
       {...rest}
     >

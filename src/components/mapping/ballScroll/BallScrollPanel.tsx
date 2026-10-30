@@ -1,4 +1,4 @@
-import { ballScrollOf, ballScrollActivatorForSlot } from "@/domain/profile";
+import { ballScrollOf } from "@/domain/profile";
 import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
 import { Panel, SettingsList, SettingsRow, Toggle } from "@/components/ui";
 import { BallScrollActivatorRow } from "./BallScrollActivatorRow";
@@ -12,18 +12,6 @@ export const BallScrollPanel = () => {
     return null;
   }
   const ball = ballScrollOf(profile.ballScroll);
-  const handleEnableChange = (slot: BallScrollSlot, enabled: boolean) => {
-    const activator = ballScrollActivatorForSlot(ball, slot);
-    if (enabled && activator === null) {
-      setEditor({ kind: "ball_scroll_activator", slot, rejected: null });
-      return;
-    }
-    if (slot === "toggle") {
-      ballScroll.update({ toggleEnabled: enabled });
-      return;
-    }
-    ballScroll.update({ holdEnabled: enabled });
-  };
   const handleClear = (slot: BallScrollSlot) => {
     if (slot === "toggle") {
       ballScroll.update({ toggleActivator: null, toggleEnabled: false });
@@ -43,7 +31,6 @@ export const BallScrollPanel = () => {
             onOpenCapture={(slot) =>
               setEditor({ kind: "ball_scroll_activator", slot, rejected: null })
             }
-            onEnableChange={handleEnableChange}
             onClear={handleClear}
           />
         </SettingsRow>
@@ -56,7 +43,6 @@ export const BallScrollPanel = () => {
             onOpenCapture={(slot) =>
               setEditor({ kind: "ball_scroll_activator", slot, rejected: null })
             }
-            onEnableChange={handleEnableChange}
             onClear={handleClear}
           />
         </SettingsRow>

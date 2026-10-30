@@ -97,16 +97,40 @@ export const windowRoot = style({
 export const windowHead = style({
   display: "flex",
   alignItems: "center",
-  justifyContent: "space-between",
+  justifyContent: "flex-end",
   gap: 8,
   marginBottom: 10,
 });
 
-export const windowTitle = style({
-  margin: 0,
-  fontSize: "1.05rem",
-  fontWeight: 650,
-  letterSpacing: "-0.02em",
+export const windowActions = style({
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+});
+
+export const memoInput = style({
+  display: "block",
+  width: "100%",
+  boxSizing: "border-box",
+  margin: "0 0 10px",
+  padding: "10px 12px",
+  border: "1px solid var(--line)",
+  borderRadius: "var(--radius)",
+  background: "var(--panel-solid)",
+  color: "var(--ink)",
+  fontSize: "0.92rem",
+  fontFamily: "inherit",
+  lineHeight: 1.35,
+  selectors: {
+    "&::placeholder": {
+      color: "var(--muted)",
+    },
+    "&:focus": {
+      outline: "none",
+      borderColor: "var(--accent)",
+      boxShadow: "0 0 0 3px var(--accent-soft)",
+    },
+  },
 });
 
 export const logTall = style([

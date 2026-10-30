@@ -95,6 +95,8 @@ export const en = {
   inputEventMouse: "Mouse · scroll · motion",
   inputEventRowEmpty: "Waiting…",
   inputEventClear: "Reset",
+  inputEventClose: "Close",
+  inputEventMemoPlaceholder: "Type here to test input…",
   launchAtLogin: "Start app automatically",
   startMinimized: "Start app minimized",
   loading: "Loading…",

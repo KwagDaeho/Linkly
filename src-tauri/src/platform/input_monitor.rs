@@ -64,11 +64,22 @@ pub fn enabled() -> bool {
     ENABLED.load(Ordering::SeqCst)
 }
 
+fn is_standard_os_mouse(summary: &str) -> bool {
+    summary.starts_with("mouse left ")
+        || summary.starts_with("mouse right ")
+        || summary.starts_with("mouse middle ")
+        || summary.starts_with("mouse back ")
+        || summary.starts_with("mouse forward ")
+}
+
 fn viewer_channel(line: &InputEventLine) -> &'static str {
     match line.kind.as_str() {
         "keyDown" | "keyUp" | "flagsChanged" => "keyboard",
-        _ if line.source == "hid" => "mouse",
+        "mouseDown" | "mouseUp" if line.source == "os" && !is_standard_os_mouse(&line.summary) => {
+            "keyboard"
+        }
         "mouseDown" | "mouseUp" | "scrollWheel" => "mouse",
+        _ if line.source == "hid" => "mouse",
         _ if line.summary.contains("key ") => "keyboard",
         _ => "mouse",
     }
@@ -82,7 +93,7 @@ fn viewer_wants_channel(channel: &str) -> bool {
     }
 }
 
-fn emit(line: InputEventLine) {
+pub(crate) fn publish(line: InputEventLine) {
     if !enabled() {
         return;
     }
@@ -102,7 +113,7 @@ pub fn on_hid_report(report: &LastReport) {
             return;
         }
         let summary = format!("vendor report {}", report.hex);
-        emit(InputEventLine {
+        publish(InputEventLine {
             ts_ms: report.ts_ms,
             source: "hid",
             kind: "hidVendor".into(),
@@ -137,7 +148,7 @@ pub fn on_hid_report(report: &LastReport) {
 
     let summary = format!("[{buttons}]{motion}{wheel}");
     let detail = format!("{summary}\n{}", report.hex);
-    emit(InputEventLine {
+    publish(InputEventLine {
         ts_ms: report.ts_ms,
         source: "hid",
         kind: "hidReport".into(),

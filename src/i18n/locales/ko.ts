@@ -95,6 +95,8 @@ export const ko = {
   inputEventMouse: "마우스 · 스크롤 · 이동",
   inputEventRowEmpty: "입력 대기…",
   inputEventClear: "초기화",
+  inputEventClose: "닫기",
+  inputEventMemoPlaceholder: "여기에 입력해 보세요…",
   launchAtLogin: "자동으로 앱 시작",
   startMinimized: "최소화 상태로 앱 시작",
   loading: "로딩…",

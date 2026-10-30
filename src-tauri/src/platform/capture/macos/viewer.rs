@@ -59,32 +59,25 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
         LEFT_DOWN | LEFT_UP | RIGHT_DOWN | RIGHT_UP | OTHER_DOWN | OTHER_UP => {
             let btn =
                 unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) };
-            let (label, phase) = match etype {
-                LEFT_DOWN => ("left", "down"),
-                LEFT_UP => ("left", "up"),
-                RIGHT_DOWN => ("right", "down"),
-                RIGHT_UP => ("right", "up"),
-                OTHER_DOWN => (
-                    if btn == 2 { "middle" } else { "other" },
-                    "down",
-                ),
-                OTHER_UP => (
-                    if btn == 2 { "middle" } else { "other" },
-                    "up",
-                ),
-                _ => ("mouse", "event"),
-            };
-            let btn_suffix = if matches!(etype, OTHER_DOWN | OTHER_UP) && btn != 2 {
-                format!(" #{btn}")
-            } else {
-                String::new()
-            };
-            let kind = if phase == "down" {
+            let down = matches!(etype, LEFT_DOWN | RIGHT_DOWN | OTHER_DOWN);
+            let phase = if down { "down" } else { "up" };
+            let kind = if down {
                 "mouseDown".to_string()
             } else {
                 "mouseUp".to_string()
             };
-            let summary = format!("mouse {label}{btn_suffix} {phase}");
+            let summary = match etype {
+                LEFT_DOWN | LEFT_UP => format!("mouse left {phase}"),
+                RIGHT_DOWN | RIGHT_UP => format!("mouse right {phase}"),
+                OTHER_DOWN | OTHER_UP => match btn {
+                    2 => format!("mouse middle {phase}"),
+                    3 => format!("mouse back {phase}"),
+                    4 => format!("mouse forward {phase}"),
+                    n if n >= 0 => format!("Button {} {phase}", n + 1),
+                    _ => format!("mouse other {phase}"),
+                },
+                _ => format!("mouse event {phase}"),
+            };
             (kind, summary)
         }
         SCROLL_WHEEL => {
@@ -117,5 +110,5 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
         summary: summary.clone(),
         detail: summary,
     };
-    crate::platform::app_bus::emit("input-event", line);
+    input_monitor::publish(line);
 }

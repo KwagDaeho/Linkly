@@ -7,7 +7,11 @@ import {
 } from "@/components/mapping";
 import { Accordion, SectionGroupHeading } from "@/components/ui";
 import { accordionStateId } from "@/services/accordionState";
-import { ballScrollOf, customMappingsOf } from "@/domain/profile";
+import {
+  ballScrollActivatorForSlot,
+  ballScrollOf,
+  customMappingsOf,
+} from "@/domain/profile";
 import { useBallScrollLatch } from "@/hooks/useBallScrollLatch";
 import { usePrefs, useProfileCtx, useSession } from "@/hooks";
 import { cx } from "@/utils/cx";
@@ -28,7 +32,9 @@ export const CustomTab = () => {
   const comboCount = customMappingsOf(profile).length;
   const ball = ballScrollOf(profile.ballScroll);
   const trackballActive =
-    latchOn || ball.toggleEnabled || ball.holdEnabled;
+    latchOn ||
+    ballScrollActivatorForSlot(ball, "toggle") !== null ||
+    ballScrollActivatorForSlot(ball, "hold") !== null;
 
   return (
     <>

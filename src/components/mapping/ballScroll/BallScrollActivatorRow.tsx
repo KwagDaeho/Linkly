@@ -1,6 +1,6 @@
 import { ballScrollActivatorForSlot } from "@/domain/profile";
 import { formatActivator } from "@/i18n";
-import { Button, Muted, Toggle } from "@/components/ui";
+import { Button, Muted } from "@/components/ui";
 import type {
   BallScrollSlot,
   Dict,
@@ -15,14 +15,12 @@ interface BallScrollActivatorRowProps {
   lang: Lang;
   i18n: Dict;
   onOpenCapture: (slot: BallScrollSlot) => void;
-  onEnableChange: (slot: BallScrollSlot, enabled: boolean) => void;
   onClear: (slot: BallScrollSlot) => void;
 }
 
 export const BallScrollActivatorRow = (props: BallScrollActivatorRowProps) => {
   const isToggle = props.slot === "toggle";
   const activator = ballScrollActivatorForSlot(props.ball, props.slot);
-  const enabled = isToggle ? props.ball.toggleEnabled : props.ball.holdEnabled;
   const label = isToggle
     ? props.i18n.ballScrollToggle
     : props.i18n.ballScrollHold;
@@ -31,13 +29,7 @@ export const BallScrollActivatorRow = (props: BallScrollActivatorRowProps) => {
     : props.i18n.ballScrollHoldHelp;
   return (
     <div className={styles.row}>
-      <Toggle
-        variant="labelFirst"
-        checked={enabled}
-        onChange={(on) => props.onEnableChange(props.slot, on)}
-      >
-        {label}
-      </Toggle>
+      <span className={styles.label}>{label}</span>
       <div className={styles.key}>
         <Button size="tiny" onClick={() => props.onOpenCapture(props.slot)}>
           {activator !== null

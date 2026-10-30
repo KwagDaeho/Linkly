@@ -2,8 +2,15 @@ import { style } from "@vanilla-extract/css";
 
 import { buttonHead } from "../button/ButtonMappingPanel.css";
 
-export const toolbarRow = style({
-  justifyContent: "flex-end",
+export const toolbar = style({
+  marginTop: 8,
+  marginBottom: 10,
+});
+
+export const addButton = style({
+  minWidth: "7.5rem",
+  padding: "0.42rem 1.35rem",
+  fontSize: "0.86rem",
 });
 
 export const empty = style({

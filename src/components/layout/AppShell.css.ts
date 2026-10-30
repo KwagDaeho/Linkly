@@ -2,7 +2,11 @@ import { globalStyle, style } from "@vanilla-extract/css";
 
 import { footer } from "@/components/info/ContactFooter.css";
 import { root as accordionSection } from "@/components/ui/Accordion.css";
-import { shellSideInsetPx } from "@/components/ui/panelLayout";
+import {
+  footerSpaceAboveBorderPx,
+  shellSectionGapPx,
+  shellSideInsetPx,
+} from "@/components/ui/panelLayout";
 import { staticSection } from "@/components/ui/sectionTitle.css";
 
 const shellHorizontalInset = shellSideInsetPx * 2;
@@ -14,7 +18,12 @@ export const shell = style({
   margin: "0 auto",
   padding: "28px 0 28px",
   display: "grid",
-  gap: 8,
+  gap: shellSectionGapPx,
+});
+
+/** Guaranteed space above footer border (grid gap + this padding = footerSpaceAboveBorderPx). */
+export const footerLead = style({
+  paddingTop: footerSpaceAboveBorderPx - shellSectionGapPx,
 });
 
 const flushBeforeFooter = {

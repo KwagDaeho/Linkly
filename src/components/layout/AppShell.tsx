@@ -79,7 +79,9 @@ export const AppShell = () => {
           link={<CustomTab />}
         />
 
-        <ContactFooter />
+        <div className={styles.footerLead}>
+          <ContactFooter />
+        </div>
         <EditorHost />
       </main>
     </>

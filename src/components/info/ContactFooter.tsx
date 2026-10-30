@@ -18,10 +18,10 @@ export const ContactFooter = () => {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerMain}>
+        <Muted>{APP_VERSION_LABEL}</Muted>
         <p className={styles.credit}>
           <span className={styles.creditBy}>{i18n.creditBy}</span> {i18n.credit}
         </p>
-        <Muted>{APP_VERSION_LABEL}</Muted>
         <div className={styles.contactBlock}>
           <strong>{i18n.contactLabel}</strong>
           <p>
@@ -66,7 +66,9 @@ export const ContactFooter = () => {
           </p>
         </div>
       </div>
-      <AppBrandMark />
+      <div className={styles.footerBrand}>
+        <AppBrandMark />
+      </div>
     </footer>
   );
 };

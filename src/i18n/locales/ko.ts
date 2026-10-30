@@ -114,7 +114,7 @@ export const ko = {
   bootFailedTag: "[ Failed ]",
   failedUi: "UI 시작 실패",
   credit: "Theo Kwag",
-  creditBy: "제작",
+  creditBy: "By",
   contactLabel: "Contact",
   emailLabel: "E-mail",
   kakaoLabel: "Kakao",

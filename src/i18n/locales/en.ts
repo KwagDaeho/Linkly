@@ -114,7 +114,7 @@ export const en = {
   bootFailedTag: "[ Failed ]",
   failedUi: "Failed to start UI",
   credit: "Theo Kwag",
-  creditBy: "by",
+  creditBy: "By",
   contactLabel: "Contact",
   emailLabel: "E-mail",
   kakaoLabel: "Kakao",

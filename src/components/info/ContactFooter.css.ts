@@ -1,15 +1,26 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import { title as brandTitle } from "@/components/layout/AppHeader.css";
+import {
+  footerSpaceBelowBorderPx,
+  footerSpaceBottomPx,
+} from "@/components/ui/panelLayout";
+
 export const footer = style({
   display: "flex",
-  alignItems: "flex-end",
+  alignItems: "flex-start",
   justifyContent: "space-between",
   gap: 24,
   color: "var(--muted)",
   fontSize: "0.86rem",
-  padding: "14px 4px 10px",
+  boxSizing: "border-box",
+  paddingTop: footerSpaceBelowBorderPx,
+  paddingRight: 4,
+  paddingBottom: 10,
+  paddingLeft: 4,
   borderTop: "1px solid var(--line)",
-  marginTop: 12,
+  marginTop: 0,
+  marginBottom: footerSpaceBottomPx,
 });
 
 export const footerMain = style({
@@ -17,6 +28,16 @@ export const footerMain = style({
   gap: 6,
   flex: "1 1 auto",
   minWidth: 0,
+});
+
+/** Header-sized mark — align cap height with credit line. */
+export const footerBrand = style({
+  flexShrink: 0,
+});
+
+globalStyle(`${footerBrand} ${brandTitle}`, {
+  display: "block",
+  lineHeight: 1,
 });
 
 export const credit = style({

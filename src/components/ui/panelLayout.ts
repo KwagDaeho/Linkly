@@ -1,6 +1,18 @@
 /** Main shell inset from window left/right edges (AppShell, BootScreen). */
 export const shellSideInsetPx = 72;
 
+/** Vertical gap between AppShell grid rows (see AppShell.css.ts `shell`). */
+export const shellSectionGapPx = 8;
+
+/** Contact footer: space from tab content to top border (excludes shell row gap). */
+export const footerSpaceAboveBorderPx = 40;
+
+/** Contact footer: space from top border to footer text. */
+export const footerSpaceBelowBorderPx = 48;
+
+/** Contact footer: trailing space below footer block. */
+export const footerSpaceBottomPx = 120;
+
 /** Horizontal padding inside boxed `Panel` root (see Panel.css.ts). */
 export const panelPaddingX = 12;
 

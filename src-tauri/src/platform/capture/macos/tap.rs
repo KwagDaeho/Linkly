@@ -192,12 +192,12 @@ fn handle_watch(etype: u32, event: CGEventRef) -> CGEventRef {
                 ball_scroll::yield_modifier_hold_for_chord(&activator);
             }
             custom_mapping::note_os_down(&activator, autorepeat);
+            if ball_scroll::on_os_down(&activator, autorepeat) {
+                return std::ptr::null_mut();
+            }
             if custom_mapping::offer_os_trigger(&activator, true)
                 || crate::domain::button_mapping::offer_os_trigger(&activator, true)
             {
-                return std::ptr::null_mut();
-            }
-            if ball_scroll::on_os_down(&activator, autorepeat) {
                 return std::ptr::null_mut();
             }
             if let Activator::Key { name } = &activator {
@@ -216,12 +216,12 @@ fn handle_watch(etype: u32, event: CGEventRef) -> CGEventRef {
             unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_AUTOREPEAT) } != 0;
         if let Some(activator) = key_activator(event) {
             custom_mapping::note_os_up(&activator, autorepeat);
+            if ball_scroll::on_os_up(&activator, autorepeat) {
+                return std::ptr::null_mut();
+            }
             if custom_mapping::offer_os_trigger(&activator, false)
                 || crate::domain::button_mapping::offer_os_trigger(&activator, false)
             {
-                return std::ptr::null_mut();
-            }
-            if ball_scroll::on_os_up(&activator, autorepeat) {
                 return std::ptr::null_mut();
             }
             if let Activator::Key { name } = &activator {
@@ -244,22 +244,22 @@ fn handle_watch(etype: u32, event: CGEventRef) -> CGEventRef {
             }
             if down {
                 custom_mapping::note_os_down(&activator, false);
+                if ball_scroll::on_os_down(&activator, false) {
+                    return std::ptr::null_mut();
+                }
                 if custom_mapping::offer_os_trigger(&activator, true)
                     || crate::domain::button_mapping::offer_os_trigger(&activator, true)
                 {
                     return std::ptr::null_mut();
                 }
-                if ball_scroll::on_os_down(&activator, false) {
-                    return std::ptr::null_mut();
-                }
             } else {
                 custom_mapping::note_os_up(&activator, false);
+                if ball_scroll::on_os_up(&activator, false) {
+                    return std::ptr::null_mut();
+                }
                 if custom_mapping::offer_os_trigger(&activator, false)
                     || crate::domain::button_mapping::offer_os_trigger(&activator, false)
                 {
-                    return std::ptr::null_mut();
-                }
-                if ball_scroll::on_os_up(&activator, false) {
                     return std::ptr::null_mut();
                 }
             }
@@ -270,17 +270,17 @@ fn handle_watch(etype: u32, event: CGEventRef) -> CGEventRef {
         etype,
         unsafe { CGEventGetIntegerValueField(event, MOUSE_EVENT_BUTTON_NUMBER) },
     ) {
-        if custom_mapping::offer_os_trigger(&activator, down)
-            || crate::domain::button_mapping::offer_os_trigger(&activator, down)
-        {
-            return std::ptr::null_mut();
-        }
         let handled = if down {
             ball_scroll::on_os_down(&activator, false)
         } else {
             ball_scroll::on_os_up(&activator, false)
         };
         if handled {
+            return std::ptr::null_mut();
+        }
+        if custom_mapping::offer_os_trigger(&activator, down)
+            || crate::domain::button_mapping::offer_os_trigger(&activator, down)
+        {
             return std::ptr::null_mut();
         }
     }

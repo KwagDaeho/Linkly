@@ -53,6 +53,10 @@ export const en = {
   ballScrollInvertHorizontal: "Invert horizontal",
   ballScrollSpeed: "Scroll speed",
   ballScrollKey: "Set key",
+  ballScrollActivatorHintToggle:
+    "Press the key to use as the toggle key.\nPress Esc to cancel.",
+  ballScrollActivatorHintHold:
+    "Press the key to use as the hold key.\nPress Esc to cancel.",
   ballScrollOn: "On",
   comboMapping: "Combo mapping",
   customButtonMapping: "Combo mapping",

@@ -42,10 +42,10 @@ pub fn synthetic_mouse_matches_armed(button: &MouseClickButton) -> bool {
     let settings = super::state::settings();
     settings
         .hold_armed()
-        .is_some_and(|armed| armed.same_as(&activator))
+        .is_some_and(|armed| armed.matches_input(&activator))
         || settings
             .toggle_armed()
-            .is_some_and(|armed| armed.same_as(&activator))
+            .is_some_and(|armed| armed.matches_input(&activator))
 }
 
 /// Remapped/injected mouse or key (not from the OS tap) — e.g. left → Button 30.
@@ -73,13 +73,13 @@ pub fn on_os_up(activator: &Activator, is_repeat: bool) -> bool {
 fn matches_hold(activator: &Activator) -> bool {
     settings()
         .hold_armed()
-        .is_some_and(|armed| armed.same_as(activator))
+        .is_some_and(|armed| armed.matches_input(activator))
 }
 
 fn matches_toggle(activator: &Activator) -> bool {
     settings()
         .toggle_armed()
-        .is_some_and(|armed| armed.same_as(activator))
+        .is_some_and(|armed| armed.matches_input(activator))
 }
 
 fn is_modifier_key(activator: &Activator) -> bool {

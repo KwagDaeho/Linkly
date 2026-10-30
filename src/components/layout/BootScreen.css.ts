@@ -13,8 +13,10 @@ export const stack = style({
   alignItems: "center",
   gap: 32,
   textAlign: "center",
-  maxWidth: "min(780px, 100%)",
-  padding: "12px 16px 20px",
+  boxSizing: "border-box",
+  width: "calc(100% - 96px)",
+  maxWidth: "none",
+  padding: "12px 0 20px",
 });
 
 export const loadingTag = style({

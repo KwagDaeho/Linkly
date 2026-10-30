@@ -42,11 +42,7 @@ pub(crate) fn settings() -> parking_lot::MutexGuard<'static, BallScrollSettings>
 
 pub fn sync_from_profile(profile: &Profile) {
     let prev = SETTINGS.lock().clone();
-    let next = if profile.enabled {
-        profile.ball_scroll.clone()
-    } else {
-        BallScrollSettings::default()
-    };
+    let next = profile.ball_scroll.clone();
     let hold_changed =
         !activator_options_same(&prev.hold_activator, &next.hold_activator);
     let toggle_changed =

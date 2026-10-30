@@ -282,7 +282,8 @@ export const useKeyCapture = (
 
         if (
           captureMode === "chord_hold" ||
-          captureMode === "button_mapping_capture"
+          captureMode === "button_mapping_capture" ||
+          captureMode === "ball_scroll"
         ) {
           const unLeft = await listen("capture-left-pointer", () => {
             if (cancelled) {
@@ -290,6 +291,22 @@ export const useKeyCapture = (
             }
             const activeEditor = editorRef.current;
             if (activeEditor === null) {
+              return;
+            }
+            if (activeEditor.kind === "ball_scroll_activator") {
+              if (hitCaptureCancelAtPointer()) {
+                setEditor(null);
+                return;
+              }
+              void (async () => {
+                const accepted = await onActivatorAssignedRef.current(
+                  activeEditor.slot,
+                  { type: "huge", button: "left" },
+                );
+                if (accepted) {
+                  setEditor(null);
+                }
+              })();
               return;
             }
             if (activeEditor.kind === "button_mapping_activator") {

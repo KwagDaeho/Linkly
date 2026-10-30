@@ -5,17 +5,13 @@ import { root as accordionSection } from "@/components/ui/Accordion.css";
 import { staticSection } from "@/components/ui/sectionTitle.css";
 
 export const shell = style({
-  width: "min(780px, calc(100% - 32px))",
+  boxSizing: "border-box",
+  width: "calc(100% - 96px)",
+  maxWidth: "none",
   margin: "0 auto",
   padding: "16px 0 28px",
   display: "grid",
   gap: 8,
-  "@media": {
-    "(max-width: 720px)": {
-      width: "min(100% - 24px, 920px)",
-      paddingTop: 24,
-    },
-  },
 });
 
 const flushBeforeFooter = {

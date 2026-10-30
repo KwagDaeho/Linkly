@@ -55,6 +55,7 @@ export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
         keyCapture: false,
         comboTrigger: false,
         activatorCapture: true,
+        allowLeftActivator: true,
         uiModal: true,
       };
     case "button_mapping_capture":

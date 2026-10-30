@@ -19,6 +19,10 @@ export const BallScrollActivatorEditor = (props: BallScrollActivatorEditorProps)
   });
   const slotLabel =
     editor.slot === "toggle" ? i18n.ballScrollToggle : i18n.ballScrollHold;
+  const hint =
+    editor.slot === "toggle"
+      ? i18n.ballScrollActivatorHintToggle
+      : i18n.ballScrollActivatorHintHold;
   const statusMessage =
     rejectedMessage !== null ? rejectedMessage : i18n.activatorWaiting;
 
@@ -29,7 +33,7 @@ export const BallScrollActivatorEditor = (props: BallScrollActivatorEditorProps)
           {i18n.activatorTitle} · {slotLabel}
         </>
       }
-      hint={i18n.activatorHint}
+      hint={hint}
       statusMessage={statusMessage}
       cancelLabel={i18n.cancel}
       onCancel={() => setEditor(null)}

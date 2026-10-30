@@ -23,7 +23,7 @@ export const ActivatorCaptureModal = (props: ActivatorCaptureModalProps) => {
       <Muted variant="modal">{props.hint}</Muted>
       <ChordPreview variant="field">{props.statusMessage}</ChordPreview>
       <ModalFooter>
-        <Button variant="ghost" onClick={props.onCancel}>
+        <Button variant="ghost" data-capture-cancel onClick={props.onCancel}>
           {props.cancelLabel}
         </Button>
       </ModalFooter>

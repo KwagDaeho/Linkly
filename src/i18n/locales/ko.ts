@@ -53,6 +53,10 @@ export const ko = {
   ballScrollInvertHorizontal: "좌우 반전",
   ballScrollSpeed: "스크롤 속도",
   ballScrollKey: "키 입력",
+  ballScrollActivatorHintToggle:
+    "토글키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
+  ballScrollActivatorHintHold:
+    "홀딩키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
   ballScrollOn: "켜짐",
   comboMapping: "조합 매핑",
   customButtonMapping: "조합 매핑",

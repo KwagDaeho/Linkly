@@ -1,15 +1,10 @@
 import { style } from "@vanilla-extract/css";
 
+import { tabTransitionEase, tabTransitionMs } from "@/components/ui/panelLayout";
+
 export const root = style({
   paddingTop: 6,
   overflow: "hidden",
-  touchAction: "pan-y pinch-zoom",
-  cursor: "grab",
-  selectors: {
-    "&[data-dragging='true']": {
-      cursor: "grabbing",
-    },
-  },
 });
 
 export const track = style({
@@ -17,6 +12,12 @@ export const track = style({
   alignItems: "flex-start",
   width: "200%",
   willChange: "transform",
+  transition: `transform ${tabTransitionMs}ms ${tabTransitionEase}`,
+  "@media": {
+    "(prefers-reduced-motion: reduce)": {
+      transition: "none",
+    },
+  },
 });
 
 export const page = style({

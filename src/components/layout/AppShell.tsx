@@ -1,14 +1,9 @@
-import {
-  useCallback,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-} from "react";
+import { useRef, useState } from "react";
 import { EditorHost } from "@/components/editors";
 import { ContactFooter } from "@/components/info";
 import { AppHeader, BootScreen, OverlayScrollbar } from "@/components/layout";
 import { TabSwipePanels } from "./TabSwipePanels";
+import { useTabBarSwipe } from "./useTabBarSwipe";
 import { CustomTab, InfoTab } from "@/components/tabs";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import type { TabId } from "@/types";
@@ -21,44 +16,6 @@ export const AppShell = () => {
   const { profile } = useProfileCtx();
   const [tab, setTab] = useState<TabId>("info");
   const tabListRef = useRef<HTMLElement>(null);
-  const [pillStyle, setPillStyle] = useState<CSSProperties>({
-    opacity: 0,
-  });
-
-  /** Align pill box to the active tab button. */
-  const syncTabPill = useCallback(() => {
-    const list = tabListRef.current;
-    if (list === null) {
-      return;
-    }
-    const buttons = list.querySelectorAll<HTMLButtonElement>('[role="tab"]');
-    const index = tab === "custom" ? 1 : 0;
-    const activeBtn = buttons.item(index);
-    if (activeBtn === null) {
-      return;
-    }
-    setPillStyle({
-      left: activeBtn.offsetLeft,
-      top: activeBtn.offsetTop,
-      width: activeBtn.offsetWidth,
-      height: activeBtn.offsetHeight,
-      opacity: 1,
-    });
-  }, [tab]);
-
-  useLayoutEffect(() => {
-    syncTabPill();
-  }, [syncTabPill, i18n.tabInfo, i18n.tabCustom]);
-
-  useLayoutEffect(() => {
-    const list = tabListRef.current;
-    if (list === null) {
-      return;
-    }
-    const observer = new ResizeObserver(syncTabPill);
-    observer.observe(list);
-    return () => observer.disconnect();
-  }, [syncTabPill]);
 
   /** Same #root scroll offset across tabs (not per-tab saved positions). */
   const setTabKeepScroll = (next: TabId) => {
@@ -80,6 +37,13 @@ export const AppShell = () => {
     });
   };
 
+  const tabBar = useTabBarSwipe({
+    tab,
+    onTab: setTabKeepScroll,
+    listRef: tabListRef,
+    labels: [i18n.tabInfo, i18n.tabCustom] as const,
+  });
+
   if (!profile) {
     return (
       <>
@@ -99,15 +63,30 @@ export const AppShell = () => {
           className={styles.tabs}
           aria-label="Sections"
           role="tablist"
+          data-tab-drag={tabBar.dragging ? "true" : "false"}
+          {...tabBar.tabBarHandlers}
         >
-          <span className={styles.tabPill} style={pillStyle} aria-hidden />
+          <span
+            className={styles.tabPill}
+            style={tabBar.pillStyle}
+            data-dragging={tabBar.dragging ? "true" : "false"}
+            aria-hidden
+          />
           <button
             type="button"
             role="tab"
             aria-selected={tab === "info"}
             aria-controls="tabpanel-info"
-            className={cx(styles.tab, tab === "info" && styles.tabActive)}
-            onClick={() => setTabKeepScroll("info")}
+            className={cx(
+              styles.tab,
+              tabBar.visualTab === "info" && styles.tabActive,
+            )}
+            onClick={() => {
+              if (tabBar.shouldIgnoreClick()) {
+                return;
+              }
+              setTabKeepScroll("info");
+            }}
           >
             {i18n.tabInfo}
           </button>
@@ -116,8 +95,16 @@ export const AppShell = () => {
             role="tab"
             aria-selected={tab === "custom"}
             aria-controls="tabpanel-custom"
-            className={cx(styles.tab, tab === "custom" && styles.tabActive)}
-            onClick={() => setTabKeepScroll("custom")}
+            className={cx(
+              styles.tab,
+              tabBar.visualTab === "custom" && styles.tabActive,
+            )}
+            onClick={() => {
+              if (tabBar.shouldIgnoreClick()) {
+                return;
+              }
+              setTabKeepScroll("custom");
+            }}
           >
             {i18n.tabCustom}
           </button>
@@ -125,7 +112,6 @@ export const AppShell = () => {
 
         <TabSwipePanels
           active={tab}
-          onActiveChange={setTabKeepScroll}
           info={<InfoTab />}
           link={<CustomTab />}
         />

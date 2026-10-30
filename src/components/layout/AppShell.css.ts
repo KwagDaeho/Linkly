@@ -6,6 +6,8 @@ import {
   footerSpaceAboveBorderPx,
   shellSectionGapPx,
   shellSideInsetPx,
+  tabTransitionEase,
+  tabTransitionMs,
 } from "@/components/ui/panelLayout";
 import { staticSection } from "@/components/ui/sectionTitle.css";
 
@@ -51,10 +53,14 @@ export const tabs = style({
   border: "1px solid var(--line)",
   borderRadius: 8,
   background: "var(--panel)",
+  touchAction: "pan-y",
+  cursor: "grab",
+  selectors: {
+    "&[data-tab-drag='true']": {
+      cursor: "grabbing",
+    },
+  },
 });
-
-const tabColorMs = 380;
-const tabColorEase = "cubic-bezier(0.32, 0.72, 0, 1)";
 
 /** Slides under the active tab button. */
 export const tabPill = style({
@@ -63,7 +69,12 @@ export const tabPill = style({
   borderRadius: 6,
   background: "var(--accent)",
   pointerEvents: "none",
-  transition: `left ${tabColorMs}ms ${tabColorEase}, top ${tabColorMs}ms ${tabColorEase}, width ${tabColorMs}ms ${tabColorEase}, height ${tabColorMs}ms ${tabColorEase}`,
+  transition: `left ${tabTransitionMs}ms ${tabTransitionEase}, top ${tabTransitionMs}ms ${tabTransitionEase}, width ${tabTransitionMs}ms ${tabTransitionEase}, height ${tabTransitionMs}ms ${tabTransitionEase}`,
+  selectors: {
+    "&[data-dragging='true']": {
+      transition: "none",
+    },
+  },
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       transition: "none",
@@ -84,7 +95,7 @@ export const tab = style({
   cursor: "pointer",
   WebkitAppearance: "none",
   appearance: "none",
-  transition: `color ${tabColorMs}ms ${tabColorEase}`,
+  transition: `color ${tabTransitionMs}ms ${tabTransitionEase}`,
   "@media": {
     "(prefers-reduced-motion: reduce)": {
       transition: "none",

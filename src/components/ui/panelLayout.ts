@@ -13,6 +13,10 @@ export const footerSpaceBelowBorderPx = 48;
 /** Contact footer: trailing space below footer block. */
 export const footerSpaceBottomPx = 120;
 
+/** Section tab pill, panel track, and label color (keep in sync). */
+export const tabTransitionMs = 520;
+export const tabTransitionEase = "cubic-bezier(0.4, 0, 0.2, 1)";
+
 /** Horizontal padding inside boxed `Panel` root (see Panel.css.ts). */
 export const panelPaddingX = 12;
 

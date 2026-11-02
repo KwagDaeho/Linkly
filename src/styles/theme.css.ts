@@ -111,8 +111,9 @@ globalStyle(
 
 globalStyle("#root", {
   width: "100%",
-  overflowX: "hidden",
-  overflowY: "auto",
+  display: "flex",
+  flexDirection: "column",
+  overflow: "hidden",
   scrollbarWidth: "none",
   color: "var(--ink)",
   background:

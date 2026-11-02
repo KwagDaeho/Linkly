@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { EditorHost } from "@/components/editors";
 import { AppHeader, BootScreen, OverlayScrollbar } from "@/components/layout";
 import { TabBar } from "./TabBar";
@@ -13,25 +13,7 @@ import * as styles from "./AppShell.css";
 export const AppShell = () => {
   const { profile } = useProfileCtx();
   const [tab, setTab] = useState<TabId>("trigger");
-
-  const setTabKeepScroll = (next: TabId) => {
-    if (next === tab) {
-      return;
-    }
-    const root = document.getElementById("root");
-    const scrollTop = root?.scrollTop ?? 0;
-    setTab(next);
-    if (!root) {
-      return;
-    }
-    const restore = () => {
-      root.scrollTop = scrollTop;
-    };
-    requestAnimationFrame(() => {
-      restore();
-      requestAnimationFrame(restore);
-    });
-  };
+  const activeTabScrollRef = useRef<HTMLDivElement | null>(null);
 
   if (!profile) {
     return (
@@ -43,14 +25,15 @@ export const AppShell = () => {
   }
   return (
     <TriggerScopeProvider scope={{ kind: "common" }}>
-      <OverlayScrollbar contentKey={tab} />
+      <OverlayScrollbar contentKey={tab} scrollRef={activeTabScrollRef} />
       <main className={styles.shell}>
         <AppHeader />
 
-        <TabBar tab={tab} onTab={setTabKeepScroll} />
+        <TabBar tab={tab} onTab={setTab} />
 
         <TabSwipePanels
           active={tab}
+          activeScrollRef={activeTabScrollRef}
           trigger={<TriggerTab />}
           mouse={<MouseTab />}
           system={<SystemTab />}

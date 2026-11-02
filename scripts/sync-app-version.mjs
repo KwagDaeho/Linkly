@@ -3,7 +3,7 @@
  * App version SSOT: package.json `"version"`.
  * Contact SSOT: src/meta/app.json.
  *
- * Syncs src-tauri/tauri.conf.json, src-tauri/Cargo.toml, and README.md.
+ * Syncs src-tauri/tauri.conf.json, src-tauri/Cargo.toml, package-lock.json, and README.md.
  *
  *   node scripts/sync-app-version.mjs          # write
  *   node scripts/sync-app-version.mjs --check  # fail if drifted
@@ -27,12 +27,16 @@ if (!/^\d+\.\d+\.\d+$/.test(version)) {
 const tauriPath = join(root, "src-tauri/tauri.conf.json");
 const cargoPath = join(root, "src-tauri/Cargo.toml");
 const readmePath = join(root, "README.md");
+const lockPath = join(root, "package-lock.json");
 
 const tauri = JSON.parse(readFileSync(tauriPath, "utf8"));
 const cargo = readFileSync(cargoPath, "utf8");
 const cargoMatch = cargo.match(/^version = "([^"]+)"/m);
 const cargoVersion = cargoMatch?.[1];
 const readme = readFileSync(readmePath, "utf8");
+const lock = JSON.parse(readFileSync(lockPath, "utf8"));
+const lockRootVersion = lock.version;
+const lockPkgVersion = lock.packages?.[""]?.version;
 
 const versionTag = `v${version}`;
 const dmgNameLinkly = `Linkly-${version}-aarch64.dmg`;
@@ -96,6 +100,10 @@ const syncedReadme = syncReadme(readme);
 const drifted = [];
 if (tauri.version !== version) drifted.push(`tauri.conf.json (${tauri.version})`);
 if (cargoVersion !== version) drifted.push(`Cargo.toml (${cargoVersion})`);
+if (lockRootVersion !== version) drifted.push(`package-lock.json (${lockRootVersion})`);
+if (lockPkgVersion !== undefined && lockPkgVersion !== version) {
+  drifted.push(`package-lock.json packages[""] (${lockPkgVersion})`);
+}
 if (syncedReadme !== readme) drifted.push("README.md");
 
 if (checkOnly) {
@@ -120,5 +128,11 @@ writeFileSync(
 );
 
 writeFileSync(readmePath, syncedReadme);
+
+lock.version = version;
+if (lock.packages?.[""]) {
+  lock.packages[""].version = version;
+}
+writeFileSync(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
 
 console.log(`synced app version ${version}`);

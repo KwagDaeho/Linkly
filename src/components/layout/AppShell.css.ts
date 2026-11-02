@@ -22,8 +22,12 @@ export const shell = style({
   maxWidth: "none",
   margin: "0 auto",
   padding: "28px 0 28px",
-  display: "grid",
+  flex: 1,
+  minHeight: 0,
+  display: "flex",
+  flexDirection: "column",
   gap: shellSectionGapPx,
+  overflow: "hidden",
 });
 
 /** Tab panels — extra top inset so gap below tabs matches sectionGroupFollow (~14px). */

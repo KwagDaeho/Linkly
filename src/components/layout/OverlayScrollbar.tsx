@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState, type CSSProperties } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type RefObject,
+} from "react";
 import { createPortal } from "react-dom";
 
 import { cx } from "@/utils/cx";
@@ -18,6 +24,8 @@ const SCROLLBAR_FADE_MS = SCROLLBAR_GONE_MS - SCROLLBAR_FADE_START_MS;
 interface OverlayScrollbarProps {
   /** Re-sync thumb when main content changes (e.g. tab switch); does not reset scroll. */
   contentKey?: string;
+  /** When set, syncs to this element instead of `#root` (e.g. active tab panel). */
+  scrollRef?: RefObject<HTMLElement | null>;
 }
 export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
   const dragRef = useRef<{
@@ -30,6 +38,9 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
   const [revealed, setRevealed] = useState(false);
   const [hovering, setHovering] = useState(false);
   const [thumb, setThumb] = useState<Thumb>({ top: 0, height: 40 });
+  const [trackBox, setTrackBox] = useState<{ top: number; height: number } | null>(
+    null,
+  );
   const clearHideTimer = () => {
     if (hideTimerRef.current !== null) {
       window.clearTimeout(hideTimerRef.current);
@@ -48,10 +59,21 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
     scheduleHide();
   };
   useEffect(() => {
-    const root = document.getElementById("root");
-    if (!root) return;
+    let scrollEl =
+      props.scrollRef?.current ??
+      (props.scrollRef ? null : document.getElementById("root"));
+    if (!scrollEl) {
+      const retry = window.requestAnimationFrame(() => syncRef.current());
+      return () => window.cancelAnimationFrame(retry);
+    }
     const sync = () => {
-      const { scrollTop, scrollHeight, clientHeight } = root;
+      const { scrollTop, scrollHeight, clientHeight } = scrollEl;
+      if (props.scrollRef?.current) {
+        const rect = props.scrollRef.current.getBoundingClientRect();
+        setTrackBox({ top: rect.top, height: rect.height });
+      } else {
+        setTrackBox(null);
+      }
       const hasOverflow = scrollHeight > clientHeight + 1;
       setOverflow(hasOverflow);
       if (!hasOverflow) {
@@ -72,38 +94,43 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
       sync();
     };
     sync();
-    root.addEventListener("scroll", onScroll, { passive: true });
+    scrollEl.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", sync);
     const ro = new ResizeObserver(sync);
-    ro.observe(root);
-    const shellEl = root.querySelector(`main.${shell}`);
+    ro.observe(scrollEl);
+    for (const child of scrollEl.children) {
+      ro.observe(child);
+    }
+    const root = document.getElementById("root");
+    const shellEl = root?.querySelector(`main.${shell}`);
     if (shellEl) ro.observe(shellEl);
     return () => {
-      root.removeEventListener("scroll", onScroll);
+      scrollEl.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", sync);
       ro.disconnect();
       clearHideTimer();
     };
-  }, []);
+  }, [props.contentKey, props.scrollRef]);
   useEffect(() => {
     setRevealed(false);
     clearHideTimer();
     requestAnimationFrame(() => syncRef.current());
     const retry = window.setTimeout(() => syncRef.current(), 0);
     return () => window.clearTimeout(retry);
-  }, [props.contentKey]);
+  }, [props.contentKey, props.scrollRef]);
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
       const drag = dragRef.current;
-      const root = document.getElementById("root");
-      if (!drag || !root) return;
+      const scrollEl =
+        props.scrollRef?.current ?? document.getElementById("root");
+      if (!drag || !scrollEl) return;
       reveal();
-      const range = root.scrollHeight - root.clientHeight;
-      const maxTop = Math.max(0, root.clientHeight - thumb.height);
+      const range = scrollEl.scrollHeight - scrollEl.clientHeight;
+      const maxTop = Math.max(0, scrollEl.clientHeight - thumb.height);
       if (range <= 0 || maxTop <= 0) return;
       const delta = event.clientY - drag.startY;
       const next = drag.startScroll + (delta / maxTop) * range;
-      root.scrollTop = Math.min(range, Math.max(0, next));
+      scrollEl.scrollTop = Math.min(range, Math.max(0, next));
     };
     const onUp = () => {
       dragRef.current = null;
@@ -116,15 +143,22 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointercancel", onUp);
     };
-  }, [thumb.height]);
+  }, [props.scrollRef, thumb.height]);
   if (!overflow) return null;
+
+  const getScrollEl = () =>
+    props.scrollRef?.current ?? document.getElementById("root");
   const shown = revealed || hovering;
+  const trackStyle: CSSProperties | undefined = trackBox
+    ? { top: trackBox.top, height: trackBox.height, bottom: "auto" }
+    : undefined;
   return createPortal(
     <div
       className={cx(styles.root, shown && styles.visible)}
       style={
         {
           "--overlay-scrollbar-fade-out": `${SCROLLBAR_FADE_MS}ms`,
+          ...trackStyle,
         } as CSSProperties
       }
       aria-hidden
@@ -132,15 +166,15 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
       onPointerLeave={() => setHovering(false)}
       onPointerDown={(event) => {
         reveal();
-        const root = document.getElementById("root");
-        if (!root || event.target !== event.currentTarget) return;
+        const scrollEl = getScrollEl();
+        if (!scrollEl || event.target !== event.currentTarget) return;
         const rect = event.currentTarget.getBoundingClientRect();
         const y = event.clientY - rect.top;
-        const range = root.scrollHeight - root.clientHeight;
-        const maxTop = Math.max(0, root.clientHeight - thumb.height);
+        const range = scrollEl.scrollHeight - scrollEl.clientHeight;
+        const maxTop = Math.max(0, scrollEl.clientHeight - thumb.height);
         if (range <= 0 || maxTop <= 0) return;
         const top = Math.min(maxTop, Math.max(0, y - thumb.height / 2));
-        root.scrollTop = (top / maxTop) * range;
+        scrollEl.scrollTop = (top / maxTop) * range;
       }}
     >
       <div
@@ -150,11 +184,11 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
           event.preventDefault();
           event.stopPropagation();
           reveal();
-          const root = document.getElementById("root");
-          if (!root) return;
+          const scrollEl = getScrollEl();
+          if (!scrollEl) return;
           dragRef.current = {
             startY: event.clientY,
-            startScroll: root.scrollTop,
+            startScroll: scrollEl.scrollTop,
           };
           const target = event.target;
           if (

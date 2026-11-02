@@ -11,11 +11,11 @@ import * as sectionStyles from "@/components/ui/sectionTitle.css";
 
 export const SystemTab = () => {
   const { i18n } = usePrefs();
-  const { trusted } = useSession();
+  const { permissionGateVisible } = useSession();
 
   return (
     <>
-      {!trusted && (
+      {!permissionGateVisible ? null : (
         <section className={sectionStyles.staticSection}>
           <SectionHeading alignWithAccordion>
             {i18n.accessibilityTitle}

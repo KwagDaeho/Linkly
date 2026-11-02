@@ -4,7 +4,7 @@
 
 Supported languages: **English / Korean** · 지원 언어: **한국어 / English**
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS%20DMG%20(v1.4.3)-0A7EA4?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/KwagDaeho/Linkly/releases/download/v1.4.3/Linkly-1.4.3-aarch64.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS%20DMG%20(v1.4.4)-0A7EA4?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/KwagDaeho/Linkly/releases/download/v1.4.4/Linkly-1.4.4-aarch64.dmg)
 [![All releases](https://img.shields.io/badge/Releases-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/KwagDaeho/Linkly/releases/latest)
 
 Email: [1438eogh@gmail.com](mailto:1438eogh@gmail.com) · Kakao: [open.kakao.com/me/Theo_Kwag](https://open.kakao.com/me/Theo_Kwag) · GitHub: [KwagDaeho/Linkly](https://github.com/KwagDaeho/Linkly)
@@ -35,7 +35,7 @@ Linkly is independent third-party software. Device support uses public HID behav
 
 Linkly runs in the **menu bar**, reads keyboard, mouse, and catalog HID buttons macOS may not expose, and applies your profile while it is running. Closing the window keeps the app alive in the tray.
 
-### Features (v1.4.3)
+### Features (v1.4.4)
 
 Current public builds still ship under the legacy app name on disk; functionally they include:
 
@@ -57,12 +57,12 @@ Current public builds still ship under the legacy app name on disk; functionally
 
 - macOS 12+ (Monterey or later)
 - Supported catalog models: wired `M-HT1URBK` or wireless dongle `M-HT1DRBK` (056e:010c / 010d family)
-- GitHub DMG (v1.4.3): Apple Silicon (M1+)
+- GitHub DMG (v1.4.4): Apple Silicon (M1+)
 - From source: Node 20+, Rust (stable)
 
-### Coverage (v1.4.3)
+### Coverage (v1.4.4)
 
-| | v1.4.3 DMG | From source |
+| | v1.4.4 DMG | From source |
 |---|:---:|:---:|
 | Apple Silicon, macOS 12+ | ✓ | ✓ |
 | Intel Mac, macOS 12+ | — | ✓ |
@@ -74,7 +74,7 @@ Current public builds still ship under the legacy app name on disk; functionally
 
 ### Install (released DMG)
 
-1. Download the [macOS DMG](https://github.com/KwagDaeho/Linkly/releases/latest/download/Linkly-1.4.3-aarch64.dmg).
+1. Download the [macOS DMG](https://github.com/KwagDaeho/Linkly/releases/latest/download/Linkly-1.4.4-aarch64.dmg).
 2. Open the DMG and drag the app to **Applications**.
 3. Grant **Accessibility** (and **Input Monitoring** if prompted) from the **Info** tab.
 
@@ -129,7 +129,7 @@ MIT — see [LICENSE](./LICENSE).
 
 **Linkly**는 macOS **메뉴 바**에서 동작하는 입력 리매퍼입니다. 키·마우스·카탈로그 HID 버튼(Fn1–3 등)을 원하는 동작(클릭, 키, 스크롤, 매크로, 앱 실행)에 **연결**합니다.
 
-### 기능 (v1.4.3)
+### 기능 (v1.4.4)
 
 공개 DMG는 아직 예전 앱 이름으로 배포됩니다. 포함 기능:
 

@@ -1,6 +1,6 @@
 [package]
 name = "linkly"
-version = "1.4.3"
+version = "1.4.4"
 description = "Linkly"
 homepage = "https://github.com/KwagDaeho/Linkly"
 authors = ["kwagdaeho"]

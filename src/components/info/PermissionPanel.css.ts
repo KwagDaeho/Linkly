@@ -18,3 +18,9 @@ export const permList = style({
   color: "var(--muted)",
   fontSize: "0.92rem",
 });
+
+export const permRestarting = style({
+  margin: "4px 0 0",
+  color: "var(--ink)",
+  fontSize: "0.9rem",
+});

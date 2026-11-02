@@ -29,6 +29,9 @@ export const en = {
     "Allow Linkly in the system prompt or Accessibility settings.",
   accessibilityStep3:
     "When permission is granted, the app restarts automatically.",
+  accessibilityRestartToast:
+    "Accessibility granted. Restarting the app…",
+  accessibilityRestarting: "Restarting the app. Please wait…",
   grantAccess: "Grant access",
   buttonMapping: "Single trigger",
   buttonMappingEmpty: "Click Add to create a single trigger.",

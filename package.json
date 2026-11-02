@@ -2,7 +2,7 @@
   "name": "linkly",
   "description": "Linkly",
   "private": true,
-  "version": "1.4.3",
+  "version": "1.4.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,6 +13,7 @@
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
     "version:sync": "node scripts/sync-app-version.mjs",
+    "release:dmg": "bash scripts/create-release-dmg.sh",
     "app:open": "npm run tauri:build && open \"src-tauri/target/release/bundle/macos/Linkly.app\""
   },
   "dependencies": {

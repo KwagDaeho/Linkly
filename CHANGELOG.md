@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [1.4.4] — 2026-11-02
+
+### Fixed
+
+- **Accessibility permission** — use Tauri `request_restart` after grant; show toast and “restarting” copy instead of hiding the panel while the process relaunches; stop resetting TCC on every «Grant access» click.
+- **Release DMG** — `npm run release:dmg` builds installer layout (large icons, Applications drop link) via Tauri’s `bundle_dmg.sh`.
+
 ## [1.4.3] — 2026-11-02
 
 ### Changed

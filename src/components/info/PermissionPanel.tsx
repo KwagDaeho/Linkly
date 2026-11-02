@@ -8,7 +8,7 @@ import * as styles from "./PermissionPanel.css";
 
 export const PermissionPanel = () => {
   const { i18n } = usePrefs();
-  const { grantAccess } = useSession();
+  const { grantAccess, permissionRestarting } = useSession();
   return (
     <Panel variant="plain">
       <ol className={styles.permSteps}>
@@ -16,9 +16,13 @@ export const PermissionPanel = () => {
         <li>{i18n.accessibilityStep2}</li>
         <li>{i18n.accessibilityStep3}</li>
       </ol>
-      <Row>
-        <Button onClick={() => void grantAccess()}>{i18n.grantAccess}</Button>
-      </Row>
+      {permissionRestarting ? (
+        <p className={styles.permRestarting}>{i18n.accessibilityRestarting}</p>
+      ) : (
+        <Row>
+          <Button onClick={() => void grantAccess()}>{i18n.grantAccess}</Button>
+        </Row>
+      )}
     </Panel>
   );
 };

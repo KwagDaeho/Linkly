@@ -28,6 +28,8 @@ export const ko = {
   accessibilityStep2:
     "시스템 대화상자 또는 손쉬운 사용 설정에서 Linkly 앱을 허용해주세요.",
   accessibilityStep3: "권한이 허용되면 앱이 자동으로 재시작됩니다.",
+  accessibilityRestartToast: "손쉬운 사용 권한이 허용되었습니다. 앱을 재시작합니다…",
+  accessibilityRestarting: "앱을 재시작하는 중입니다. 잠시만 기다려주세요.",
   grantAccess: "권한 요청",
   buttonMapping: "단일 트리거",
   buttonMappingEmpty: "추가 버튼을 눌러 단일 트리거를 만드세요.",

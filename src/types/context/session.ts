@@ -9,6 +9,8 @@ export type SessionContextValue = {
   connected: DeviceInfo | null;
   report: LastReport | null;
   trusted: boolean;
+  permissionGateVisible: boolean;
+  permissionRestarting: boolean;
   grantAccess: () => Promise<void>;
   autostart: SessionAutostart;
 };

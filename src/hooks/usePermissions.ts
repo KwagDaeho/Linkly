@@ -2,6 +2,10 @@ import { publishToast } from "@/components/ui/toast/toastBus";
 import { usePrefs } from "@/hooks/prefs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PERMISSION_POLL_MS } from "../constants/polling";
+import {
+  pinPermissionPanelInDev,
+  skipPermissionRelaunchInDev,
+} from "../constants/devUi";
 import * as tauri from "../services/tauri";
 import type { PermissionStatus } from "../types";
 
@@ -16,8 +20,9 @@ export const usePermissions = () => {
   const restartScheduled = useRef(false);
   const trusted = permissionStatus !== null && permissionStatus.ready;
   const permissionGateVisible =
-    permissionStatus !== null &&
-    (!permissionStatus.ready || permissionRestarting);
+    pinPermissionPanelInDev ||
+    (permissionStatus !== null &&
+      (!permissionStatus.ready || permissionRestarting));
 
   const scheduleRelaunch = useCallback(() => {
     if (restartScheduled.current) {
@@ -48,6 +53,9 @@ export const usePermissions = () => {
       return;
     }
     if (sawUntrusted.current) {
+      if (skipPermissionRelaunchInDev) {
+        return;
+      }
       scheduleRelaunch();
     }
   }, [permissionStatus, scheduleRelaunch]);

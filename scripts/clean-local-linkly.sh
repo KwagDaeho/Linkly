@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
-# Remove local Linkly install, user data, login item, and macOS TCC rows.
-# Deleting the .app alone does NOT clear Accessibility in System Settings.
+# Full local wipe: app, data, LaunchAgent, and macOS privacy (TCC) for Linkly.
+#
+# Note: System Settings may still *list* Linkly under Accessibility after reset;
+# the toggle should be OFF. If it stays ON, turn it off manually once, or log out/in.
 set -euo pipefail
 
 BUNDLE="com.kwagdaeho.linkly"
+LEGACY_BUNDLES=(
+  "com.kwagdaeho.elecom-huge"
+)
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
-pkill -x linkly 2>/dev/null || true
+/usr/bin/pkill -9 -x linkly 2>/dev/null || true
 osascript -e 'tell application "Linkly" to quit' 2>/dev/null || true
 sleep 1
 
@@ -25,12 +30,29 @@ rm -f "$HOME/Library/Preferences/${BUNDLE}.plist"
 rm -rf "$HOME/Library/Saved Application State/${BUNDLE}.savedState"
 rm -rf "$HOME/Library/WebKit/${BUNDLE}"
 
-for svc in Accessibility ListenEvent PostEvent; do
-  tccutil reset "$svc" "$BUNDLE" 2>/dev/null || true
+reset_tcc() {
+  local id="$1"
+  if tccutil reset All "$id" 2>/dev/null; then
+    echo "TCC reset All: ${id}"
+  fi
+  for svc in Accessibility ListenEvent PostEvent; do
+    tccutil reset "$svc" "$id" 2>/dev/null || true
+  done
+}
+
+reset_tcc "$BUNDLE"
+for legacy in "${LEGACY_BUNDLES[@]}"; do
+  reset_tcc "$legacy" 2>/dev/null || true
 done
 
 rm -rf "${ROOT}/src-tauri/target" "${ROOT}/dist"
 find "$HOME/Downloads" -maxdepth 1 -name 'Linkly*.dmg' -delete 2>/dev/null || true
 
-echo "Linkly local data cleared (including TCC for ${BUNDLE})."
-echo "Reinstall from GitHub DMG if needed; grant Accessibility again on first run."
+while read -r vol; do
+  [[ -n "$vol" ]] && hdiutil detach "$vol" -force 2>/dev/null || true
+done < <(hdiutil info 2>/dev/null | awk '/\/Volumes\// {print $NF}' | rg '^/Volumes/(Linkly|dmg\.)' || true)
+
+echo ""
+echo "Done. Removed app + user data + TCC for ${BUNDLE}."
+echo "System Settings → Privacy → Accessibility: Linkly should be OFF or gone."
+echo "If the toggle is still ON, switch it off manually (macOS sometimes keeps the row)."

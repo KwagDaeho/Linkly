@@ -15,8 +15,14 @@ export const useSession = (): SessionContextValue => {
 export const useSessionState = (): SessionContextValue => {
   const { lifecycle } = useProfileCtx();
   const { connected, report } = useDeviceProbe();
-  const { trusted, grantAccess, permissionGateVisible, permissionRestarting } =
-    usePermissions();
+  const {
+    trusted,
+    grantAccess,
+    permissionGateVisible,
+    permissionRestarting,
+    permissionStatus,
+    openAccessibilitySettings,
+  } = usePermissions();
   const [autostartEnabled, setAutostartEnabledState] = useState(false);
   useEffect(() => {
     void tauri.autostartIsEnabled().then(setAutostartEnabledState);
@@ -35,6 +41,8 @@ export const useSessionState = (): SessionContextValue => {
     grantAccess,
     permissionGateVisible,
     permissionRestarting,
+    permissionStatus,
+    openAccessibilitySettings,
     autostart: {
       enabled: autostartEnabled,
       setEnabled: setAutostartEnabled,

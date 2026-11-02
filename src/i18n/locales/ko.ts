@@ -25,9 +25,13 @@ export const ko = {
   inputDeviceTransportVirtual: "가상",
   accessibilityTitle: "손쉬운 사용 권한이 필요합니다",
   accessibilityStep1: "«권한 요청»을 클릭해주세요.",
-  accessibilityStep2:
-    "시스템 대화상자 또는 손쉬운 사용 설정에서 Linkly 앱을 허용해주세요.",
-  accessibilityStep3: "권한이 허용되면 앱이 자동으로 재시작됩니다.",
+  accessibilityStep2: "필요하면 «시스템 설정 열기»로 손쉬운 사용·입력 모니터링을 확인해주세요.",
+  accessibilityStep3:
+    "손쉬운 사용을 허용하면 입력 모니터링 요청이 이어질 수 있습니다. 둘 다 켜져야 리매핑이 동작합니다.",
+  accessibilityStep4: "권한이 허용되면 앱이 자동으로 재시작됩니다.",
+  accessibility: "손쉬운 사용",
+  inputMonitoring: "입력 모니터링",
+  openSettings: "시스템 설정 열기",
   accessibilityRestartToast: "손쉬운 사용 권한이 허용되었습니다. 앱을 재시작합니다…",
   accessibilityRestarting: "앱을 재시작하는 중입니다. 잠시만 기다려주세요.",
   accessibilityRestartRetry: "재시작 다시 시도",

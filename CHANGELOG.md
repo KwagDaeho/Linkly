@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## [1.5.0] — 2026-11-02
+
+### Fixed
+
+- **Permission setup (System tab)** — restore pre–Linkly UI: steps 1–4, Accessibility / Input Monitoring ON·OFF, «Grant access» + «Open System Settings»; no TCC reset on every grant click.
+- **Local cleanup** — `clean-local-linkly.sh` resets TCC (`All` + services), LaunchAgent, and app data (not just Application Support).
+
+### Changed
+
+- **`tauri dev`** — permission panel always visible for QA (same copy as release); no auto relaunch in dev so the window stays open while testing.
+
 ## [1.4.5] — 2026-11-02
 
 ### Fixed

@@ -1,4 +1,5 @@
 import type { DeviceInfo, LastReport } from "../device";
+import type { PermissionStatus } from "../ui";
 
 export type SessionAutostart = {
   enabled: boolean;
@@ -11,6 +12,8 @@ export type SessionContextValue = {
   trusted: boolean;
   permissionGateVisible: boolean;
   permissionRestarting: boolean;
+  permissionStatus: PermissionStatus | null;
   grantAccess: () => Promise<void>;
+  openAccessibilitySettings: () => Promise<void>;
   autostart: SessionAutostart;
 };

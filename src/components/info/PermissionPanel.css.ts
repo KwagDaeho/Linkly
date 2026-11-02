@@ -19,6 +19,14 @@ export const permList = style({
   fontSize: "0.92rem",
 });
 
+export const permStatus = style({
+  margin: "4px 0 12px",
+  paddingLeft: "1.2rem",
+  color: "var(--ink)",
+  fontSize: "0.88rem",
+  lineHeight: 1.5,
+});
+
 export const permRestarting = style({
   margin: "4px 0 0",
   color: "var(--ink)",

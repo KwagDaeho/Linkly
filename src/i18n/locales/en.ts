@@ -26,9 +26,13 @@ export const en = {
   accessibilityTitle: "Accessibility permission required",
   accessibilityStep1: "Click «Grant access».",
   accessibilityStep2:
-    "Allow Linkly in the system prompt or Accessibility settings.",
+    "Use «Open System Settings» to check Accessibility and Input Monitoring.",
   accessibilityStep3:
-    "When permission is granted, the app restarts automatically.",
+    "After Accessibility, macOS may prompt for Input Monitoring. Both should be ON for remapping.",
+  accessibilityStep4: "When permission is granted, the app restarts automatically.",
+  accessibility: "Accessibility",
+  inputMonitoring: "Input Monitoring",
+  openSettings: "Open System Settings",
   accessibilityRestartToast:
     "Accessibility granted. Restarting the app…",
   accessibilityRestarting: "Restarting the app. Please wait…",

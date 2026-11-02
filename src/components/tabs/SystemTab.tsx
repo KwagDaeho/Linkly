@@ -40,7 +40,9 @@ export const SystemTab = () => {
       )}
       <section className={sectionStyles.staticSection}>
         <SectionHeading alignWithAccordion>{i18n.sectionAppInfo}</SectionHeading>
-        <ContactFooter embedded />
+        <div className={sectionStyles.staticSectionBody}>
+          <ContactFooter embedded />
+        </div>
       </section>
     </>
   );

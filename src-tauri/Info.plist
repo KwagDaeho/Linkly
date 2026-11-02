@@ -4,7 +4,5 @@
 <dict>
   <key>NSHumanReadableCopyright</key>
   <string>Copyright © Theo Kwag</string>
-  <key>CFBundleGetInfoString</key>
-  <string>Linkly — macOS input remapper</string>
 </dict>
 </plist>

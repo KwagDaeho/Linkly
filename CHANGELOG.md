@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [1.4.2] — 2026-11-02
+
+### Fixed
+
+- **macOS About** — remove `CFBundleGetInfoString` marketing line; panel shows name, version, and copyright only.
+- **App info (System tab)** — align footer block with other sections via `staticSectionBody` indent.
+
 ## [1.4.1] — 2026-11-02
 
 ### Changed

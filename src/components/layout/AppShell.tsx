@@ -12,7 +12,7 @@ import * as styles from "./AppShell.css";
 
 export const AppShell = () => {
   const { profile } = useProfileCtx();
-  const [tab, setTab] = useState<TabId>("trigger");
+  const [tab, setTab] = useState<TabId>("system");
   const activeTabScrollRef = useRef<HTMLDivElement | null>(null);
 
   if (!profile) {

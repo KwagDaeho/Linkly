@@ -40,7 +40,6 @@ export const writeAccordionOpen = (id: string, open: boolean): void => {
 /** Stable ids for persisted accordion open state. */
 export const accordionStateId = {
   devicesInputDevices: "devices.inputDevices",
-  systemAccessibility: "system.accessibility",
   mousePointerScroll: "mouse.pointerScroll",
   mouseBallScroll: "mouse.ballScroll",
   triggerButtonMapping: "trigger.buttonMapping",

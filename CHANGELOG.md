@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [1.4.3] — 2026-11-02
+
+### Changed
+
+- **Main tabs** — order is System, Trigger, Mouse; default tab is System.
+- **System tab** — accessibility permission block at the top (always visible when required, no accordion); panel styling matches General and Event viewer sections.
+
 ## [1.4.2] — 2026-11-02
 
 ### Fixed

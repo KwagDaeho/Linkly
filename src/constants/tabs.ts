@@ -1,6 +1,6 @@
 import type { TabId } from "@/types";
 
-export const MAIN_TABS: TabId[] = ["trigger", "mouse", "system"];
+export const MAIN_TABS: TabId[] = ["system", "trigger", "mouse"];
 
 export const MAIN_TAB_COUNT = MAIN_TABS.length;
 

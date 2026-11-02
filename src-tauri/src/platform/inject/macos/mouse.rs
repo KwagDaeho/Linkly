@@ -19,10 +19,12 @@ pub fn synthetic_buttons_held() -> bool {
 }
 
 fn post_mouse_event(e: &CGEvent, button: &MouseClickButton) {
-    // HID posts go through our suppress tap. When that button's OS stream is
-    // suppressed (remap / auto-click / long-press), post at Session so the
-    // synth click isn't deleted with the real HUGE click.
-    if crate::platform::suppress::os_mouse_button_suppressed(button) {
+    // HUGE runs in shared pointer mode: OS owns the cursor. Synthetic clicks must
+    // post at Session — HID posts are often dropped by our own suppress tap or
+    // never reach apps (Fn → right click, remapped actions, etc.).
+    let at_session = crate::platform::inject::shared_pointer_mode()
+        || crate::platform::suppress::os_mouse_button_suppressed(button);
+    if at_session {
         e.post(CGEventTapLocation::Session);
     } else {
         e.post(CGEventTapLocation::HID);

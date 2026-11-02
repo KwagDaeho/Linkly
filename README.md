@@ -4,7 +4,7 @@
 
 Supported languages: **English / Korean** · 지원 언어: **한국어 / English**
 
-[![Download for macOS](https://img.shields.io/badge/Download-macOS%20DMG%20(v1.3.2)-0A7EA4?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/KwagDaeho/Linkly/releases/download/v1.3.2/Unofficial-Elecom-Huge-Custom-Mac-1.3.2-aarch64.dmg)
+[![Download for macOS](https://img.shields.io/badge/Download-macOS%20DMG%20(v1.4.0)-0A7EA4?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/KwagDaeho/Linkly/releases/download/v1.4.0/Unofficial-Elecom-Huge-Custom-Mac-1.4.0-aarch64.dmg)
 [![All releases](https://img.shields.io/badge/Releases-GitHub-181717?style=for-the-badge&logo=github)](https://github.com/KwagDaeho/Linkly/releases/latest)
 
 Email: [1438eogh@gmail.com](mailto:1438eogh@gmail.com) · Kakao: [open.kakao.com/me/Theo_Kwag](https://open.kakao.com/me/Theo_Kwag) · GitHub: [KwagDaeho/Linkly](https://github.com/KwagDaeho/Linkly)
@@ -35,7 +35,7 @@ Linkly is becoming a **general-purpose input remapper** for macOS, not a single-
 
 Linkly runs in the **menu bar**, reads input (including HUGE-specific HID buttons macOS normally hides), and applies your profile while it is running. Closing the window keeps the app alive in the tray.
 
-### Features (v1.3.2)
+### Features (v1.4.0)
 
 Current public builds still ship under the legacy app name on disk; functionally they include:
 
@@ -57,12 +57,12 @@ Current public builds still ship under the legacy app name on disk; functionally
 
 - macOS 12+ (Monterey or later)
 - For HUGE: wired (`M-HT1URBK`) or wireless dongle (`M-HT1DRBK`)
-- GitHub DMG (v1.3.2): Apple Silicon (M1+)
+- GitHub DMG (v1.4.0): Apple Silicon (M1+)
 - From source: Node 20+, Rust (stable)
 
-### Coverage (v1.3.2)
+### Coverage (v1.4.0)
 
-| | v1.3.2 DMG | From source |
+| | v1.4.0 DMG | From source |
 |---|:---:|:---:|
 | Apple Silicon, macOS 12+ | ✓ | ✓ |
 | Intel Mac, macOS 12+ | — | ✓ |
@@ -74,7 +74,7 @@ Current public builds still ship under the legacy app name on disk; functionally
 
 ### Install (released DMG)
 
-1. Download the [macOS DMG](https://github.com/KwagDaeho/Linkly/releases/latest/download/Unofficial-Elecom-Huge-Custom-Mac-1.3.2-aarch64.dmg) *(legacy filename until the next Linkly-branded release)*.
+1. Download the [macOS DMG](https://github.com/KwagDaeho/Linkly/releases/latest/download/Unofficial-Elecom-Huge-Custom-Mac-1.4.0-aarch64.dmg) *(legacy filename until the next Linkly-branded release)*.
 2. Open the DMG and drag the app to **Applications**.
 3. Grant **Accessibility** (and **Input Monitoring** if prompted) from the **Info** tab.
 
@@ -131,7 +131,7 @@ MIT — see [LICENSE](./LICENSE).
 
 **Linkly**는 macOS **메뉴 바**에서 동작하는 입력 리매퍼입니다. 키·마우스·장치 전용 버튼(HUGE Fn1–3 등)을 원하는 동작(클릭, 키, 스크롤, 매크로, 앱 실행)에 **연결**합니다.
 
-### 기능 (v1.3.2)
+### 기능 (v1.4.0)
 
 공개 DMG는 아직 예전 앱 이름으로 배포됩니다. 포함 기능:
 

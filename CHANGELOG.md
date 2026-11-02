@@ -2,14 +2,29 @@
 
 All notable changes to this project are documented here.
 
-## [Unreleased]
+## [1.4.0] — 2026-11-02
+
+### Added
+
+- **Linkly** — macOS input remapper rebrand (`com.kwagdaeho.linkly`); ELECOM HUGE remains the first supported device.
+- **Input event viewer** — live HID/OS event stream in a dedicated window.
+- **Device linking** — per-device trigger profiles with scoped overrides and duplicate-trigger guard + toast.
+- **Custom combos & hold-chord capture** — OS trigger activators, mapping triggers, and improved capture UX.
+- **Connected devices** — list peripherals with link state and transport (wired / RF).
 
 ### Changed
 
-- **Product** — Rebranded to **Linkly** (`com.kwagdaeho.linkly`). Repository: [KwagDaeho/Linkly](https://github.com/KwagDaeho/Linkly).
-- **UI** — Remap tab grouped into **Common** (buttons, pointer/scroll, custom chords) and **Trackball** accordion (ball scroll). Gesture mapping removed from the UI.
-- **Profiles** — On first launch, copies `~/Library/Application Support/elecom-huge/profile.json` into `linkly/` when present.
-- **Docs** — README and GitHub About reflect the general input-remapper direction (HUGE as first supported device).
+- **Shell** — three main tabs (Trigger / Mouse / System) with horizontal swipe transitions and per-tab scroll.
+- **Labels** — physical buttons shown as LB / RB in the UI; `ButtonId` serde keys unchanged.
+- **Profiles** — migrates legacy `elecom-huge/profile.json` into `linkly/` on first launch when present.
+- **Performance** — removes RF probe from the HID hot path; throttles device scans; OS trigger dispatch and event emit off worker threads.
+- **Docs** — README download links and badges follow `package.json` version via `npm run version:sync`.
+
+### Fixed
+
+- **Fn → synthetic clicks** — pulse down/up for hidden Fn buttons; synthetic mouse posts at Session in shared pointer mode.
+- **Input latency** — faster remaps and event viewer updates after worker/dispatch changes.
+- **UI** — toast provider crash on duplicate trigger; tab overflow timing during transitions.
 
 ## [1.3.2] — 2026-08-24
 

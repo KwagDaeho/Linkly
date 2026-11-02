@@ -151,6 +151,7 @@ export const ko = {
   buttonMappingInputHint:
     "매핑할 키·마우스·트랙볼 버튼을 입력하세요.\nEsc 키를 누르면 취소됩니다.",
   buttonMappingCaptureWaiting: "입력 대기…",
+  buttonMappingAlreadyRegistered: "이미 등록된 트리거입니다.",
   openAppTitle: "앱 열기",
   openAppHint: "설치되어 있는 앱을 검색해 선택하세요.",
   openAppSearch: "앱 검색",

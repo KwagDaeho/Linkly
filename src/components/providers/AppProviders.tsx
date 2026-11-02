@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { ToastProvider } from "@/components/ui/toast/ToastContext";
 import { InputDevicesProvider } from "@/hooks/useInputDevices";
 import { EditorProvider } from "./EditorProvider";
 import { PrefsProvider } from "./PrefsProvider";
@@ -11,11 +12,13 @@ export const AppProviders = (props: AppProvidersProps) => {
   return (
     <PrefsProvider>
       <ProfileProvider>
-        <InputDevicesProvider>
-          <EditorProvider>
-            <SessionProvider>{props.children}</SessionProvider>
-          </EditorProvider>
-        </InputDevicesProvider>
+        <ToastProvider>
+          <InputDevicesProvider>
+            <EditorProvider>
+              <SessionProvider>{props.children}</SessionProvider>
+            </EditorProvider>
+          </InputDevicesProvider>
+        </ToastProvider>
       </ProfileProvider>
     </PrefsProvider>
   );

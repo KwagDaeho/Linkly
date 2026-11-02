@@ -151,6 +151,7 @@ export const en = {
   buttonMappingInputHint:
     "Press the key, mouse, or trackball button to map.\nPress Esc to cancel.",
   buttonMappingCaptureWaiting: "Waiting for input…",
+  buttonMappingAlreadyRegistered: "This trigger is already registered.",
   openAppTitle: "Open app",
   openAppHint: "Search and pick an installed application.",
   openAppSearch: "Search apps",

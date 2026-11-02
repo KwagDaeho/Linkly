@@ -30,6 +30,10 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "copyright": "Copyright © Theo Kwag",
+    "homepage": "https://github.com/KwagDaeho/Linkly",
+    "shortDescription": "Linkly",
+    "longDescription": "macOS menu bar input remapper.",
     "macOS": {
       "minimumSystemVersion": "12.0",
       "signingIdentity": "-",

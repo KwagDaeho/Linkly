@@ -53,6 +53,7 @@ pub fn run() {
     // so a duplicate launch cannot attach a second engine.
 
     tauri::Builder::default()
+        .enable_macos_default_menu(false)
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {

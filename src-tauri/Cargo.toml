@@ -1,7 +1,8 @@
 [package]
 name = "linkly"
 version = "1.4.2"
-description = "Linkly — macOS input remapper"
+description = "Linkly"
+homepage = "https://github.com/KwagDaeho/Linkly"
 authors = ["kwagdaeho"]
 edition = "2021"
 

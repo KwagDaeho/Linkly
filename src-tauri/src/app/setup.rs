@@ -4,7 +4,7 @@ use crate::domain::watch;
 use crate::platform::capture;
 use tauri::{
     image::Image,
-    menu::{Menu, MenuItem},
+    menu::{AboutMetadata, Menu, MenuItem, PredefinedMenuItem, Submenu},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     App, Manager,
 };
@@ -39,6 +39,48 @@ fn apply_dock_icon(png_bytes: &[u8]) {
     }
 }
 
+/// Minimal menu bar: About shows name, version, and copyright only (no vendor blurb).
+#[cfg(target_os = "macos")]
+fn install_app_menu(app: &App) -> Result<(), Box<dyn std::error::Error>> {
+    let version = app.package_info().version.to_string();
+    let about = AboutMetadata {
+        name: Some(PRODUCT_NAME.to_string()),
+        version: Some(version),
+        copyright: Some("Copyright © Theo Kwag".to_string()),
+        ..Default::default()
+    };
+    let app_menu = Submenu::with_items(
+        app,
+        PRODUCT_NAME,
+        true,
+        &[
+            &PredefinedMenuItem::about(app, None, Some(about))?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::hide(app, None)?,
+            &PredefinedMenuItem::hide_others(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::quit(app, None)?,
+        ],
+    )?;
+    let edit_menu = Submenu::with_items(
+        app,
+        "Edit",
+        true,
+        &[
+            &PredefinedMenuItem::undo(app, None)?,
+            &PredefinedMenuItem::redo(app, None)?,
+            &PredefinedMenuItem::separator(app)?,
+            &PredefinedMenuItem::cut(app, None)?,
+            &PredefinedMenuItem::copy(app, None)?,
+            &PredefinedMenuItem::paste(app, None)?,
+            &PredefinedMenuItem::select_all(app, None)?,
+        ],
+    )?;
+    let menu = Menu::with_items(app, &[&app_menu, &edit_menu])?;
+    app.set_menu(menu)?;
+    Ok(())
+}
+
 pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     app.state::<AppState>().engine.start();
 
@@ -47,6 +89,9 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     if watch::needs_os_event_watch(&profile) || crate::platform::input_monitor::enabled() {
         capture::ensure_watch_tap();
     }
+    #[cfg(target_os = "macos")]
+    install_app_menu(app)?;
+
     let show_i = MenuItem::with_id(
         app,
         "show",

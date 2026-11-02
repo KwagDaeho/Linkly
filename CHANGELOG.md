@@ -8,6 +8,8 @@ All notable changes to this project are documented here.
 
 - **macOS About** — remove `CFBundleGetInfoString` marketing line; panel shows name, version, and copyright only.
 - **App info (System tab)** — align footer block with other sections via `staticSectionBody` indent.
+- **GitHub About** — repository description no longer mentions legacy vendor names.
+- **Menu bar About** — minimal Linkly About panel (name, version, copyright); neutral bundle/Cargo descriptions.
 
 ## [1.4.1] — 2026-11-02
 

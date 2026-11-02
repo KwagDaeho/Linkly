@@ -1,6 +1,6 @@
 {
   "name": "linkly",
-  "description": "Linkly — macOS menu bar input remapper",
+  "description": "Linkly",
   "private": true,
   "version": "1.4.2",
   "type": "module",

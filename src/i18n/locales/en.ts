@@ -32,6 +32,9 @@ export const en = {
   accessibilityRestartToast:
     "Accessibility granted. Restarting the app…",
   accessibilityRestarting: "Restarting the app. Please wait…",
+  accessibilityRestartRetry: "Retry restart",
+  accessibilityRestartFailed:
+    "Automatic restart failed. Use the button below or quit and reopen the app.",
   grantAccess: "Grant access",
   buttonMapping: "Single trigger",
   buttonMappingEmpty: "Click Add to create a single trigger.",

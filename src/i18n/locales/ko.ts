@@ -30,6 +30,9 @@ export const ko = {
   accessibilityStep3: "권한이 허용되면 앱이 자동으로 재시작됩니다.",
   accessibilityRestartToast: "손쉬운 사용 권한이 허용되었습니다. 앱을 재시작합니다…",
   accessibilityRestarting: "앱을 재시작하는 중입니다. 잠시만 기다려주세요.",
+  accessibilityRestartRetry: "재시작 다시 시도",
+  accessibilityRestartFailed:
+    "자동 재시작에 실패했습니다. 아래 버튼을 누르거나 앱을 종료한 뒤 다시 실행해주세요.",
   grantAccess: "권한 요청",
   buttonMapping: "단일 트리거",
   buttonMappingEmpty: "추가 버튼을 눌러 단일 트리거를 만드세요.",

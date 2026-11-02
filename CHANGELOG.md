@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## [1.4.5] — 2026-11-02
+
+### Fixed
+
+- **Accessibility grant** — relaunch after permission no longer hangs on “restarting”; exit on the main thread and spawn a new instance after the instance lock is released (1.4.4 `request_restart` from IPC did not exit menu-bar apps).
+- **Permission UI** — «Retry restart» if auto relaunch fails; clearer failure toast.
+
+### Added
+
+- **`scripts/clean-local-linkly.sh`** — remove app data, LaunchAgent, and macOS TCC rows for a true local reset.
+
 ## [1.4.4] — 2026-11-02
 
 ### Fixed

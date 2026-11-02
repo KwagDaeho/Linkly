@@ -3,6 +3,7 @@ import { Panel } from "@/components/ui/Panel";
 import { Row } from "@/components/ui/Row";
 import { usePrefs } from "@/hooks/prefs";
 import { useSession } from "@/hooks/session";
+import * as tauri from "@/services/tauri";
 
 import * as styles from "./PermissionPanel.css";
 
@@ -17,7 +18,14 @@ export const PermissionPanel = () => {
         <li>{i18n.accessibilityStep3}</li>
       </ol>
       {permissionRestarting ? (
-        <p className={styles.permRestarting}>{i18n.accessibilityRestarting}</p>
+        <>
+          <p className={styles.permRestarting}>{i18n.accessibilityRestarting}</p>
+          <Row>
+            <Button onClick={() => void tauri.relaunchApp()}>
+              {i18n.accessibilityRestartRetry}
+            </Button>
+          </Row>
+        </>
       ) : (
         <Row>
           <Button onClick={() => void grantAccess()}>{i18n.grantAccess}</Button>

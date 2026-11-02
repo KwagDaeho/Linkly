@@ -27,9 +27,13 @@ export const usePermissions = () => {
     setPermissionRestarting(true);
     publishToast(i18n.accessibilityRestartToast);
     window.setTimeout(() => {
-      void tauri.relaunchApp();
+      void tauri.relaunchApp().catch(() => {
+        publishToast(i18n.accessibilityRestartFailed);
+        restartScheduled.current = false;
+        setPermissionRestarting(false);
+      });
     }, RESTART_TOAST_DELAY_MS);
-  }, [i18n.accessibilityRestartToast]);
+  }, [i18n.accessibilityRestartToast, i18n.accessibilityRestartFailed]);
 
   const refresh = useCallback(async () => {
     setPermissionStatus(await tauri.getPermissionStatus());

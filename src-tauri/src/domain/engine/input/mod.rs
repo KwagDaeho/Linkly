@@ -495,6 +495,19 @@ pub(crate) fn apply_binding_press<K>(
             fire_action_pulse(inject_id, &pulse, &profile.pointer);
             start_key_repeat_for(key_repeats, state_key, inject_id, &pulse);
         }
+    } else if inject_id.is_hidden_from_macos() {
+        // Fn1–3 have no OS mouse stream — pulse discrete click actions on press.
+        if is_scroll_action(&binding.click) {
+            link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
+            inject::press_action(inject_id, &binding.click, &profile.pointer);
+        } else {
+            let pulse = match &binding.click {
+                Action::Default => binding.click.clone(),
+                other => other.clone(),
+            };
+            link_event::announce(input, &pulse, inject_id, LinkPhase::Press);
+            fire_action_pulse(inject_id, &pulse, &profile.pointer);
+        }
     } else if inject::shared_pointer_mode()
         && remap::action_is_native_for(inject_id, &binding.click)
         && !(synth_native_if_suppressed

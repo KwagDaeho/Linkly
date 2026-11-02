@@ -1,12 +1,28 @@
 //! Live input event stream for the Info-tab event viewer (Karabiner-style).
 
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::mpsc::{sync_channel, TrySendError};
+use std::sync::LazyLock;
+use std::thread;
 
 use serde::Serialize;
 
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{Activator, MouseClickButton};
 use crate::platform::app_bus;
+
+static EMIT_TX: LazyLock<std::sync::mpsc::SyncSender<InputEventLine>> = LazyLock::new(|| {
+    let (tx, rx) = sync_channel(512);
+    thread::Builder::new()
+        .name("input-event-emit".into())
+        .spawn(move || {
+            while let Ok(line) = rx.recv() {
+                app_bus::emit("input-event", line);
+            }
+        })
+        .expect("spawn input-event-emit");
+    tx
+});
 
 static ENABLED: AtomicBool = AtomicBool::new(false);
 static VIEWER_KEYBOARD: AtomicBool = AtomicBool::new(false);
@@ -153,7 +169,11 @@ pub(crate) fn publish(line: InputEventLine) {
     if !viewer_wants_channel(channel) {
         return;
     }
-    app_bus::emit("input-event", line);
+    match EMIT_TX.try_send(line) {
+        Ok(()) => {}
+        Err(TrySendError::Full(_)) => {}
+        Err(TrySendError::Disconnected(_)) => {}
+    }
 }
 
 pub fn on_hid_report(report: &LastReport) {

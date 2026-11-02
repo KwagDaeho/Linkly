@@ -465,7 +465,10 @@ pub fn patch_wireless_huge_connected_status(
     huge_rf_last_input: &parking_lot::Mutex<Option<std::time::Instant>>,
     profile_enabled: bool,
 ) {
-    use std::time::Instant;
+    use std::time::Duration;
+
+    /// RF "linked" follows real ball HID on the worker — never block here on `probe_*` (≈420ms).
+    const RF_STALE: Duration = Duration::from_secs(45);
 
     for d in api.device_list() {
         if !is_huge(d.vendor_id(), d.product_id()) || !is_wireless_huge(d.vendor_id(), d.product_id()) {
@@ -478,17 +481,16 @@ pub fn patch_wireless_huge_connected_status(
             continue;
         }
 
-        let rf_now = probe_wireless_huge_ball_rf(api, d);
-        {
-            let mut last = huge_rf_last_input.lock();
-            if rf_now {
-                *last = Some(Instant::now());
-            } else if !profile_enabled {
-                *last = None;
-            }
+        let linked = {
+            let guard = huge_rf_last_input.lock();
+            guard
+                .as_ref()
+                .is_some_and(|t| t.elapsed() < RF_STALE)
+        };
+        if !profile_enabled {
+            *huge_rf_last_input.lock() = None;
         }
 
-        let linked = rf_now || huge_rf_last_input.lock().is_some();
         let key = (d.vendor_id(), d.product_id());
         for row in statuses.iter_mut() {
             if (row.vendor_id, row.product_id) != key {

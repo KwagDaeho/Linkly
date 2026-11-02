@@ -11,10 +11,12 @@ use parking_lot::Mutex;
 
 use crate::domain::device::{device_identity_key, is_wireless_huge, DeviceIdentityKey, DeviceInfo, InputDeviceStatus};
 use crate::domain::profile::Profile;
+use crate::domain::remap_session::{self, RemapSession};
 use crate::persistence::input_device_store;
 
 pub struct Engine {
     profile: Arc<Mutex<Profile>>,
+    profile_dirty: Arc<AtomicBool>,
     running: Arc<AtomicBool>,
     worker: Mutex<Option<JoinHandle<()>>>,
     last_report: Arc<Mutex<Option<LastReport>>>,
@@ -42,6 +44,7 @@ impl Engine {
     pub fn new(profile: Profile) -> Self {
         Self {
             profile: Arc::new(Mutex::new(profile)),
+            profile_dirty: Arc::new(AtomicBool::new(true)),
             running: Arc::new(AtomicBool::new(false)),
             worker: Mutex::new(None),
             last_report: Arc::new(Mutex::new(None)),
@@ -62,6 +65,7 @@ impl Engine {
 
     pub fn set_profile(&self, profile: Profile) {
         *self.profile.lock() = profile;
+        self.profile_dirty.store(true, Ordering::SeqCst);
     }
 
     pub fn connected_device(&self) -> Option<DeviceInfo> {
@@ -78,6 +82,7 @@ impl Engine {
         }
 
         let profile = Arc::clone(&self.profile);
+        let profile_dirty = Arc::clone(&self.profile_dirty);
         let running = Arc::clone(&self.running);
         let last_report = Arc::clone(&self.last_report);
         let connected = Arc::clone(&self.connected);
@@ -85,12 +90,17 @@ impl Engine {
         let input_devices = Arc::clone(&self.input_devices);
         let huge_rf_last_input = Arc::clone(&self.huge_rf_last_input);
 
+        let session = RemapSession::spawn(self.profile.lock().clone(), Arc::clone(&self.running));
+        remap_session::install(Arc::clone(&session));
+
         let handle = thread::Builder::new()
             .name("huge-hid-worker".into())
             .spawn(move || {
                 let result = catch_unwind(AssertUnwindSafe(|| {
                     worker::run(
                         profile,
+                        profile_dirty,
+                        session,
                         running,
                         last_report,
                         connected,

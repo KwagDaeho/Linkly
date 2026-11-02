@@ -11,7 +11,6 @@ use parking_lot::Mutex;
 use crate::domain::ball_scroll;
 use crate::domain::button_mapping::{self, ButtonMaps};
 use crate::domain::custom_mapping::{self, CustomMaps};
-use crate::domain::watch;
 use crate::domain::device::{
     device_identity_key, ButtonId, ButtonState, DeviceIdentityKey, DeviceInfo, InputDeviceStatus,
     ParsedReport, is_wireless_huge,
@@ -23,7 +22,8 @@ use crate::domain::engine::input::{
     PendingHold, ScrollRepeat, TiltHoldGate,
 };
 use crate::domain::engine::LastReport;
-use crate::domain::profile::{Action, Profile};
+use crate::domain::profile::{effective_long_press_ms, Action, Profile};
+use crate::domain::remap_session::RemapSession;
 use crate::domain::remap;
 use crate::persistence::input_device_store;
 use crate::platform::hid::{
@@ -34,6 +34,8 @@ use crate::platform::{capture, inject, permissions, suppress};
 
 pub(crate) fn run(
     profile: Arc<Mutex<Profile>>,
+    profile_dirty: Arc<AtomicBool>,
+    session: Arc<RemapSession>,
     running: Arc<AtomicBool>,
     last_report: Arc<Mutex<Option<LastReport>>>,
     connected: Arc<Mutex<Option<DeviceInfo>>>,
@@ -47,8 +49,6 @@ pub(crate) fn run(
     let mut pending: HashMap<ButtonId, PendingHold> = HashMap::new();
     let mut scroll_repeats: HashMap<ButtonId, ScrollRepeat> = HashMap::new();
     let mut key_repeats: HashMap<ButtonId, ActionRepeat> = HashMap::new();
-    let mut custom_maps = CustomMaps::default();
-    let mut button_maps = ButtonMaps::default();
     let mut tilt_gate = TiltHoldGate::default();
     let mut api = match HidApi::new() {
         Ok(api) => api,
@@ -59,13 +59,22 @@ pub(crate) fn run(
         }
     };
 
+    let mut profile_snap = profile.lock().clone();
+    let mut last_full_device_scan = Instant::now();
+    const FULL_DEVICE_SCAN_INTERVAL: Duration = Duration::from_secs(3);
+
     while running.load(Ordering::SeqCst) {
-        // Keep UI connection status even when remap is off (enumerate only).
-        let snapshot = scan_input_snapshot(&mut api);
+        // Full USB/BT refresh + open probes are expensive — do not run every loop turn.
+        let snapshot = if last_full_device_scan.elapsed() >= FULL_DEVICE_SCAN_INTERVAL {
+            last_full_device_scan = Instant::now();
+            scan_input_snapshot(&mut api)
+        } else {
+            collect_input_snapshot(&api)
+        };
         let device_info = find_huge(&api);
         *connected.lock() = device_info.clone();
 
-        let profile_enabled = profile.lock().enabled;
+        let profile_enabled = profile_snap.enabled;
         let profile_target = if profile_enabled {
             device_info.as_ref()
         } else {
@@ -87,15 +96,10 @@ pub(crate) fn run(
             }
         }
 
-        let profile_snap = profile.lock().clone();
-        let trigger_device = device_info.as_ref().map(device_identity_key);
-        ball_scroll::sync_from_profile(&profile_snap);
-        custom_mapping::sync_from_profile(&profile_snap, trigger_device);
-        if button_mapping::sync_from_profile(&profile_snap, trigger_device) {
-            button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
-        }
-        if watch::needs_os_event_watch(&profile_snap) {
-            capture::ensure_watch_tap();
+        if profile_dirty.swap(false, Ordering::SeqCst) {
+            profile_snap = profile.lock().clone();
+            let trigger_device = device_info.as_ref().map(device_identity_key);
+            session.sync_runtime(&profile_snap, trigger_device);
         }
         if !profile_snap.enabled {
             // Release any held virtual buttons and don't seize the device.
@@ -105,8 +109,7 @@ pub(crate) fn run(
             pending.clear();
             scroll_repeats.clear();
             key_repeats.clear();
-            custom_maps.clear();
-            button_maps.clear();
+            session.clear_maps();
             tilt_gate = TiltHoldGate::default();
             prev = ButtonState::default();
             suppress::clear_suppress();
@@ -153,26 +156,29 @@ pub(crate) fn run(
 
         let mut buf = [0u8; 64];
         let mut last_input_scan = Instant::now();
+        let mut last_registry_full_scan = Instant::now();
+        let trigger_device = Some(device_identity_key(&info));
         while running.load(Ordering::SeqCst) {
-            let profile_snap = profile.lock().clone();
-            let trigger_device = Some(device_identity_key(&info));
-            ball_scroll::sync_from_profile(&profile_snap);
-            custom_mapping::sync_from_profile(&profile_snap, trigger_device);
-            if button_mapping::sync_from_profile(&profile_snap, trigger_device) {
-                button_mapping::reset_pressed_state(&mut button_maps, &profile_snap);
+            if profile_dirty.swap(false, Ordering::SeqCst) {
+                profile_snap = profile.lock().clone();
+                session.sync_runtime(&profile_snap, trigger_device);
             }
-            if watch::needs_os_event_watch(&profile_snap) {
-                capture::ensure_watch_tap();
-            }
+            let long_press = long_press_threshold(&profile_snap, trigger_device);
             if !profile_snap.enabled {
                 *huge_rf_last_input.lock() = None;
                 break;
             }
             suppress::sync_scroll_transform(true);
 
-            match device.read_timeout(&mut buf, 40) {
+            match device.read_timeout(&mut buf, 8) {
                 Ok(0) => {
                     if last_input_scan.elapsed() >= Duration::from_millis(800) {
+                        let refresh_list =
+                            last_registry_full_scan.elapsed() >= FULL_DEVICE_SCAN_INTERVAL;
+                        if refresh_list {
+                            last_registry_full_scan = Instant::now();
+                            last_full_device_scan = Instant::now();
+                        }
                         sync_input_device_registry(
                             &mut api,
                             &profile,
@@ -180,72 +186,71 @@ pub(crate) fn run(
                             &known_input_devices,
                             &input_devices,
                             &huge_rf_last_input,
-                            true,
+                            refresh_list,
                         );
                         last_input_scan = Instant::now();
                     }
                     let now = Instant::now();
-                    custom_mapping::process_os_trigger_queue(&profile_snap, &mut custom_maps);
-                    button_mapping::process_os_trigger_queue(&profile_snap, &mut button_maps);
-                    fire_due_long_presses(
-                        &mut pending,
-                        &mut held,
-                        &profile_snap.pointer,
-                        profile_snap.long_press_threshold(),
-                    );
-                    custom_mapping::fire_due_ticks(
-                        &mut custom_maps,
-                        &profile_snap,
-                        profile_snap.long_press_threshold(),
-                    );
-                    button_mapping::fire_due_ticks(
-                        &mut button_maps,
-                        &profile_snap,
-                        profile_snap.long_press_threshold(),
-                    );
-                    fire_due_scroll_repeats(&mut scroll_repeats, &profile_snap.pointer);
-                    fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
-                    tilt_gate.expire(now);
-                    ball_scroll::tick();
-                    inject::end_idle_ball_scroll();
-                    let mut state = prev;
-                    tilt_gate.apply(&mut state);
-                    custom_mapping::sync_button_state(state);
-                    custom_mapping::maintain_chords(
-                        state,
-                        &profile_snap,
-                        &mut custom_maps,
-                        &mut pending,
-                        &mut held,
-                        &mut scroll_repeats,
-                        &mut key_repeats,
-                    );
-                    if state != prev {
-                        apply_button_edges(
-                            prev,
+                    session.with_maps(&profile_snap, |custom_maps, button_maps| {
+                        fire_due_long_presses(
+                            &mut pending,
+                            &mut held,
+                            &profile_snap.pointer,
+                            long_press,
+                        );
+                        custom_mapping::fire_due_ticks(
+                            custom_maps,
+                            &profile_snap,
+                            long_press,
+                        );
+                        button_mapping::fire_due_ticks(
+                            button_maps,
+                            &profile_snap,
+                            long_press,
+                        );
+                        fire_due_scroll_repeats(&mut scroll_repeats, &profile_snap.pointer);
+                        fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
+                        tilt_gate.expire(now);
+                        ball_scroll::tick();
+                        inject::end_idle_ball_scroll();
+                        let mut state = prev;
+                        tilt_gate.apply(&mut state);
+                        custom_mapping::sync_button_state(state);
+                        custom_mapping::maintain_chords(
                             state,
                             &profile_snap,
-                            &mut custom_maps,
-                            &mut button_maps,
+                            custom_maps,
                             &mut pending,
                             &mut held,
                             &mut scroll_repeats,
                             &mut key_repeats,
                         );
-                        prev = state;
-                        // Reflect gated tilt release in Live HID probe.
-                        if let Some(rep) = last_report.lock().as_mut() {
-                            rep.buttons.retain(|b| {
-                                *b != "wheel_tilt_left" && *b != "wheel_tilt_right"
-                            });
-                            if state.tilt_left {
-                                rep.buttons.push("wheel_tilt_left");
-                            }
-                            if state.tilt_right {
-                                rep.buttons.push("wheel_tilt_right");
+                        if state != prev {
+                            apply_button_edges(
+                                prev,
+                                state,
+                                &profile_snap,
+                                custom_maps,
+                                button_maps,
+                                &mut pending,
+                                &mut held,
+                                &mut scroll_repeats,
+                                &mut key_repeats,
+                            );
+                            prev = state;
+                            if let Some(rep) = last_report.lock().as_mut() {
+                                rep.buttons.retain(|b| {
+                                    *b != "wheel_tilt_left" && *b != "wheel_tilt_right"
+                                });
+                                if state.tilt_left {
+                                    rep.buttons.push("wheel_tilt_left");
+                                }
+                                if state.tilt_right {
+                                    rep.buttons.push("wheel_tilt_right");
+                                }
                             }
                         }
-                    }
+                    });
                     // Pulse (AC off): HID quiet → allow next tilt without pan==0.
                     tilt_gate.clear_pulse_latches_when_idle();
                     inject::expire_restored_cursor_if_due();
@@ -415,11 +420,13 @@ pub(crate) fn run(
                             &pending,
                             &state,
                             &profile_snap,
-                        ) || custom_mapping::pointer_takeover_active(
-                            &custom_maps,
-                            &state,
-                            &profile_snap,
-                        );
+                        ) || session.with_maps(&profile_snap, |custom_maps, _| {
+                            custom_mapping::pointer_takeover_active(
+                                custom_maps,
+                                &state,
+                                &profile_snap,
+                            )
+                        });
                         suppress::set_suppress_motion(inject::synthetic_buttons_held());
                         let (out_x, out_y) = if ball_scroll_on {
                             (0.0, 0.0)
@@ -496,38 +503,37 @@ pub(crate) fn run(
                         inject::end_idle_ball_scroll();
                     }
 
-                    custom_mapping::process_os_trigger_queue(&profile_snap, &mut custom_maps);
-                    button_mapping::process_os_trigger_queue(&profile_snap, &mut button_maps);
+                    session.with_maps(&profile_snap, |custom_maps, button_maps| {
+                        fire_due_long_presses(
+                            &mut pending,
+                            &mut held,
+                            &profile_snap.pointer,
+                            long_press,
+                        );
+                        custom_mapping::fire_due_ticks(
+                            custom_maps,
+                            &profile_snap,
+                            long_press,
+                        );
+                        button_mapping::fire_due_ticks(
+                            button_maps,
+                            &profile_snap,
+                            long_press,
+                        );
+                        fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
 
-                    fire_due_long_presses(
-                        &mut pending,
-                        &mut held,
-                        &profile_snap.pointer,
-                        profile_snap.long_press_threshold(),
-                    );
-                    custom_mapping::fire_due_ticks(
-                        &mut custom_maps,
-                        &profile_snap,
-                        profile_snap.long_press_threshold(),
-                    );
-                    button_mapping::fire_due_ticks(
-                        &mut button_maps,
-                        &profile_snap,
-                        profile_snap.long_press_threshold(),
-                    );
-                    fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
-
-                    apply_button_edges(
-                        prev,
-                        state,
-                        &profile_snap,
-                        &mut custom_maps,
-                        &mut button_maps,
-                        &mut pending,
-                        &mut held,
-                        &mut scroll_repeats,
-                        &mut key_repeats,
-                    );
+                        apply_button_edges(
+                            prev,
+                            state,
+                            &profile_snap,
+                            custom_maps,
+                            button_maps,
+                            &mut pending,
+                            &mut held,
+                            &mut scroll_repeats,
+                            &mut key_repeats,
+                        );
+                    });
 
                     prev = state;
                     prev_raw = raw_buttons;
@@ -544,8 +550,7 @@ pub(crate) fn run(
         for (id, action) in held.drain() {
             inject::release_action(id, &action);
         }
-        custom_maps.clear();
-        button_maps.clear();
+        session.clear_maps();
         pending.clear();
         scroll_repeats.clear();
         key_repeats.clear();
@@ -703,4 +708,11 @@ fn apply_wireless_huge_connected(
     huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
 ) {
     patch_wireless_huge_connected_status(api, statuses, huge_rf_last_input.as_ref(), profile_enabled);
+}
+
+fn long_press_threshold(
+    profile: &Profile,
+    trigger_device: Option<DeviceIdentityKey>,
+) -> Duration {
+    Duration::from_millis(effective_long_press_ms(profile, trigger_device).clamp(150, 2000))
 }

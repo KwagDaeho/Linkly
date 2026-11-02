@@ -5,6 +5,7 @@ pub mod custom_mapping;
 pub mod device;
 pub mod profile;
 pub mod remap;
+pub mod remap_session;
 pub mod engine;
 pub mod link_event;
 pub mod watch;

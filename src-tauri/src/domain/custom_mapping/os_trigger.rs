@@ -34,6 +34,7 @@ pub fn offer_os_trigger(activator: &Activator, down: bool) -> bool {
     if swallow {
         OS_TRIGGER_QUEUE.lock().push((activator.clone(), down));
         request_chord_reeval();
+        crate::domain::remap_session::poke_os_dispatch();
     }
     swallow
 }

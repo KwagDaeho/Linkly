@@ -1,8 +1,8 @@
 {
   "name": "linkly",
-  "description": "Linkly — macOS menu bar input remapper (ELECOM HUGE first supported device)",
+  "description": "Linkly — macOS menu bar input remapper",
   "private": true,
-  "version": "1.4.0",
+  "version": "1.4.1",
   "type": "module",
   "scripts": {
     "dev": "vite",

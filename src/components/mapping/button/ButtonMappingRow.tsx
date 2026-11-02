@@ -14,8 +14,8 @@ interface ButtonMappingRowProps {
   entry: ButtonMappingEntry;
 }
 
-const hugeButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
-  if (entry.activator?.type === "huge") {
+const catalogButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
+  if (entry.activator?.type === "device") {
     return entry.activator.button;
   }
   return undefined;
@@ -34,7 +34,7 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
           return token !== null ? [token] : null;
         })()
       : null;
-  const resolvedButtonId = hugeButtonId(entry);
+  const resolvedButtonId = catalogButtonId(entry);
   return (
     <div className={styles.row}>
       <div className={styles.inputCell}>

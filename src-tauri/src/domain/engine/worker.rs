@@ -13,7 +13,7 @@ use crate::domain::button_mapping::{self, ButtonMaps};
 use crate::domain::custom_mapping::{self, CustomMaps};
 use crate::domain::device::{
     device_identity_key, ButtonId, ButtonState, DeviceIdentityKey, DeviceInfo, InputDeviceStatus,
-    ParsedReport, is_wireless_huge,
+    ParsedReport, is_wireless_receiver_pid,
 };
 use crate::domain::engine::input::{
     binding_of, fire_due_key_repeats, fire_due_long_presses, fire_due_scroll_repeats,
@@ -27,8 +27,8 @@ use crate::domain::remap_session::RemapSession;
 use crate::domain::remap;
 use crate::persistence::input_device_store;
 use crate::platform::hid::{
-    build_input_device_statuses, collect_input_snapshot, find_huge, open_huge_device,
-    patch_wireless_huge_connected_status, scan_input_snapshot,
+    build_input_device_statuses, collect_input_snapshot, find_catalog_hid_device, open_catalog_hid_device,
+    patch_wireless_rf_link_status, scan_input_snapshot,
 };
 use crate::platform::{capture, inject, permissions, suppress};
 
@@ -41,7 +41,7 @@ pub(crate) fn run(
     connected: Arc<Mutex<Option<DeviceInfo>>>,
     known_input_devices: Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
     input_devices: Arc<Mutex<Vec<InputDeviceStatus>>>,
-    huge_rf_last_input: Arc<Mutex<Option<Instant>>>,
+    rf_last_hid_input: Arc<Mutex<Option<Instant>>>,
 ) {
     let mut prev = ButtonState::default();
     let mut prev_raw = ButtonState::default();
@@ -71,7 +71,7 @@ pub(crate) fn run(
         } else {
             collect_input_snapshot(&api)
         };
-        let device_info = find_huge(&api);
+        let device_info = find_catalog_hid_device(&api);
         *connected.lock() = device_info.clone();
 
         let profile_enabled = profile_snap.enabled;
@@ -84,11 +84,11 @@ pub(crate) fn run(
             let mut known = known_input_devices.lock();
             let (mut statuses, dirty) =
                 build_input_device_statuses(&mut known, &snapshot, profile_target);
-            apply_wireless_huge_connected(
+            apply_wireless_rf_link(
                 &api,
                 &mut statuses,
                 profile_enabled,
-                &huge_rf_last_input,
+                &rf_last_hid_input,
             );
             *input_devices.lock() = statuses;
             if dirty {
@@ -136,10 +136,10 @@ pub(crate) fn run(
         suppress::ensure_started();
         suppress::sync_scroll_transform(true);
 
-        let device = match open_huge_device(&api, &info) {
+        let device = match open_catalog_hid_device(&api, &info) {
             Ok(d) => d,
             Err(err) => {
-                log::warn!("open huge failed: {err}");
+                log::warn!("open catalog HID device failed: {err}");
                 std::thread::sleep(Duration::from_millis(800));
                 continue;
             }
@@ -148,7 +148,7 @@ pub(crate) fn run(
         let _ = device.set_blocking_mode(true);
         inject::sync_cursor_from_system();
         log::info!(
-            "HUGE shared {:04x}:{:04x} {}",
+            "catalog shared {:04x}:{:04x} {}",
             info.vendor_id,
             info.product_id,
             info.product_name
@@ -165,7 +165,7 @@ pub(crate) fn run(
             }
             let long_press = long_press_threshold(&profile_snap, trigger_device);
             if !profile_snap.enabled {
-                *huge_rf_last_input.lock() = None;
+                *rf_last_hid_input.lock() = None;
                 break;
             }
             suppress::sync_scroll_transform(true);
@@ -185,7 +185,7 @@ pub(crate) fn run(
                             &connected,
                             &known_input_devices,
                             &input_devices,
-                            &huge_rf_last_input,
+                            &rf_last_hid_input,
                             refresh_list,
                         );
                         last_input_scan = Instant::now();
@@ -259,8 +259,8 @@ pub(crate) fn run(
                     continue;
                 }
                 Ok(n) => {
-                    if is_wireless_huge(info.vendor_id, info.product_id) {
-                        *huge_rf_last_input.lock() = Some(Instant::now());
+                    if is_wireless_receiver_pid(info.vendor_id, info.product_id) {
+                        *rf_last_hid_input.lock() = Some(Instant::now());
                     }
                     let data = &buf[..n];
                     let hex = data
@@ -297,7 +297,7 @@ pub(crate) fn run(
                         tilt_side_sustain(&profile_snap, ButtonId::WheelTiltLeft);
                     let right_sustain =
                         tilt_side_sustain(&profile_snap, ButtonId::WheelTiltRight);
-                    // Pan axis sticks on HUGE — gate tilt "down" for actions only.
+                    // Pan axis sticks on catalog — gate tilt "down" for actions only.
                     tilt_gate.note_pan(parsed.pan, now, left_sustain, right_sustain);
                     tilt_gate.expire(now);
                     tilt_gate.apply(&mut state);
@@ -344,29 +344,29 @@ pub(crate) fn run(
                         state.forward,
                         (capture_block && state.left)
                             || rl
-                            || ball_scroll::is_reserved_huge(ButtonId::Left)
-                            || custom_mapping::is_reserved_huge(ButtonId::Left)
-                            || button_mapping::is_reserved_huge(ButtonId::Left),
+                            || ball_scroll::is_reserved_catalog_button(ButtonId::Left)
+                            || custom_mapping::is_reserved_catalog_button(ButtonId::Left)
+                            || button_mapping::is_reserved_catalog_button(ButtonId::Left),
                         (capture_block && state.right)
                             || rr
-                            || ball_scroll::is_reserved_huge(ButtonId::Right)
-                            || custom_mapping::is_reserved_huge(ButtonId::Right)
-                            || button_mapping::is_reserved_huge(ButtonId::Right),
+                            || ball_scroll::is_reserved_catalog_button(ButtonId::Right)
+                            || custom_mapping::is_reserved_catalog_button(ButtonId::Right)
+                            || button_mapping::is_reserved_catalog_button(ButtonId::Right),
                         (capture_block && state.middle)
                             || rm
-                            || ball_scroll::is_reserved_huge(ButtonId::Middle)
-                            || custom_mapping::is_reserved_huge(ButtonId::Middle)
-                            || button_mapping::is_reserved_huge(ButtonId::Middle),
+                            || ball_scroll::is_reserved_catalog_button(ButtonId::Middle)
+                            || custom_mapping::is_reserved_catalog_button(ButtonId::Middle)
+                            || button_mapping::is_reserved_catalog_button(ButtonId::Middle),
                         (capture_block && state.back)
                             || rb
-                            || ball_scroll::is_reserved_huge(ButtonId::Back)
-                            || custom_mapping::is_reserved_huge(ButtonId::Back)
-                            || button_mapping::is_reserved_huge(ButtonId::Back),
+                            || ball_scroll::is_reserved_catalog_button(ButtonId::Back)
+                            || custom_mapping::is_reserved_catalog_button(ButtonId::Back)
+                            || button_mapping::is_reserved_catalog_button(ButtonId::Back),
                         (capture_block && state.forward)
                             || rf
-                            || ball_scroll::is_reserved_huge(ButtonId::Forward)
-                            || custom_mapping::is_reserved_huge(ButtonId::Forward)
-                            || button_mapping::is_reserved_huge(ButtonId::Forward),
+                            || ball_scroll::is_reserved_catalog_button(ButtonId::Forward)
+                            || custom_mapping::is_reserved_catalog_button(ButtonId::Forward)
+                            || button_mapping::is_reserved_catalog_button(ButtonId::Forward),
                     ));
 
                     ball_scroll::tick();
@@ -444,7 +444,7 @@ pub(crate) fn run(
                         }
                     }
 
-                    // HUGE wheel / tilt-pan — skip inject while ball-as-scroll.
+                    // catalog wheel / tilt-pan — skip inject while ball-as-scroll.
                     // Shared HID still posts the OS wheel; arm echo drop so it
                     // does not mix with ball scroll. Trackpad never arms.
                     let mut scroll_dx_notches = 0.0_f64;
@@ -452,12 +452,12 @@ pub(crate) fn run(
                     let mut scroll_continuous = false;
 
                     if ball_scroll_on && (parsed.wheel != 0 || parsed.pan != 0) {
-                        suppress::arm_huge_scroll_echo_suppress();
+                        suppress::arm_catalog_scroll_echo_suppress();
                     }
 
                     if !ball_scroll_on {
                         if parsed.wheel != 0 {
-                            suppress::arm_huge_scroll_echo_suppress();
+                            suppress::arm_catalog_scroll_echo_suppress();
                             scroll_dy_notches += parsed.wheel as f64;
                         }
                         if parsed.pan != 0 {
@@ -467,7 +467,7 @@ pub(crate) fn run(
                                 ButtonId::WheelTiltRight
                             };
                             let binding = binding_of(&profile_snap, side);
-                            suppress::arm_huge_scroll_echo_suppress();
+                            suppress::arm_catalog_scroll_echo_suppress();
                             if tilt_uses_pan_stream(&binding) {
                                 scroll_dx_notches +=
                                     tilt_pan_stream_dx_notches(&binding, parsed.pan);
@@ -540,7 +540,7 @@ pub(crate) fn run(
                     suppress::set_suppress_motion(inject::synthetic_buttons_held());
                 }
                 Err(err) => {
-                    log::warn!("huge read error (device gone?): {err}");
+                    log::warn!("catalog HID read error (device gone?): {err}");
                     *connected.lock() = None;
                     break;
                 }
@@ -576,7 +576,7 @@ fn apply_button_edges(
     scroll_repeats: &mut HashMap<ButtonId, ScrollRepeat>,
     key_repeats: &mut HashMap<ButtonId, ActionRepeat>,
 ) {
-    note_huge_activators(prev, state);
+    note_catalog_button_activators(prev, state);
     if capture::input_capture_active() || capture::ui_modal_active() {
         return;
     }
@@ -603,7 +603,7 @@ fn apply_button_edges(
         key_repeats,
     );
     skip_press.extend(skip_from_custom);
-    let (bm_skip_rel, bm_skip_press) = button_mapping::handle_huge_transitions(
+    let (bm_skip_rel, bm_skip_press) = button_mapping::handle_catalog_button_transitions(
         prev,
         state,
         profile,
@@ -627,16 +627,16 @@ fn apply_button_edges(
     );
 }
 
-fn note_huge_activators(prev: ButtonState, state: ButtonState) {
+fn note_catalog_button_activators(prev: ButtonState, state: ButtonState) {
     if capture::combo_trigger_capture_active() {
         for id in state.released_edges(prev) {
-            capture::release_combo_capture_token_for_huge(id);
+            capture::release_combo_capture_token_for_catalog_button(id);
         }
         for id in state.pressed_edges(prev) {
             if id == ButtonId::Left {
                 capture::emit_capture_left_pointer();
             } else {
-                capture::emit_combo_trigger_huge(id);
+                capture::emit_combo_trigger_catalog_button(id);
             }
         }
         return;
@@ -646,7 +646,7 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
             if id == ButtonId::Left && capture::allow_left_activator() {
                 capture::emit_capture_left_pointer();
             } else {
-                capture::emit_activator_from_hid(crate::domain::profile::Activator::Huge {
+                capture::emit_activator_from_hid(crate::domain::profile::Activator::Device {
                     button: id,
                 });
             }
@@ -661,7 +661,7 @@ fn note_huge_activators(prev: ButtonState, state: ButtonState) {
             }
         }
     }
-    ball_scroll::note_huge_edges(prev, state);
+    ball_scroll::note_catalog_button_edges(prev, state);
 }
 
 fn sync_input_device_registry(
@@ -670,7 +670,7 @@ fn sync_input_device_registry(
     connected: &Arc<Mutex<Option<DeviceInfo>>>,
     known_input_devices: &Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
     input_devices: &Arc<Mutex<Vec<InputDeviceStatus>>>,
-    huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
+    rf_last_hid_input: &Arc<Mutex<Option<Instant>>>,
     refresh_list: bool,
 ) {
     let snapshot = if refresh_list {
@@ -678,7 +678,7 @@ fn sync_input_device_registry(
     } else {
         collect_input_snapshot(api)
     };
-    let device_info = find_huge(api);
+    let device_info = find_catalog_hid_device(api);
     *connected.lock() = device_info.clone();
     let profile_enabled = profile.lock().enabled;
     let profile_target = if profile_enabled {
@@ -688,11 +688,11 @@ fn sync_input_device_registry(
     };
     let mut known = known_input_devices.lock();
     let (mut statuses, dirty) = build_input_device_statuses(&mut known, &snapshot, profile_target);
-    apply_wireless_huge_connected(
+    apply_wireless_rf_link(
         api,
         &mut statuses,
         profile_enabled,
-        huge_rf_last_input,
+        rf_last_hid_input,
     );
     *input_devices.lock() = statuses;
     if dirty {
@@ -701,13 +701,13 @@ fn sync_input_device_registry(
 }
 
 
-fn apply_wireless_huge_connected(
+fn apply_wireless_rf_link(
     api: &HidApi,
     statuses: &mut [InputDeviceStatus],
     profile_enabled: bool,
-    huge_rf_last_input: &Arc<Mutex<Option<Instant>>>,
+    rf_last_hid_input: &Arc<Mutex<Option<Instant>>>,
 ) {
-    patch_wireless_huge_connected_status(api, statuses, huge_rf_last_input.as_ref(), profile_enabled);
+    patch_wireless_rf_link_status(api, statuses, rf_last_hid_input.as_ref(), profile_enabled);
 }
 
 fn long_press_threshold(

@@ -24,20 +24,20 @@ export const tiltForcesAutoClick = (id: ButtonId, _click: Action): boolean => {
   return isTiltButton(id);
 };
 
-export const hugeButtonFromActivator = (
+export const catalogButtonFromActivator = (
   activator: Activator | null | undefined,
 ): ButtonId | undefined => {
-  if (activator?.type === "huge") {
+  if (activator?.type === "device") {
     return activator.button;
   }
   return undefined;
 };
 
-export const hugeButtonFromComboTrigger = (
+export const catalogButtonFromComboTrigger = (
   combo: ComboActivator,
 ): ButtonId | undefined => {
   if (combo.trigger !== undefined) {
-    return hugeButtonFromActivator(combo.trigger);
+    return catalogButtonFromActivator(combo.trigger);
   }
   return combo.button;
 };
@@ -67,7 +67,7 @@ export const normalizeTiltPanStreamFlags = (profile: Profile): Profile => {
   const buttonMappings = buttonMappingsOf(next);
   let mappingsChanged = false;
   const nextMappings = buttonMappings.map((entry) => {
-    const id = hugeButtonFromActivator(entry.activator);
+    const id = catalogButtonFromActivator(entry.activator);
     if (id === undefined || !isTiltButton(id)) {
       return entry;
     }
@@ -82,7 +82,7 @@ export const normalizeTiltPanStreamFlags = (profile: Profile): Profile => {
   const customs = customMappingsOf(next);
   let customsChanged = false;
   const nextCustoms = customs.map((entry) => {
-    const id = hugeButtonFromComboTrigger(entry.activator);
+    const id = catalogButtonFromComboTrigger(entry.activator);
     if (id === undefined || !isTiltButton(id)) {
       return entry;
     }

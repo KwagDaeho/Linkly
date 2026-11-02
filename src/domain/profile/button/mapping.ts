@@ -72,7 +72,7 @@ export const migrateLegacyButtonMappings = (profile: Profile): Profile => {
           } satisfies ButtonBinding);
     entries.push({
       id: crypto.randomUUID(),
-      activator: { type: "huge", button: id },
+      activator: { type: "device", button: id },
       ...binding,
     });
   }

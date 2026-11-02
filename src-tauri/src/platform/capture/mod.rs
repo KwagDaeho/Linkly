@@ -10,8 +10,8 @@ use crate::platform::app_bus;
 
 pub use emit::{
     emit_activator_from_hid, emit_capture_left_pointer, emit_combo_trigger_activator,
-    emit_combo_trigger_huge, merge_combo_capture_token, refresh_combo_key_capture,
-    release_combo_capture_token_for_huge,
+    emit_combo_trigger_catalog_button, merge_combo_capture_token, refresh_combo_key_capture,
+    release_combo_capture_token_for_catalog_button,
 };
 pub use session::{
     activator_capture_active, allow_left_activator, apply_capture_session,

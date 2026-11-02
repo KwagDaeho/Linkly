@@ -1,9 +1,9 @@
-//! Known ELECOM HUGE hardware IDs and button layout.
+//! Supported catalog trackball hardware IDs and button layout.
 
-pub const ELECOM_VID: u16 = 0x056e;
+pub const CATALOG_VENDOR_ID: u16 = 0x056e;
 
-/// Wired / wireless HUGE (and close revisions). Huge Plus is intentionally excluded for now.
-pub const HUGE_PIDS: &[u16] = &[
+/// Wired / wireless catalog PIDs (plus revisions). Extended models excluded until catalogued.
+pub const CATALOG_PRODUCT_IDS: &[u16] = &[
     0x010c, // M-HT1URBK (wired)
     0x010d, // M-HT1DRBK (wireless)
     0x011c, // M-HT1DRBK revision
@@ -131,7 +131,7 @@ pub struct DeviceInfo {
     pub product_name: String,
     pub manufacturer: String,
     pub path: String,
-    pub is_huge: bool,
+    pub is_catalog_device: bool,
     #[serde(default)]
     pub transport: HidTransport,
     /// Physical link types ever seen for this VID:PID (USB / Bluetooth / BLE).
@@ -139,13 +139,13 @@ pub struct DeviceInfo {
     pub known_transports: Vec<HidTransport>,
 }
 
-pub fn is_huge(vendor_id: u16, product_id: u16) -> bool {
-    vendor_id == ELECOM_VID && HUGE_PIDS.contains(&product_id)
+pub fn is_catalog_device(vendor_id: u16, product_id: u16) -> bool {
+    vendor_id == CATALOG_VENDOR_ID && CATALOG_PRODUCT_IDS.contains(&product_id)
 }
 
 /// 2.4 GHz dongle (`M-HT1DRBK`); USB receiver stays enumerated when the ball power is off.
-pub fn is_wireless_huge(vendor_id: u16, product_id: u16) -> bool {
-    vendor_id == ELECOM_VID && matches!(product_id, 0x010d | 0x011c)
+pub fn is_wireless_receiver_pid(vendor_id: u16, product_id: u16) -> bool {
+    vendor_id == CATALOG_VENDOR_ID && matches!(product_id, 0x010d | 0x011c)
 }
 
 pub type DeviceIdentityKey = (u16, u16);
@@ -235,7 +235,7 @@ pub fn merge_device_info(prev: &DeviceInfo, incoming: &DeviceInfo) -> DeviceInfo
         product_name,
         manufacturer,
         path: incoming.path.clone(),
-        is_huge: prev.is_huge || incoming.is_huge,
+        is_catalog_device: prev.is_catalog_device || incoming.is_catalog_device,
         transport: incoming.transport,
         known_transports,
     }
@@ -262,7 +262,7 @@ pub struct InputDeviceStatus {
     pub product_name: String,
     pub manufacturer: String,
     pub path: String,
-    pub is_huge: bool,
+    pub is_catalog_device: bool,
     /// Active physical link when `connected`; otherwise last seen (legacy / fallback).
     pub transport: HidTransport,
     pub connected: bool,
@@ -285,7 +285,7 @@ pub struct ButtonState {
     pub tilt_right: bool,
 }
 
-/// HUGE mouse report (observed / LinearMouse):
+/// catalog mouse report (observed / LinearMouse):
 /// ```text
 /// 01 | buttons | x_lo x_hi | y_lo y_hi | wheel | pan
 /// ```

@@ -1,7 +1,7 @@
 import {
   asBinding,
   enforceTiltBindingFlags,
-  hugeButtonFromActivator,
+  catalogButtonFromActivator,
   isTiltButton,
   resolveBindingFlags,
 } from "@/domain/profile";
@@ -47,8 +47,8 @@ export const withButtonMappingActivator = (
       return entry;
     }
     const next = { ...entry, activator };
-    const huge = hugeButtonFromActivator(activator);
-    if (huge !== undefined && isTiltButton(huge)) {
+    const catalogButton = catalogButtonFromActivator(activator);
+    if (catalogButton !== undefined && isTiltButton(catalogButton)) {
       return { ...next, ...enforceTiltBindingFlags(asBinding(entry)) };
     }
     return next;
@@ -66,8 +66,8 @@ export const withButtonMappingFlags = (
       return entry;
     }
     const currentBinding = asBinding(entry);
-    const huge = hugeButtonFromActivator(entry.activator);
-    if (huge !== undefined && isTiltButton(huge)) {
+    const catalogButton = catalogButtonFromActivator(entry.activator);
+    if (catalogButton !== undefined && isTiltButton(catalogButton)) {
       return { ...entry, ...currentBinding, ...enforceTiltBindingFlags(currentBinding) };
     }
     const flags = resolveBindingFlags(currentBinding, patch);
@@ -91,8 +91,8 @@ export const withButtonMappingSlot = (
       slot === "click"
         ? { ...entry, ...currentBinding, click: action }
         : { ...entry, ...currentBinding, longPress: action };
-    const huge = hugeButtonFromActivator(entry.activator);
-    if (huge !== undefined && isTiltButton(huge) && slot === "click") {
+    const catalogButton = catalogButtonFromActivator(entry.activator);
+    if (catalogButton !== undefined && isTiltButton(catalogButton) && slot === "click") {
       return { ...next, ...enforceTiltBindingFlags(asBinding(next)) };
     }
     return next;

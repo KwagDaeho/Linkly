@@ -65,7 +65,7 @@ pub fn set_combo_activator_capture(active: bool) {
     super::ensure_watch_tap();
 }
 
-/// Unified combo-trigger session: keyboard chord + HUGE button snapshot.
+/// Unified combo-trigger session: keyboard chord + catalog button snapshot.
 pub fn set_combo_trigger_capture(active: bool) {
     let combo_was = COMBO_TRIGGER_CAPTURE.load(Ordering::SeqCst);
     COMBO_TRIGGER_CAPTURE.store(active, Ordering::SeqCst);
@@ -97,7 +97,7 @@ pub fn key_capture_active() -> bool {
     CAPTURE_ACTIVE.load(Ordering::SeqCst)
 }
 
-/// Any UI capture session — block HUGE remaps leaking to the OS.
+/// Any UI capture session — block catalog remaps leaking to the OS.
 pub fn input_capture_active() -> bool {
     key_capture_active() || activator_capture_active()
 }

@@ -32,8 +32,8 @@ pub(crate) fn emit_activator_choice(activator: Activator) {
 
 pub fn emit_activator_from_hid(activator: Activator) {
     if session::combo_trigger_capture_active() {
-        if let Activator::Huge { button } = activator {
-            emit_combo_trigger_huge(button);
+        if let Activator::Device { button } = activator {
+            emit_combo_trigger_catalog_button(button);
         }
         return;
     }
@@ -54,7 +54,7 @@ pub fn merge_combo_capture_token(token: String) {
     }
 }
 
-pub fn release_combo_capture_token_for_huge(button: ButtonId) {
+pub fn release_combo_capture_token_for_catalog_button(button: ButtonId) {
     if !session::combo_trigger_capture_active() {
         return;
     }
@@ -66,7 +66,7 @@ pub fn release_combo_capture_token_for_huge(button: ButtonId) {
     }
 }
 
-pub fn emit_combo_trigger_huge(button: ButtonId) {
+pub fn emit_combo_trigger_catalog_button(button: ButtonId) {
     if !session::combo_trigger_capture_active() {
         return;
     }

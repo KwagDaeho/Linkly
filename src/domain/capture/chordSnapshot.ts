@@ -17,12 +17,12 @@ const MOUSE_CAPTURE_TOKENS = new Set([
   "WheelTiltRight",
 ]);
 
-const HUGE_CAPTURE_TOKENS: Record<string, Activator> = {
-  Fn1: { type: "huge", button: "fn1" },
-  Fn2: { type: "huge", button: "fn2" },
-  Fn3: { type: "huge", button: "fn3" },
-  WheelTiltLeft: { type: "huge", button: "wheel_tilt_left" },
-  WheelTiltRight: { type: "huge", button: "wheel_tilt_right" },
+const CATALOG_CAPTURE_TOKENS: Record<string, Activator> = {
+  Fn1: { type: "device", button: "fn1" },
+  Fn2: { type: "device", button: "fn2" },
+  Fn3: { type: "device", button: "fn3" },
+  WheelTiltLeft: { type: "device", button: "wheel_tilt_left" },
+  WheelTiltRight: { type: "device", button: "wheel_tilt_right" },
 };
 
 export const isCaptureMouseToken = (token: string): boolean => {
@@ -103,8 +103,8 @@ export const snapshotToComboActivator = (
 };
 
 export const tokenToActivator = (token: string): Activator | null => {
-  if (HUGE_CAPTURE_TOKENS[token]) {
-    return HUGE_CAPTURE_TOKENS[token]!;
+  if (CATALOG_CAPTURE_TOKENS[token]) {
+    return CATALOG_CAPTURE_TOKENS[token]!;
   }
   if (token === "MouseLeft") {
     return { type: "mouse", button: "left" };
@@ -122,10 +122,10 @@ export const tokenToActivator = (token: string): Activator | null => {
     return { type: "mouse", button: "forward" };
   }
   if (token === "WheelTiltLeft") {
-    return { type: "huge", button: "wheel_tilt_left" };
+    return { type: "device", button: "wheel_tilt_left" };
   }
   if (token === "WheelTiltRight") {
-    return { type: "huge", button: "wheel_tilt_right" };
+    return { type: "device", button: "wheel_tilt_right" };
   }
   if (token.startsWith("Button")) {
     const n = Number.parseInt(token.slice("Button".length), 10);

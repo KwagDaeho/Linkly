@@ -7,12 +7,12 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 pub use activator::{
-    arm_app_quit, mouse_from_event, note_huge_edges, on_os_down, on_os_up,
+    arm_app_quit, mouse_from_event, note_catalog_button_edges, on_os_down, on_os_up,
     on_synthetic_down, on_synthetic_up, synthetic_mouse_matches_armed,
     yield_modifier_hold_for_chord,
 };
 pub use state::{
-    ignore_ball_pointer_motion, is_active, is_reserved_huge, latch_on, needs_event_watch,
+    ignore_ball_pointer_motion, is_active, is_reserved_catalog_button, latch_on, needs_event_watch,
     shutdown, sync_from_profile,
 };
 

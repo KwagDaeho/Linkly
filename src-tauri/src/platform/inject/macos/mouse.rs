@@ -19,7 +19,7 @@ pub fn synthetic_buttons_held() -> bool {
 }
 
 fn post_mouse_event(e: &CGEvent, button: &MouseClickButton) {
-    // HUGE runs in shared pointer mode: OS owns the cursor. Synthetic clicks must
+    // catalog runs in shared pointer mode: OS owns the cursor. Synthetic clicks must
     // post at Session — HID posts are often dropped by our own suppress tap or
     // never reach apps (Fn → right click, remapped actions, etc.).
     let at_session = crate::platform::inject::shared_pointer_mode()
@@ -160,7 +160,7 @@ pub(super) fn double_click() {
     sync_motion_suppress();
 }
 
-/// Post a left click at the cursor for webview UI (HUGE L → modal buttons).
+/// Post a left click at the cursor for webview UI (catalog L → modal buttons).
 pub fn click_at_cursor() {
     let pos = cursor_pos();
     let Some(src) = source() else {

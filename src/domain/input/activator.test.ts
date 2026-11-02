@@ -21,7 +21,7 @@ describe("comboEffectiveTrigger", () => {
   it("falls back to legacy device button", () => {
     expect(
       comboEffectiveTrigger({ modifiers: [], keys: ["K"], button: "fn1" }),
-    ).toEqual({ type: "huge", button: "fn1" });
+    ).toEqual({ type: "device", button: "fn1" });
   });
 });
 

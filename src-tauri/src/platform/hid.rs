@@ -1,11 +1,11 @@
-//! ELECOM HUGE HID discovery and open helpers.
+//! Catalog HID discovery and open helpers.
 
 use hidapi::HidApi;
 
 use crate::domain::device::{
-    device_identity_key, is_huge, is_wireless_huge, merge_device_info, merge_known_transports,
-    preferred_product_name, DeviceIdentityKey, DeviceInfo, HidTransport, InputDeviceStatus,
-    ParsedReport, ELECOM_VID,
+    device_identity_key, is_catalog_device, is_wireless_receiver_pid, merge_device_info,
+    merge_known_transports, preferred_product_name, DeviceIdentityKey, DeviceInfo, HidTransport,
+    InputDeviceStatus, ParsedReport, CATALOG_VENDOR_ID,
 };
 
 #[cfg(target_os = "macos")]
@@ -23,13 +23,13 @@ fn hid_node_online(d: &hidapi::DeviceInfo) -> bool {
     }
 }
 
-/// Pointer / HUGE collections: must open successfully (filters powered-off ghosts in hidapi).
+/// Pointer / catalog collections: must open successfully (filters powered-off ghosts in hidapi).
 fn hid_device_responds(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
-    if is_huge(d.vendor_id(), d.product_id()) && is_wireless_huge(d.vendor_id(), d.product_id()) {
-        return wireless_huge_dongle_attached(api, d);
+    if is_catalog_device(d.vendor_id(), d.product_id()) && is_wireless_receiver_pid(d.vendor_id(), d.product_id()) {
+        return wireless_rf_dongle_attached(api, d);
     }
     let is_pointer = d.usage_page() == 0x01 && d.usage() == 0x02;
-    if !is_pointer && !is_huge(d.vendor_id(), d.product_id()) {
+    if !is_pointer && !is_catalog_device(d.vendor_id(), d.product_id()) {
         return true;
     }
     match d.open_device(api) {
@@ -41,7 +41,7 @@ fn hid_device_responds(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     }
 }
 
-fn wireless_huge_dongle_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+fn wireless_rf_dongle_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     if !hid_node_online(d) {
         return false;
     }
@@ -55,12 +55,12 @@ fn wireless_huge_dongle_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
 }
 
 /// Best-effort RF link (ball powered on). Idle may yield no reports; do not use for dongle presence.
-pub fn probe_wireless_huge_ball_rf(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+pub fn probe_wireless_rf_ball_link(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     let Ok(handle) = d.open_device(api) else {
         return false;
     };
     let _ = handle.set_blocking_mode(true);
-    // Wake/status poke seen on ELECOM wireless receivers (best-effort).
+    // Wake/status poke seen on wireless vendor wireless receivers (best-effort).
     let ping = [0x06u8, 0x01, 0x00, 0, 0, 0, 0, 0];
     let _ = handle.send_feature_report(&ping);
     let mut buf = [0u8; 64];
@@ -101,7 +101,7 @@ fn hid_transport_for_path(path: &str) -> HidTransport {
     }
 }
 
-pub fn open_huge_device(
+pub fn open_catalog_hid_device(
     api: &HidApi,
     info: &DeviceInfo,
 ) -> Result<hidapi::HidDevice, hidapi::HidError> {
@@ -116,9 +116,9 @@ pub fn open_huge_device(
     api.open(info.vendor_id, info.product_id)
 }
 
-pub fn find_huge(api: &HidApi) -> Option<DeviceInfo> {
+pub fn find_catalog_hid_device(api: &HidApi) -> Option<DeviceInfo> {
     api.device_list()
-        .filter(|d| is_huge(d.vendor_id(), d.product_id()))
+        .filter(|d| is_catalog_device(d.vendor_id(), d.product_id()))
         .filter(|d| hid_entry_attached(api, d))
         .min_by_key(|d| {
             let usage_score = match (d.usage_page(), d.usage()) {
@@ -130,16 +130,16 @@ pub fn find_huge(api: &HidApi) -> Option<DeviceInfo> {
         })
         .map(|d| {
             let mut info = device_info_from_hid(d);
-            info.is_huge = true;
+            info.is_catalog_device = true;
             info
         })
 }
 
-pub fn list_elecom_devices() -> Result<Vec<DeviceInfo>, String> {
+pub fn list_catalog_vendor_devices() -> Result<Vec<DeviceInfo>, String> {
     let api = HidApi::new().map_err(|e| e.to_string())?;
     let mut out = Vec::new();
     for d in api.device_list() {
-        if d.vendor_id() != ELECOM_VID {
+        if d.vendor_id() != CATALOG_VENDOR_ID {
             continue;
         }
         out.push(device_info_from_hid(&d));
@@ -166,7 +166,7 @@ fn device_info_from_hid(d: &hidapi::DeviceInfo) -> DeviceInfo {
             .map(|s| s.to_string())
             .unwrap_or_else(|| "Unknown".to_string()),
         path: path.clone(),
-        is_huge: is_huge(d.vendor_id(), d.product_id()),
+        is_catalog_device: is_catalog_device(d.vendor_id(), d.product_id()),
         transport,
         known_transports: if transport.indicates_physical_link() {
             vec![transport]
@@ -387,7 +387,7 @@ pub fn build_input_device_statuses(
                 if prev.path != merged.path
                     || prev.manufacturer != merged.manufacturer
                     || prev.product_name != merged.product_name
-                    || prev.is_huge != merged.is_huge
+                    || prev.is_catalog_device != merged.is_catalog_device
                     || prev.transport != merged.transport
                     || prev.known_transports != merged.known_transports
                 {
@@ -437,7 +437,7 @@ pub fn build_input_device_statuses(
                 product_name: info.product_name.clone(),
                 manufacturer: info.manufacturer.clone(),
                 path: info.path.clone(),
-                is_huge: info.is_huge,
+                is_catalog_device: info.is_catalog_device,
                 transport,
                 connected,
                 profile_target: target_key.as_ref() == Some(&key),
@@ -458,11 +458,11 @@ pub fn build_input_device_statuses(
     (out, dirty)
 }
 
-/// Override `connected` for wireless HUGE: dongle stays in the list, dot reflects RF link.
-pub fn patch_wireless_huge_connected_status(
+/// Override `connected` for wireless catalog: dongle stays in the list, dot reflects RF link.
+pub fn patch_wireless_rf_link_status(
     api: &HidApi,
     statuses: &mut [InputDeviceStatus],
-    huge_rf_last_input: &parking_lot::Mutex<Option<std::time::Instant>>,
+    rf_last_hid_input: &parking_lot::Mutex<Option<std::time::Instant>>,
     profile_enabled: bool,
 ) {
     use std::time::Duration;
@@ -471,24 +471,24 @@ pub fn patch_wireless_huge_connected_status(
     const RF_STALE: Duration = Duration::from_secs(45);
 
     for d in api.device_list() {
-        if !is_huge(d.vendor_id(), d.product_id()) || !is_wireless_huge(d.vendor_id(), d.product_id()) {
+        if !is_catalog_device(d.vendor_id(), d.product_id()) || !is_wireless_receiver_pid(d.vendor_id(), d.product_id()) {
             continue;
         }
-        if !wireless_huge_dongle_attached(api, d) {
+        if !wireless_rf_dongle_attached(api, d) {
             if !profile_enabled {
-                *huge_rf_last_input.lock() = None;
+                *rf_last_hid_input.lock() = None;
             }
             continue;
         }
 
         let linked = {
-            let guard = huge_rf_last_input.lock();
+            let guard = rf_last_hid_input.lock();
             guard
                 .as_ref()
                 .is_some_and(|t| t.elapsed() < RF_STALE)
         };
         if !profile_enabled {
-            *huge_rf_last_input.lock() = None;
+            *rf_last_hid_input.lock() = None;
         }
 
         let key = (d.vendor_id(), d.product_id());
@@ -510,19 +510,19 @@ pub fn patch_wireless_huge_connected_status(
 
 #[cfg(all(test, target_os = "macos"))]
 #[test]
-#[ignore = "manual: toggle HUGE ball power and compare 0 vs N reports"]
-fn diag_huge_spontaneous_reports() {
+#[ignore = "manual: toggle catalog ball power and compare 0 vs N reports"]
+fn diag_catalog_spontaneous_reports() {
     let mut api = HidApi::new().expect("hidapi");
     let _ = api.refresh_devices();
     for d in api.device_list() {
-        if !is_huge(d.vendor_id(), d.product_id()) {
+        if !is_catalog_device(d.vendor_id(), d.product_id()) {
             continue;
         }
         let Ok(handle) = d.open_device(&api) else {
             continue;
         };
         let _ = handle.set_blocking_mode(true);
-        eprintln!("listening 3s for spontaneous HUGE reports...");
+        eprintln!("listening 3s for spontaneous catalog reports...");
         let mut buf = [0u8; 64];
         let start = std::time::Instant::now();
         let mut count = 0;
@@ -543,15 +543,15 @@ fn diag_huge_spontaneous_reports() {
 #[cfg(all(test, target_os = "macos"))]
 #[test]
 #[ignore = "manual HID feature dump"]
-fn diag_huge_feature_reports() {
+fn diag_catalog_feature_reports() {
     let mut api = HidApi::new().expect("hidapi");
     let _ = api.refresh_devices();
     for d in api.device_list() {
-        if !is_huge(d.vendor_id(), d.product_id()) {
+        if !is_catalog_device(d.vendor_id(), d.product_id()) {
             continue;
         }
         eprintln!(
-            "HUGE {:04x}:{:04x} path={}",
+            "catalog {:04x}:{:04x} path={}",
             d.vendor_id(),
             d.product_id(),
             d.path().to_string_lossy()

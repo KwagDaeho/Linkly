@@ -1,9 +1,5 @@
 {
   "productName": "Linkly",
-  "tagline": {
-    "en": "Connect inputs to actions on macOS.",
-    "ko": "macOS에서 입력을 동작에 연결합니다."
-  },
   "contact": {
     "email": "1438eogh@gmail.com",
     "kakaoUrl": "https://open.kakao.com/me/Theo_Kwag",

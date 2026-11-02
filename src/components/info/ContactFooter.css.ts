@@ -7,7 +7,7 @@ import {
 
 export const footer = style({
   display: "flex",
-  alignItems: "flex-start",
+  alignItems: "flex-end",
   justifyContent: "space-between",
   gap: 24,
   color: "var(--muted)",
@@ -48,10 +48,10 @@ export const footerBrandMark = style({
   WebkitUserSelect: "none",
 });
 
-/** Header-sized mark — align cap height with credit line. */
+/** Right column — bottom edge lines up with last contact row. */
 export const footerBrand = style({
   flexShrink: 0,
-  paddingTop: 4,
+  alignSelf: "flex-end",
 });
 
 export const credit = style({
@@ -70,7 +70,7 @@ export const creditBy = style({
 export const contactBlock = style({
   display: "grid",
   gap: 5,
-  marginTop: 4,
+  marginTop: 16,
 });
 
 globalStyle(`${contactBlock} strong`, {

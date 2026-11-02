@@ -87,8 +87,8 @@ pub fn is_active() -> bool {
     logical_armed() || WAS_ACTIVE.load(Ordering::SeqCst)
 }
 
-pub fn is_reserved_huge(id: ButtonId) -> bool {
-    SETTINGS.lock().is_reserved_huge(id)
+pub fn is_reserved_catalog_button(id: ButtonId) -> bool {
+    SETTINGS.lock().is_reserved_catalog_button(id)
 }
 
 pub fn latch_on() -> bool {
@@ -106,7 +106,7 @@ pub fn needs_event_watch(profile: &Profile) -> bool {
         || is_active()
 }
 
-/// Drop HUGE ball deltas as pointer motion right after ball-scroll ends.
+/// Drop catalog ball deltas as pointer motion right after ball-scroll ends.
 pub fn ignore_ball_pointer_motion() -> bool {
     if crate::platform::inject::restore_cursor_active() {
         return true;

@@ -104,7 +104,7 @@ fn activator_summary(activator: &Activator) -> String {
             MouseClickButton::Forward => "mouse forward".into(),
             MouseClickButton::Other { number } => format!("Button {}", number + 1),
         },
-        Activator::Huge { button } => (*button).id_str().to_string(),
+        Activator::Device { button } => (*button).id_str().to_string(),
     }
 }
 

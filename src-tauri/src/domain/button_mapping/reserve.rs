@@ -2,11 +2,11 @@ use crate::domain::device::ButtonId;
 
 use super::handler::ButtonMaps;
 use super::os_trigger::ACTIVE_OS_ENTRIES;
-use super::state::{self, find_huge};
+use super::state::{self, find_mapping_for_button};
 
-/// Block parallel HID edges when this HUGE button is remapped / not OS-passthrough.
-pub fn is_reserved_huge(id: ButtonId) -> bool {
-    find_huge(id).is_some_and(|e| state::entry_needs_app_handling(&e))
+/// Block parallel HID edges when this catalog button is remapped / not OS-passthrough.
+pub fn is_reserved_catalog_button(id: ButtonId) -> bool {
+    find_mapping_for_button(id).is_some_and(|e| state::entry_needs_app_handling(&e))
 }
 
 pub(crate) fn reconcile_active_os(maps: &mut ButtonMaps) {

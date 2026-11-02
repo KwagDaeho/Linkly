@@ -24,7 +24,7 @@ export type ButtonBinding = {
 export type Activator =
   | { type: "key"; name: string }
   | { type: "mouse"; button: MouseClickButton }
-  | { type: "huge"; button: ButtonId };
+  | { type: "device"; button: ButtonId };
 
 export type BallScrollSlot = "toggle" | "hold";
 

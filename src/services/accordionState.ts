@@ -1,11 +1,8 @@
 const STORAGE_KEY = "linkly-accordion-open";
-const LEGACY_PREFIX = "elecom-huge-accordion-open";
 
 const readMap = (): Record<string, boolean> => {
   try {
-    const raw =
-      localStorage.getItem(STORAGE_KEY) ??
-      localStorage.getItem(LEGACY_PREFIX);
+    const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === null) {
       return {};
     }

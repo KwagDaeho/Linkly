@@ -72,7 +72,7 @@ export const ConnectedInputDevices = () => {
                 i18n,
               );
               const showProfileTarget =
-                device.profileTarget && !device.isHuge;
+                device.profileTarget && !device.isCatalogDevice;
               const detailParts = [
                 device.manufacturer,
                 `${hexPid(device.vendorId)}:${hexPid(device.productId)}`,

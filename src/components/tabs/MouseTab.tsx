@@ -10,7 +10,6 @@ import {
 } from "@/domain/profile";
 import { useBallScrollLatch } from "@/hooks/useBallScrollLatch";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { cx } from "@/utils/cx";
 
 import * as sectionStyles from "@/components/ui/sectionTitle.css";
 
@@ -31,35 +30,28 @@ export const MouseTab = () => {
     ballScrollActivatorForSlot(ball, "hold") !== null;
 
   return (
-    <>
-      <section className={sectionStyles.sectionGroup}>
-        <SectionGroupHeading>{i18n.sectionMouse}</SectionGroupHeading>
-        <Accordion
-          label={i18n.pointerScroll}
-          defaultOpen={false}
-          stateKey={accordionStateId.mousePointerScroll}
-        >
-          <PointerScrollPanel />
-        </Accordion>
-      </section>
-
-      <section
-        className={cx(
-          sectionStyles.sectionGroup,
-          sectionStyles.sectionGroupFollow,
-        )}
+    <section className={sectionStyles.sectionGroup}>
+      <SectionGroupHeading>{i18n.sectionMouse}</SectionGroupHeading>
+      <Accordion
+        label={i18n.pointerScroll}
+        defaultOpen={false}
+        stateKey={accordionStateId.mousePointerScroll}
       >
-        <SectionGroupHeading>{i18n.sectionTrackball}</SectionGroupHeading>
-        <Accordion
-          label={i18n.ballScroll}
-          status={onOff(trackballActive)}
-          statusOn={trackballActive}
-          defaultOpen={false}
-          stateKey={accordionStateId.mouseBallScroll}
-        >
-          <BallScrollPanel />
-        </Accordion>
-      </section>
-    </>
+        <PointerScrollPanel />
+      </Accordion>
+
+      <SectionGroupHeading className={sectionStyles.sectionGroupFollow}>
+        {i18n.sectionTrackball}
+      </SectionGroupHeading>
+      <Accordion
+        label={i18n.ballScroll}
+        status={onOff(trackballActive)}
+        statusOn={trackballActive}
+        defaultOpen={false}
+        stateKey={accordionStateId.mouseBallScroll}
+      >
+        <BallScrollPanel />
+      </Accordion>
+    </section>
   );
 };

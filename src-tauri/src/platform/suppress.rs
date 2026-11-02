@@ -1,5 +1,5 @@
-//! Swallow native mouse-button events while a remapped HUGE button is down,
-//! and drop OS ScrollWheel echoes of HUGE wheel/pan while we re-inject from HID.
+//! Swallow native mouse-button events while a remapped catalog button is down,
+//! and drop OS ScrollWheel echoes of catalog wheel/pan while we re-inject from HID.
 //!
 //! Shared HID keeps WindowServer cursor ownership (Dock auto-hide). Remapped
 //! L/R/M/… would double-fire unless OS clicks are deleted here.
@@ -27,7 +27,7 @@ static SUPPRESS_MOTION: AtomicBool = AtomicBool::new(false);
 static CURSOR_LOCK: AtomicBool = AtomicBool::new(false);
 static CURSOR_LOCK_X: AtomicU64 = AtomicU64::new(0);
 static CURSOR_LOCK_Y: AtomicU64 = AtomicU64::new(0);
-/// Drop OS ScrollWheel until this unix-ms (set when HID reports HUGE wheel/pan).
+/// Drop OS ScrollWheel until this unix-ms (set when HID reports catalog wheel/pan).
 static SCROLL_ARM_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
 
 static TAP_RUNNING: AtomicBool = AtomicBool::new(false);
@@ -84,7 +84,7 @@ fn cursor_lock_point() -> Option<(f64, f64)> {
     }
 }
 
-/// True while our tap is dropping OS events for this physical HUGE button.
+/// True while our tap is dropping OS events for this physical catalog button.
 pub fn os_button_suppressed(id: crate::domain::device::ButtonId) -> bool {
     use crate::domain::device::ButtonId;
     let mask = SUPPRESS_MASK.load(Ordering::SeqCst);
@@ -121,8 +121,8 @@ pub fn sync_scroll_transform(active: bool) {
     }
 }
 
-/// Call when we will inject HUGE wheel/pan ourselves — drop the OS copy briefly.
-pub fn arm_huge_scroll_echo_suppress() {
+/// Call when we will inject catalog wheel/pan ourselves — drop the OS copy briefly.
+pub fn arm_catalog_scroll_echo_suppress() {
     SCROLL_ARM_UNTIL_MS.store(now_ms().saturating_add(150), Ordering::SeqCst);
 }
 
@@ -176,8 +176,8 @@ fn should_drop_scroll_echo(event: *mut std::ffi::c_void) -> bool {
     true
 }
 
-/// HUGE wheel is discrete HID. Trackpad is continuous / momentum — leave it.
-fn should_drop_huge_wheel_during_ball_scroll(event: *mut std::ffi::c_void) -> bool {
+/// catalog wheel is discrete HID. Trackpad is continuous / momentum — leave it.
+fn should_drop_catalog_wheel_during_ball_scroll(event: *mut std::ffi::c_void) -> bool {
     if !crate::domain::ball_scroll::is_active() {
         return false;
     }
@@ -242,7 +242,7 @@ unsafe extern "C" fn tap_callback(
     }
 
     if etype == EVENT_SCROLL_WHEEL {
-        if should_drop_huge_wheel_during_ball_scroll(event) {
+        if should_drop_catalog_wheel_during_ball_scroll(event) {
             return std::ptr::null_mut();
         }
         if let Some((x, y)) = cursor_lock_point() {
@@ -305,7 +305,7 @@ pub fn ensure_started() {
         return;
     }
     let handle = thread::Builder::new()
-        .name("huge-suppress-tap".into())
+        .name("catalog-suppress-tap".into())
         .spawn(|| {
             let port = unsafe {
                 CGEventTapCreate(

@@ -42,7 +42,7 @@ pub fn offer_os_trigger(activator: &Activator, down: bool) -> bool {
 fn inject_button_for_entry(entry_id: &str) -> ButtonId {
     super::state::entry_by_id(entry_id)
         .and_then(|e| match e.activator.effective_trigger() {
-            Some(Activator::Huge { button }) => Some(button),
+            Some(Activator::Device { button }) => Some(button),
             _ => None,
         })
         .unwrap_or(ButtonId::Left)
@@ -82,7 +82,7 @@ pub fn process_os_trigger_queue(profile: &Profile, maps: &mut CustomMaps) {
                 let inject_id = inject_button_for_entry(&entry_id);
                 let input = super::state::entry_by_id(&entry_id)
                     .and_then(|e| e.activator.effective_trigger())
-                    .unwrap_or(crate::domain::profile::Activator::Huge {
+                    .unwrap_or(crate::domain::profile::Activator::Device {
                         button: inject_id,
                     });
                 apply_binding_release(

@@ -32,8 +32,8 @@ const ACCENT_R: f64 = 192.0 / 255.0;
 const ACCENT_G: f64 = 123.0 / 255.0;
 const ACCENT_B: f64 = 196.0 / 255.0;
 
-const RING_VIEW_CLASS: &str = "ElecomHugeBallScrollRingView";
-const PANEL_CLASS: &str = "ElecomHugeBallScrollPanel";
+const RING_VIEW_CLASS: &str = "LinklyBallScrollRingView";
+const PANEL_CLASS: &str = "LinklyBallScrollPanel";
 
 static WINDOW: Mutex<Option<usize>> = Mutex::new(None);
 static ANCHOR: Mutex<Option<NSPoint>> = Mutex::new(None);

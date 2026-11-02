@@ -21,7 +21,7 @@ export type DeviceInfo = {
   productName: string;
   manufacturer: string;
   path: string;
-  isHuge: boolean;
+  isCatalogDevice: boolean;
   transport: HidTransport;
 };
 

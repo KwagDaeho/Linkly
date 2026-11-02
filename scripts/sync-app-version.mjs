@@ -39,8 +39,7 @@ const lockRootVersion = lock.version;
 const lockPkgVersion = lock.packages?.[""]?.version;
 
 const versionTag = `v${version}`;
-const dmgNameLinkly = `Linkly-${version}-aarch64.dmg`;
-const dmgNameLegacy = `Unofficial-Elecom-Huge-Custom-Mac-${version}-aarch64.dmg`;
+const dmgName = `Linkly-${version}-aarch64.dmg`;
 const { contact } = appMeta;
 
 /** @param {string} source */
@@ -56,19 +55,10 @@ function syncReadme(source) {
 
   next = next.replace(
     /https:\/\/github\.com\/KwagDaeho\/Linkly\/releases\/download\/v[\d.]+\/Linkly-[\d.]+-aarch64\.dmg/g,
-    `${contact.githubUrl}/releases/download/${versionTag}/${dmgNameLinkly}`,
+    `${contact.githubUrl}/releases/download/${versionTag}/${dmgName}`,
   );
 
-  next = next.replace(
-    /https:\/\/github\.com\/KwagDaeho\/Linkly\/releases\/download\/v[\d.]+\/Unofficial-Elecom-Huge-Custom-Mac-[\d.]+-aarch64\.dmg/g,
-    `${contact.githubUrl}/releases/download/${versionTag}/${dmgNameLegacy}`,
-  );
-
-  next = next.replace(/Linkly-[\d.]+-aarch64\.dmg/g, dmgNameLinkly);
-  next = next.replace(
-    /Unofficial-Elecom-Huge-Custom-Mac-[\d.]+-aarch64\.dmg/g,
-    dmgNameLegacy,
-  );
+  next = next.replace(/Linkly-[\d.]+-aarch64\.dmg/g, dmgName);
 
   next = next.replace(/git checkout v[\d.]+/g, `git checkout ${versionTag}`);
 

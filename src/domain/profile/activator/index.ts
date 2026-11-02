@@ -64,7 +64,7 @@ export const activatorsEqual = (
       mouseButtonEventNumber(left.button) === mouseButtonEventNumber(right.button)
     );
   }
-  if (left.type === "huge" && right.type === "huge") {
+  if (left.type === "device" && right.type === "device") {
     return left.button === right.button;
   }
   return false;

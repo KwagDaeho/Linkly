@@ -9,7 +9,7 @@ use std::thread::{self, JoinHandle};
 
 use parking_lot::Mutex;
 
-use crate::domain::device::{device_identity_key, is_wireless_huge, DeviceIdentityKey, DeviceInfo, InputDeviceStatus};
+use crate::domain::device::{device_identity_key, is_wireless_receiver_pid, DeviceIdentityKey, DeviceInfo, InputDeviceStatus};
 use crate::domain::profile::Profile;
 use crate::domain::remap_session::{self, RemapSession};
 use crate::persistence::input_device_store;
@@ -23,8 +23,8 @@ pub struct Engine {
     connected: Arc<Mutex<Option<DeviceInfo>>>,
     known_input_devices: Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
     input_devices: Arc<Mutex<Vec<InputDeviceStatus>>>,
-    /// Last wireless HUGE HID input while remapping (dongle-only scans miss RF-off).
-    huge_rf_last_input: Arc<Mutex<Option<std::time::Instant>>>,
+    /// Last wireless catalog HID input while remapping (dongle-only scans miss RF-off).
+    rf_last_hid_input: Arc<Mutex<Option<std::time::Instant>>>,
 }
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -51,7 +51,7 @@ impl Engine {
             connected: Arc::new(Mutex::new(None)),
             known_input_devices: Arc::new(Mutex::new(input_device_store::load_known())),
             input_devices: Arc::new(Mutex::new(Vec::new())),
-            huge_rf_last_input: Arc::new(Mutex::new(None)),
+            rf_last_hid_input: Arc::new(Mutex::new(None)),
         }
     }
 
@@ -88,13 +88,13 @@ impl Engine {
         let connected = Arc::clone(&self.connected);
         let known_input_devices = Arc::clone(&self.known_input_devices);
         let input_devices = Arc::clone(&self.input_devices);
-        let huge_rf_last_input = Arc::clone(&self.huge_rf_last_input);
+        let rf_last_hid_input = Arc::clone(&self.rf_last_hid_input);
 
         let session = RemapSession::spawn(self.profile.lock().clone(), Arc::clone(&self.running));
         remap_session::install(Arc::clone(&session));
 
         let handle = thread::Builder::new()
-            .name("huge-hid-worker".into())
+            .name("catalog-hid-worker".into())
             .spawn(move || {
                 let result = catch_unwind(AssertUnwindSafe(|| {
                     worker::run(
@@ -106,7 +106,7 @@ impl Engine {
                         connected,
                         known_input_devices,
                         input_devices,
-                        huge_rf_last_input,
+                        rf_last_hid_input,
                     );
                 }));
                 if result.is_err() {

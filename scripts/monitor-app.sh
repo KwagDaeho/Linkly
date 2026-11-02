@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Monitors Linkly (or legacy Elecom Huge Custom) and accumulates logs for post-mortem analysis.
+# Monitors Linkly and accumulates logs for post-mortem analysis.
 #   scripts/monitor-app.sh stop
 #   scripts/monitor-app.sh status
 #   scripts/monitor-app.sh tail    # follow events log
@@ -23,30 +23,18 @@ EVENTS="$LOG_DIR/events.log"
 FORENSICS="$LOG_DIR/forensics.log"
 PIDFILE="$LOG_DIR/monitor.pid"
 APP_BIN="/Applications/Linkly.app/Contents/MacOS/linkly"
-APP_BIN_LEGACY="/Applications/Elecom Huge Custom.app/Contents/MacOS/elecom-huge"
 PANIC="$HOME/Library/Logs/Linkly/rust-panic.log"
-PANIC_LEGACY="$HOME/Library/Logs/Elecom Huge Custom/rust-panic.log"
 CRASH_DIR="$HOME/Library/Logs/DiagnosticReports"
 
 app_pid() {
-  local pid
-  pid=$(pgrep -x linkly 2>/dev/null | head -1)
-  if [[ -n "$pid" ]]; then
-    echo "$pid"
-    return 0
-  fi
-  pgrep -x elecom-huge 2>/dev/null | head -1
+  pgrep -x linkly 2>/dev/null | head -1
 }
 
 app_bundle_version() {
-  local plist
-  for plist in \
-    "/Applications/Linkly.app/Contents/Info.plist" \
-    "/Applications/Elecom Huge Custom.app/Contents/Info.plist"; do
-    if [[ -f "$plist" ]]; then
-      plutil -extract CFBundleShortVersionString raw -o - "$plist" 2>/dev/null && return 0
-    fi
-  done
+  local plist="/Applications/Linkly.app/Contents/Info.plist"
+  if [[ -f "$plist" ]]; then
+    plutil -extract CFBundleShortVersionString raw -o - "$plist" 2>/dev/null && return 0
+  fi
   echo "?"
 }
 
@@ -129,7 +117,7 @@ capture_forensics() {
   {
     echo ""
     echo "========== $(date '+%Y-%m-%d %H:%M:%S') — $reason =========="
-    echo "app=$APP_BIN (legacy=$APP_BIN_LEGACY)"
+    echo "app=$APP_BIN"
     echo "pid=${pid:-unknown}"
     if [[ -n "$pid" ]]; then
       ps -p "$pid" -o pid,rss,vsz,pcpu,pmem,etime,state,command 2>/dev/null
@@ -140,16 +128,16 @@ capture_forensics() {
       echo "--- open files (count) ---"
       lsof -p "$pid" 2>/dev/null | wc -l
     fi
-    echo "--- USB/HID (elecom) ---"
-    system_profiler SPUSBDataType 2>/dev/null | grep -iE "elecom|huge|056e" -A2 2>/dev/null | head -20 || echo "(none matched)"
+    echo "--- USB/HID (056e) ---"
+    system_profiler SPUSBDataType 2>/dev/null | grep -iE "056e" -A2 2>/dev/null | head -20 || echo "(none matched)"
     echo "--- crash reports ---"
     local -a cr
-    cr=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -name 'elecom-huge*' -o -iname 'Elecom*Huge*' -o -iname 'Linkly*' \) 2>/dev/null)}")
+    cr=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -iname 'Linkly*' \) 2>/dev/null)}")
     if (( ${#cr} )); then ls -lt "${cr[@]}" 2>/dev/null | head -5; else echo "(none)"; fi
     echo "--- rust-panic.log ---"
-    if [[ -f "$PANIC" ]]; then tail -30 "$PANIC"; elif [[ -f "$PANIC_LEGACY" ]]; then tail -30 "$PANIC_LEGACY"; else echo "(none)"; fi
+    if [[ -f "$PANIC" ]]; then tail -30 "$PANIC"; else echo "(none)"; fi
     echo "--- unified log (last 2 min) ---"
-    log show --predicate 'process == "linkly" || process == "elecom-huge"' --last 2m 2>/dev/null | tail -50 || echo "(unavailable)"
+    log show --predicate 'process == "linkly"' --last 2m 2>/dev/null | tail -50 || echo "(unavailable)"
     capture_system_forensics
   } >> "$FORENSICS" 2>&1
   event "FORENSICS $reason → $FORENSICS"
@@ -284,21 +272,19 @@ run_loop() {
       last_rss=$rss_mb
     fi
 
-    for panic_file in "$PANIC" "$PANIC_LEGACY"; do
-      if [[ -f "$panic_file" ]]; then
-        local psz=$(wc -c < "$panic_file" | tr -d ' ')
-        if (( psz > last_panic_size )); then
-          event "RUST_PANIC updated ${psz} bytes ($panic_file)"
-          capture_forensics "rust_panic" "${pid:-}"
-          last_panic_size=$psz
-        fi
+    if [[ -f "$PANIC" ]]; then
+      local psz=$(wc -c < "$PANIC" | tr -d ' ')
+      if (( psz > last_panic_size )); then
+        event "RUST_PANIC updated ${psz} bytes ($PANIC)"
+        capture_forensics "rust_panic" "${pid:-}"
+        last_panic_size=$psz
       fi
-    done
+    fi
 
     local crash=""
     if [[ -d "$CRASH_DIR" ]]; then
       local -a crash_files
-      crash_files=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -name 'elecom-huge*' -o -iname 'Elecom*Huge*' -o -iname 'Linkly*' \) 2>/dev/null)}")
+      crash_files=("${(@f)$(find "$CRASH_DIR" -maxdepth 1 \( -name 'linkly*' -o -iname 'Linkly*' \) 2>/dev/null)}")
       if (( ${#crash_files} )); then
         crash=$(ls -t "${crash_files[@]}" 2>/dev/null | head -1)
       fi

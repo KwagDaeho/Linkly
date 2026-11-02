@@ -301,7 +301,7 @@ export const useKeyCapture = (
               void (async () => {
                 const accepted = await onActivatorAssignedRef.current(
                   activeEditor.slot,
-                  { type: "huge", button: "left" },
+                  { type: "device", button: "left" },
                 );
                 if (accepted) {
                   setEditor(null);
@@ -320,7 +320,7 @@ export const useKeyCapture = (
               void (async () => {
                 const accepted = await onButtonMappingAssignedRef.current(
                   activeEditor.entryId,
-                  { type: "huge", button: "left" },
+                  { type: "device", button: "left" },
                   activeEditor.draftEntry,
                 );
                 if (accepted) {

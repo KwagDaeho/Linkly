@@ -46,7 +46,7 @@ fn shutdown_once(app: &AppHandle) {
         let engine = state.engine.clone();
         let (done_tx, done_rx) = std::sync::mpsc::channel();
         thread::Builder::new()
-            .name("huge-exit-join".into())
+            .name("catalog-exit-join".into())
             .spawn(move || {
                 engine.join_worker();
                 let _ = done_tx.send(());

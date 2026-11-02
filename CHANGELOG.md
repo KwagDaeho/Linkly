@@ -2,11 +2,24 @@
 
 All notable changes to this project are documented here.
 
+## [1.4.1] — 2026-11-02
+
+### Changed
+
+- **Branding & storage** — drop legacy ELECOM/HUGE naming, config migration, and old root assets; profiles live under `~/Library/Application Support/linkly/` only.
+- **About** — macOS About panel via bundled `Info.plist`; app info block without tagline; contact spacing and Linkly mark bottom-aligned with the GitHub row.
+- **Trigger tab** — remove redundant “Common” heading; long-press and mapping accordions start the tab.
+- **Mouse tab** — one section group so the divider between pointer scroll and ball scroll matches other tab accent lines.
+
+### Fixed
+
+- **Docs** — changelog and README use neutral Linkly/device wording (no legacy vendor strings).
+
 ## [1.4.0] — 2026-11-02
 
 ### Added
 
-- **Linkly** — macOS input remapper rebrand (`com.kwagdaeho.linkly`); ELECOM HUGE remains the first supported device.
+- **Linkly** — macOS input remapper (`com.kwagdaeho.linkly`).
 - **Input event viewer** — live HID/OS event stream in a dedicated window.
 - **Device linking** — per-device trigger profiles with scoped overrides and duplicate-trigger guard + toast.
 - **Custom combos & hold-chord capture** — OS trigger activators, mapping triggers, and improved capture UX.
@@ -16,7 +29,7 @@ All notable changes to this project are documented here.
 
 - **Shell** — three main tabs (Trigger / Mouse / System) with horizontal swipe transitions and per-tab scroll.
 - **Labels** — physical buttons shown as LB / RB in the UI; `ButtonId` serde keys unchanged.
-- **Profiles** — migrates legacy `elecom-huge/profile.json` into `linkly/` on first launch when present.
+- **Profiles** — stored under `~/Library/Application Support/linkly/`.
 - **Performance** — removes RF probe from the HID hot path; throttles device scans; OS trigger dispatch and event emit off worker threads.
 - **Docs** — README download links and badges follow `package.json` version via `npm run version:sync`.
 
@@ -36,7 +49,7 @@ All notable changes to this project are documented here.
 
 ### Changed
 
-- **Diagnostics** — Rust panics append to `~/Library/Logs/Linkly/rust-panic.log` (Linkly builds; legacy DMG used `Elecom Huge Custom`).
+- **Diagnostics** — Rust panics append to `~/Library/Logs/Linkly/rust-panic.log` (Linkly builds; legacy DMG used `Linkly Catalog Custom`).
 
 ## [1.3.1] — 2026-08-21
 
@@ -77,7 +90,7 @@ All notable changes to this project are documented here.
 
 ### Fixed
 
-- **Custom mapping chords** — modifier + HUGE button combos no longer leak OS default clicks; chord keystrokes are isolated so Spotlight and foreground apps are not polluted.
+- **Custom mapping chords** — modifier + device button combos no longer leak OS default clicks; chord keystrokes are isolated so Spotlight and foreground apps are not polluted.
 
 ### Changed
 

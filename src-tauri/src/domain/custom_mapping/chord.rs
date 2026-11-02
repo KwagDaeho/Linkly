@@ -44,7 +44,7 @@ pub(crate) fn find_match(id: ButtonId) -> Option<CustomMappingEntry> {
     if !state::button_state().is_down(id) {
         return None;
     }
-    find_match_trigger_at_edge(&Activator::Huge { button: id }, true)
+    find_match_trigger_at_edge(&Activator::Device { button: id }, true)
 }
 
 pub(crate) fn find_match_with_flags(id: ButtonId, _event_flags: u64) -> Option<CustomMappingEntry> {
@@ -53,13 +53,13 @@ pub(crate) fn find_match_with_flags(id: ButtonId, _event_flags: u64) -> Option<C
         .iter()
         .find(|e| {
             let keys = effective_combo_keys_for_match(&e.activator);
-            e.activator.triggers_match(&Activator::Huge { button: id })
+            e.activator.triggers_match(&Activator::Device { button: id })
                 && combo_matches(&e.activator, &mods, &keys)
         })
         .cloned()
 }
 
-pub fn is_reserved_huge(id: ButtonId) -> bool {
+pub fn is_reserved_catalog_button(id: ButtonId) -> bool {
     if ACTIVE_BUTTONS.lock().contains(&id) {
         return true;
     }
@@ -79,7 +79,7 @@ pub(crate) fn release_active_chord() {
     state::keys_held().clear();
 }
 
-/// Map CG mouse edge → HUGE button (shared-pointer OS events).
+/// Map CG mouse edge → catalog button (shared-pointer OS events).
 pub fn button_edge_from_event(etype: u32, button_number: i64) -> Option<(ButtonId, bool)> {
     match etype {
         1 => Some((ButtonId::Left, true)),
@@ -137,7 +137,7 @@ pub fn should_swallow_os_key(name: &str) -> bool {
 
 fn entry_chord_is_live(entry: &CustomMappingEntry) -> bool {
     match entry.activator.effective_trigger() {
-        Some(Activator::Huge { button }) => ACTIVE_BUTTONS.lock().contains(&button),
+        Some(Activator::Device { button }) => ACTIVE_BUTTONS.lock().contains(&button),
         Some(_) => active_os_custom_entry_ids().contains(&entry.id),
         None => false,
     }

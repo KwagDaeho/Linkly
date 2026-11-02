@@ -14,7 +14,7 @@ pub fn activator_capture_token(activator: &Activator) -> Option<String> {
     match activator {
         Activator::Key { name } => Some(name.clone()),
         Activator::Mouse { button } => Some(chord_token::capture_token_for_mouse_button(button)),
-        Activator::Huge { button } => {
+        Activator::Device { button } => {
             Some(chord_token::capture_token_for_button_id(*button).to_string())
         }
     }

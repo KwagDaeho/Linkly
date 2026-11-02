@@ -16,7 +16,7 @@ export const comboEffectiveTrigger = (
     return normalizeActivator(combo.trigger);
   }
   if (combo.button !== undefined && combo.button !== null) {
-    return { type: "huge", button: combo.button };
+    return { type: "device", button: combo.button };
   }
   return null;
 };
@@ -39,8 +39,8 @@ export const formatActivatorLabel = (
   if (normalized.type === "key") {
     return normalized.name;
   }
-  if (normalized.type === "huge") {
-    return hugeButtonShort(normalized.button, lang);
+  if (normalized.type === "device") {
+    return catalogButtonShort(normalized.button, lang);
   }
   const button = normalized.button;
   if (typeof button === "string") {
@@ -49,7 +49,7 @@ export const formatActivatorLabel = (
   return extraMouseButtonLabel(button.number, lang);
 };
 
-const hugeButtonShort = (id: ButtonId, lang: "ko" | "en"): string => {
+const catalogButtonShort = (id: ButtonId, lang: "ko" | "en"): string => {
   if (lang === "ko") {
     return id === "wheel_tilt_left"
       ? "틸트左"
@@ -80,7 +80,7 @@ export const activatorsEqual = (
       mouseButtonEventNumber(a.button) === mouseButtonEventNumber(b.button)
     );
   }
-  if (a.type === "huge" && b.type === "huge") {
+  if (a.type === "device" && b.type === "device") {
     return a.button === b.button;
   }
   return false;

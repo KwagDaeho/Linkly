@@ -14,7 +14,7 @@ const MOUSE_TOKEN: Record<string, string> = {
   forward: "MouseForward",
 };
 
-const HUGE_BUTTON_TOKEN: Record<string, string> = {
+const CATALOG_BUTTON_TOKEN: Record<string, string> = {
   left: "MouseLeft",
   right: "MouseRight",
   middle: "MouseMiddle",
@@ -48,8 +48,8 @@ export const activatorToCaptureToken = (
   if (activator.type === "key") {
     return activator.name;
   }
-  if (activator.type === "huge") {
-    return HUGE_BUTTON_TOKEN[activator.button] ?? null;
+  if (activator.type === "device") {
+    return CATALOG_BUTTON_TOKEN[activator.button] ?? null;
   }
   return activatorToCustomKeyToken(activator);
 };
@@ -58,8 +58,8 @@ export const activatorToCaptureToken = (
 export const activatorToCustomKeyToken = (
   activator: Activator,
 ): string | null => {
-  if (activator.type === "huge") {
-    return HUGE_BUTTON_TOKEN[activator.button] ?? null;
+  if (activator.type === "device") {
+    return CATALOG_BUTTON_TOKEN[activator.button] ?? null;
   }
   if (activator.type !== "mouse") {
     return null;

@@ -1,4 +1,4 @@
-//! Modifier/key + HUGE button combos with the same binding rules as normal buttons.
+//! Modifier/key + catalog button combos with the same binding rules as normal buttons.
 
 mod chord;
 mod handler;
@@ -6,7 +6,7 @@ mod os_trigger;
 mod state;
 
 pub use chord::{
-    button_edge_from_event, is_reserved_huge, note_os_button_released, note_os_button_swallowed,
+    button_edge_from_event, is_reserved_catalog_button, note_os_button_released, note_os_button_swallowed,
     note_os_down, note_os_up, should_swallow_os_button, should_swallow_os_key,
 };
 pub use os_trigger::{offer_os_trigger, process_os_trigger_queue};

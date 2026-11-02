@@ -1,18 +1,18 @@
 use serde::{Deserialize, Serialize};
 
-use crate::domain::chord_token::mouse_button_for_huge;
+use crate::domain::chord_token::mouse_button_for_catalog_button;
 use crate::domain::device::ButtonId;
 
 use super::action::MouseClickButton;
 use super::binding::ButtonBinding;
 
-/// One physical control that arms ball-scroll: a key, a mouse button, or a HUGE button.
+/// One physical control that arms ball-scroll: a key, a mouse button, or a catalog HID button.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case")]
 pub enum Activator {
     Key { name: String },
     Mouse { button: MouseClickButton },
-    Huge { button: ButtonId },
+    Device { button: ButtonId },
 }
 
 /// Keyboard chord + any captured input (`trigger`) for custom mappings.
@@ -23,7 +23,7 @@ pub struct ComboActivator {
     pub modifiers: Vec<String>,
     #[serde(default)]
     pub keys: Vec<String>,
-    /// Legacy profiles: HUGE button only. Prefer `trigger`.
+    /// Legacy profiles: catalog button only. Prefer `trigger`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub button: Option<ButtonId>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -35,7 +35,7 @@ impl ComboActivator {
         if let Some(trigger) = &self.trigger {
             return Some(trigger.clone());
         }
-        self.button.map(|button| Activator::Huge { button })
+        self.button.map(|button| Activator::Device { button })
     }
 
     pub fn is_valid(&self) -> bool {
@@ -107,15 +107,15 @@ impl Activator {
         }
     }
 
-    /// Match stored activator to live OS/HID input (incl. HUGE ↔ shared pointer mouse).
+    /// Match stored activator to live OS/HID input (incl. catalog ↔ shared pointer mouse).
     pub fn matches_input(&self, other: &Self) -> bool {
         if self.same_as(other) {
             return true;
         }
         match (self, other) {
-            (Activator::Huge { button: id }, Activator::Mouse { button: mb })
-            | (Activator::Mouse { button: mb }, Activator::Huge { button: id }) => {
-                mouse_button_for_huge(*id).as_ref() == Some(mb)
+            (Activator::Device { button: id }, Activator::Mouse { button: mb })
+            | (Activator::Mouse { button: mb }, Activator::Device { button: id }) => {
+                mouse_button_for_catalog_button(*id).as_ref() == Some(mb)
             }
             _ => false,
         }
@@ -126,16 +126,16 @@ impl Activator {
             self,
             Activator::Mouse {
                 button: MouseClickButton::Left
-            } | Activator::Huge {
+            } | Activator::Device {
                 button: ButtonId::Left
             }
         )
     }
 
-    pub fn is_huge_tilt(&self) -> bool {
+    pub fn is_catalog_tilt_button(&self) -> bool {
         matches!(
             self,
-            Activator::Huge {
+            Activator::Device {
                 button: ButtonId::WheelTiltLeft | ButtonId::WheelTiltRight
             }
         )

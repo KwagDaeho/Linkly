@@ -71,7 +71,7 @@ pub fn process_os_trigger_queue(profile: &Profile, maps: &mut ButtonMaps) {
                     .unwrap_or(crate::domain::device::ButtonId::Left);
                 let input = state::entry_by_id(&entry_id)
                     .and_then(|e| e.activator.clone())
-                    .unwrap_or(crate::domain::profile::Activator::Huge {
+                    .unwrap_or(crate::domain::profile::Activator::Device {
                         button: inject_id,
                     });
                 apply_binding_release(

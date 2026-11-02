@@ -168,7 +168,7 @@ pub(crate) fn fire_due_long_presses(
         threshold,
         |id| *id,
         |id, action| {
-            let input = Activator::Huge { button: *id };
+            let input = Activator::Device { button: *id };
             link_event::announce(&input, action, *id, LinkPhase::LongPress);
         },
     );
@@ -311,7 +311,7 @@ fn start_scroll_repeat(repeats: &mut HashMap<ButtonId, ScrollRepeat>, id: Button
 }
 
 pub(crate) fn binding_of(profile: &Profile, id: ButtonId) -> ButtonBinding {
-    if let Some(entry) = crate::domain::button_mapping::find_huge(id) {
+    if let Some(entry) = crate::domain::button_mapping::find_mapping_for_button(id) {
         return entry.binding.clone();
     }
     profile
@@ -513,7 +513,7 @@ pub(crate) fn apply_binding_press<K>(
         && !(synth_native_if_suppressed
             && crate::platform::suppress::os_button_suppressed(inject_id))
     {
-        // Catalog default: OS owns hold/drag unless we swallowed that HUGE stream (mapping/custom).
+        // Catalog default: OS owns hold/drag unless we swallowed that catalog stream (mapping/custom).
     } else if is_scroll_action(&binding.click) {
         link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
         inject::press_action(inject_id, &binding.click, &profile.pointer);
@@ -574,9 +574,9 @@ pub(crate) fn handle_button_transitions(
             clear_regular_binding_state(id, pending, held, scroll_repeats, key_repeats);
             continue;
         }
-        if ball_scroll::is_reserved_huge(id)
-            || custom_mapping::is_reserved_huge(id)
-            || crate::domain::button_mapping::is_reserved_huge(id)
+        if ball_scroll::is_reserved_catalog_button(id)
+            || custom_mapping::is_reserved_catalog_button(id)
+            || crate::domain::button_mapping::is_reserved_catalog_button(id)
         {
             scroll_repeats.remove(&id);
             key_repeats.remove(&id);
@@ -586,7 +586,7 @@ pub(crate) fn handle_button_transitions(
             }
             continue;
         }
-        let input = Activator::Huge { button: id };
+        let input = Activator::Device { button: id };
         apply_binding_release(
             id,
             id,
@@ -602,14 +602,14 @@ pub(crate) fn handle_button_transitions(
         if skip_press.contains(&id) {
             continue;
         }
-        if ball_scroll::is_reserved_huge(id)
-            || custom_mapping::is_reserved_huge(id)
-            || crate::domain::button_mapping::is_reserved_huge(id)
+        if ball_scroll::is_reserved_catalog_button(id)
+            || custom_mapping::is_reserved_catalog_button(id)
+            || crate::domain::button_mapping::is_reserved_catalog_button(id)
         {
             continue;
         }
         let binding = binding_of(profile, id);
-        let input = Activator::Huge { button: id };
+        let input = Activator::Device { button: id };
         apply_binding_press(
             id,
             id,

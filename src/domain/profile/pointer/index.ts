@@ -9,8 +9,8 @@ export {
 } from "./speeds";
 export {
   enforceTiltBindingFlags,
-  hugeButtonFromActivator,
-  hugeButtonFromComboTrigger,
+  catalogButtonFromActivator,
+  catalogButtonFromComboTrigger,
   isTiltButton,
   isTiltPanStreamAction,
   normalizeTiltPanStreamFlags,

@@ -45,7 +45,7 @@ pub struct Profile {
     /// Ball movement → scroll while a toggle/hold activator is on.
     #[serde(default)]
     pub ball_scroll: BallScrollSettings,
-    /// Modifier/key + HUGE button combos with their own bindings.
+    /// Modifier/key + catalog button combos with their own bindings.
     #[serde(default)]
     pub custom_mappings: Vec<CustomMappingEntry>,
     /// Captured input → binding rows (UI list mappings).

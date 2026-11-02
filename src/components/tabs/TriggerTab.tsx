@@ -27,7 +27,7 @@ const TriggerScopeSection = ({
   className,
 }: {
   scope: TriggerScope;
-  heading: string;
+  heading?: string;
   className?: string;
 }) => {
   const { i18n, lang } = usePrefs();
@@ -45,7 +45,7 @@ const TriggerScopeSection = ({
   return (
     <TriggerScopeProvider scope={scope}>
       <section className={className}>
-        <SectionGroupHeading>{heading}</SectionGroupHeading>
+        {heading ? <SectionGroupHeading>{heading}</SectionGroupHeading> : null}
         <div className={sectionStyles.staticSectionBody}>
           <LongPressTimeSetting />
         </div>
@@ -81,7 +81,6 @@ const TriggerScopeSection = ({
 };
 
 export const TriggerTab = () => {
-  const { i18n } = usePrefs();
   const { profile } = useProfileCtx();
   const { devices } = useInputDevices();
 
@@ -105,7 +104,6 @@ export const TriggerTab = () => {
     <>
       <TriggerScopeSection
         scope={{ kind: "common" }}
-        heading={i18n.triggerScopeCommon}
         className={sectionStyles.sectionGroup}
       />
 

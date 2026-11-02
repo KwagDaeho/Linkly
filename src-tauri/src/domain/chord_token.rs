@@ -48,7 +48,7 @@ pub fn is_hardware_capture_token(token: &str) -> bool {
     button_id_for_capture_token(token).is_some() || token.starts_with("Button")
 }
 
-pub fn mouse_button_for_huge(id: ButtonId) -> Option<MouseClickButton> {
+pub fn mouse_button_for_catalog_button(id: ButtonId) -> Option<MouseClickButton> {
     match id {
         ButtonId::Left => Some(MouseClickButton::Left),
         ButtonId::Right => Some(MouseClickButton::Right),

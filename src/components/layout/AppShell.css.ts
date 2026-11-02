@@ -1,13 +1,9 @@
-import { globalStyle, style } from "@vanilla-extract/css";
+import { style } from "@vanilla-extract/css";
 
-import { footer } from "@/components/info/ContactFooter.css";
-import { root as accordionSection } from "@/components/ui/Accordion.css";
 import {
   chromeSegmentPaddingPx,
   chromeSegmentPillRadiusPx,
-  footerSpaceAboveBorderPx,
   sectionTabColumnWidthsRem,
-  sectionTabDevicesFontRem,
   sectionTabFontRem,
   sectionTabPadXRem,
   sectionTabPadYRem,
@@ -17,7 +13,6 @@ import {
   tabTransitionMs,
   tabPillNudgeTransition,
 } from "@/components/ui/panelLayout";
-import { staticSection } from "@/components/ui/sectionTitle.css";
 
 const shellHorizontalInset = shellSideInsetPx * 2;
 
@@ -30,20 +25,6 @@ export const shell = style({
   display: "grid",
   gap: shellSectionGapPx,
 });
-
-/** Guaranteed space above footer border (grid gap + this padding = footerSpaceAboveBorderPx). */
-export const footerLead = style({
-  paddingTop: footerSpaceAboveBorderPx - shellSectionGapPx,
-});
-
-const flushBeforeFooter = {
-  borderBottom: "none",
-  marginBottom: 0,
-  paddingBottom: 0,
-} as const;
-
-globalStyle(`${shell} ${staticSection}:has(+ ${footer})`, flushBeforeFooter);
-globalStyle(`${shell} ${accordionSection}:has(+ ${footer})`, flushBeforeFooter);
 
 /** Tab panels — extra top inset so gap below tabs matches sectionGroupFollow (~14px). */
 export const tabPanel = style({
@@ -120,9 +101,4 @@ export const tab = style({
 
 export const tabActive = style({
   color: "var(--accent-ink)",
-});
-
-export const tabDevices = style({
-  fontSize: `${sectionTabDevicesFontRem}rem`,
-  letterSpacing: "-0.02em",
 });

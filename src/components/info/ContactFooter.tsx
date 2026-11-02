@@ -11,12 +11,18 @@ import { Muted } from "@/components/ui/Muted";
 import { usePrefs } from "@/hooks/prefs";
 import * as tauri from "../../services/tauri";
 
+import { cx } from "@/utils/cx";
 import * as styles from "./ContactFooter.css";
 
-export const ContactFooter = () => {
+type ContactFooterProps = {
+  /** Inside System tab — tighter bottom spacing (no shell footer). */
+  embedded?: boolean;
+};
+
+export const ContactFooter = ({ embedded = false }: ContactFooterProps) => {
   const { i18n } = usePrefs();
   return (
-    <footer className={styles.footer}>
+    <footer className={cx(styles.footer, embedded && styles.footerEmbedded)}>
       <div className={styles.footerMain}>
         <Muted>{APP_VERSION_LABEL}</Muted>
         <p className={styles.credit}>
@@ -67,7 +73,7 @@ export const ContactFooter = () => {
         </div>
       </div>
       <div className={styles.footerBrand}>
-        <AppBrandMark />
+        <AppBrandMark className={styles.footerBrandMark} />
       </div>
     </footer>
   );

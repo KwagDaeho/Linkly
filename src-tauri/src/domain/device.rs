@@ -57,8 +57,8 @@ impl ButtonId {
     pub fn label(self) -> &'static str {
         // Default (Korean) — UI localizes via id_str when possible.
         match self {
-            ButtonId::Left => "L",
-            ButtonId::Right => "R",
+            ButtonId::Left => "LB",
+            ButtonId::Right => "RB",
             ButtonId::Middle => "휠 버튼",
             ButtonId::Back => "◀(뒤로 가기)",
             ButtonId::Forward => "▶(앞으로 가기)",

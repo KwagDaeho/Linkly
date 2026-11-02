@@ -20,8 +20,6 @@ const tabLabel = (
       return i18n.tabMouse;
     case "system":
       return i18n.tabSystem;
-    case "devices":
-      return i18n.tabDevices;
     default:
       return tab;
   }
@@ -81,11 +79,7 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
           data-tab-item=""
           aria-selected={tab === id}
           aria-controls={`tabpanel-${id}`}
-          className={cx(
-            styles.tab,
-            id === "devices" && styles.tabDevices,
-            tab === id && styles.tabActive,
-          )}
+          className={cx(styles.tab, tab === id && styles.tabActive)}
           onClick={() => {
             clearHover();
             onTab(id);

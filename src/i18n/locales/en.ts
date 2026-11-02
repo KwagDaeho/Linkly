@@ -107,6 +107,7 @@ export const en = {
   eventViewer: "Event viewer",
   inputEventViewer: "Event viewer",
   sectionGeneral: "System",
+  sectionAppInfo: "App info",
   inputEventOpenKeyboard: "Open keyboard viewer",
   inputEventOpenMouse: "Open mouse & scroll viewer",
   sectionLaunch: "Startup",
@@ -232,8 +233,8 @@ export const en = {
     macro: "Macro input",
   },
   buttons: {
-    left: "L",
-    right: "R",
+    left: "LB",
+    right: "RB",
     middle: "Wheel button",
     back: "◀ (Back)",
     forward: "▶ (Forward)",

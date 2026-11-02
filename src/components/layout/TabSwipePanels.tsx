@@ -10,14 +10,12 @@ interface TabSwipePanelsProps {
   trigger: ReactNode;
   mouse: ReactNode;
   system: ReactNode;
-  devices: ReactNode;
 }
 
 const panelContent: Record<TabId, keyof TabSwipePanelsProps> = {
   trigger: "trigger",
   mouse: "mouse",
   system: "system",
-  devices: "devices",
 };
 
 export const TabSwipePanels = (props: TabSwipePanelsProps) => {

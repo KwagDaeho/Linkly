@@ -107,6 +107,7 @@ export const ko = {
   eventViewer: "이벤트 뷰어",
   inputEventViewer: "이벤트 뷰어",
   sectionGeneral: "시스템",
+  sectionAppInfo: "앱 정보",
   inputEventOpenKeyboard: "키 입력 뷰어 열기",
   inputEventOpenMouse: "마우스·스크롤 뷰어 열기",
   sectionLaunch: "시작",
@@ -232,8 +233,8 @@ export const ko = {
     macro: "매크로 입력",
   },
   buttons: {
-    left: "L",
-    right: "R",
+    left: "LB",
+    right: "RB",
     middle: "휠 버튼",
     back: "◀(뒤로 가기)",
     forward: "▶(앞으로 가기)",

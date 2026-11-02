@@ -1,6 +1,5 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
-import { title as brandTitle } from "@/components/layout/AppHeader.css";
 import {
   footerSpaceBelowBorderPx,
   footerSpaceBottomPx,
@@ -23,6 +22,12 @@ export const footer = style({
   marginBottom: footerSpaceBottomPx,
 });
 
+export const footerEmbedded = style({
+  marginBottom: 0,
+  paddingTop: 0,
+  borderTop: "none",
+});
+
 export const footerMain = style({
   display: "grid",
   gap: 6,
@@ -30,14 +35,23 @@ export const footerMain = style({
   minWidth: 0,
 });
 
+/** Smaller than header hero mark — app info block only. */
+export const footerBrandMark = style({
+  margin: 0,
+  fontFamily: '"Futura", "Avenir Next", "Gill Sans", sans-serif',
+  fontWeight: 700,
+  fontSize: "2.75rem",
+  lineHeight: 1.1,
+  letterSpacing: "-0.09em",
+  color: "var(--accent)",
+  userSelect: "none",
+  WebkitUserSelect: "none",
+});
+
 /** Header-sized mark — align cap height with credit line. */
 export const footerBrand = style({
   flexShrink: 0,
-});
-
-globalStyle(`${footerBrand} ${brandTitle}`, {
-  display: "block",
-  lineHeight: 1,
+  paddingTop: 4,
 });
 
 export const credit = style({

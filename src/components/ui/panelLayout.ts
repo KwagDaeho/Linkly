@@ -30,8 +30,8 @@ export const chromeSegmentPaddingPx = 3;
 export const chromeSegmentIconRem = 1.25;
 /** Vertical padding per side on header theme/lang segment buttons. */
 export const chromeSegmentButtonPadYRem = 0.36;
-/** Primary section tab column widths (trigger, mouse, system, devices). */
-export const sectionTabColumnWidthsRem = [5.5, 5.5, 5.75, 7.75] as const;
+/** Primary section tab column widths (trigger, mouse, system). */
+export const sectionTabColumnWidthsRem = [5.5, 5.5, 5.75] as const;
 /** @deprecated use sectionTabColumnWidthsRem */
 export const sectionTabColumnWidthRem = 5.5;
 export const sectionTabDevicesFontRem = 1.0625;

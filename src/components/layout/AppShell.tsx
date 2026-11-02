@@ -1,15 +1,9 @@
 import { useState } from "react";
 import { EditorHost } from "@/components/editors";
-import { ContactFooter } from "@/components/info";
 import { AppHeader, BootScreen, OverlayScrollbar } from "@/components/layout";
 import { TabBar } from "./TabBar";
 import { TabSwipePanels } from "./TabSwipePanels";
-import {
-  DevicesTab,
-  MouseTab,
-  SystemTab,
-  TriggerTab,
-} from "@/components/tabs";
+import { MouseTab, SystemTab, TriggerTab } from "@/components/tabs";
 import { TriggerScopeProvider } from "@/hooks/trigger/TriggerScopeContext";
 import { useProfileCtx } from "@/hooks";
 import type { TabId } from "@/types";
@@ -60,12 +54,8 @@ export const AppShell = () => {
           trigger={<TriggerTab />}
           mouse={<MouseTab />}
           system={<SystemTab />}
-          devices={<DevicesTab />}
         />
 
-        <div className={styles.footerLead}>
-          <ContactFooter />
-        </div>
         <EditorHost />
       </main>
     </TriggerScopeProvider>

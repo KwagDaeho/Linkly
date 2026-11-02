@@ -1,4 +1,5 @@
 import {
+  ContactFooter,
   EventViewerLauncher,
   GeneralSettings,
   PermissionPanel,
@@ -37,6 +38,10 @@ export const SystemTab = () => {
           <PermissionPanel />
         </Accordion>
       )}
+      <section className={sectionStyles.staticSection}>
+        <SectionHeading alignWithAccordion>{i18n.sectionAppInfo}</SectionHeading>
+        <ContactFooter embedded />
+      </section>
     </>
   );
 };

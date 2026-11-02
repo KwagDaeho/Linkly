@@ -9,6 +9,7 @@ import {
 } from "react";
 
 import * as styles from "./Toast.css";
+import { publishToast, subscribeToast } from "./toastBus";
 
 type ToastContextValue = {
   showToast: (message: string) => void;
@@ -20,8 +21,10 @@ export const ToastProvider = ({ children }: { children: ReactNode }) => {
   const [message, setMessage] = useState<string | null>(null);
 
   const showToast = useCallback((next: string) => {
-    setMessage(next.trim() || null);
+    publishToast(next);
   }, []);
+
+  useEffect(() => subscribeToast((next) => setMessage(next)), []);
 
   useEffect(() => {
     if (message === null) {

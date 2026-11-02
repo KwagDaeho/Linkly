@@ -20,6 +20,12 @@ class ErrorBoundary extends Component<
     console.error("UI crash", error, info);
   }
 
+  componentDidMount() {
+    import.meta.hot?.on("vite:beforeUpdate", () => {
+      this.setState({ error: null });
+    });
+  }
+
   render() {
     if (this.state.error) {
       return (

@@ -5,7 +5,7 @@ import { useTriggerScope } from "@/hooks/trigger/TriggerScopeContext";
 import { useTriggerScopeMutations } from "@/hooks/trigger/useTriggerScopeMutations";
 import { activatorsEqual, buttonMappingsOf } from "@/domain/profile";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
-import { useToast } from "@/components/ui/toast/ToastContext";
+import { publishToast } from "@/components/ui/toast/toastBus";
 import { usePrefs } from "@/hooks/prefs/usePrefs";
 import type {
   ActionSlot,
@@ -31,7 +31,6 @@ export const useEditorState = (): EditorContextValue => {
   const scope = useTriggerScope();
   const { buttonMappings, customMappings, catalogSelection } =
     useTriggerScopeMutations(scope);
-  const { showToast } = useToast();
   const { i18n } = usePrefs();
   const [editor, setEditor] = useState<EditorMode | null>(null);
   useKeyCapture(
@@ -65,7 +64,7 @@ export const useEditorState = (): EditorContextValue => {
               row.id !== draftEntry?.id,
           );
           if (duplicate) {
-            showToast(i18n.buttonMappingAlreadyRegistered);
+            publishToast(i18n.buttonMappingAlreadyRegistered);
             return false;
           }
         }

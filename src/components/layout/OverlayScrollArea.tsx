@@ -94,8 +94,9 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
     window.addEventListener("resize", sync);
     const ro = new ResizeObserver(sync);
     ro.observe(viewport);
-    for (const child of viewport.children) {
-      ro.observe(child);
+    const contentRoot = viewport.firstElementChild;
+    if (contentRoot !== null) {
+      ro.observe(contentRoot);
     }
 
     return () => {

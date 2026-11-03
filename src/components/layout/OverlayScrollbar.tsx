@@ -98,9 +98,6 @@ export const OverlayScrollbar = (props: OverlayScrollbarProps) => {
     window.addEventListener("resize", sync);
     const ro = new ResizeObserver(sync);
     ro.observe(scrollEl);
-    for (const child of scrollEl.children) {
-      ro.observe(child);
-    }
     const root = document.getElementById("root");
     const shellEl = root?.querySelector(`main.${shell}`);
     if (shellEl) ro.observe(shellEl);

@@ -23,7 +23,7 @@ const formatTime = (tsMs: number): string => {
 };
 
 export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) => {
-  const { i18n } = usePrefs();
+  const { i18n, lang } = usePrefs();
   const [memo, setMemo] = useState("");
   const { historyByChannel, clear } = useInputEventStream(true, channel);
   const logScrollRef = useRef<HTMLDivElement>(null);
@@ -91,7 +91,9 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
                 history.map((line, index) => (
                   <div key={`${line.tsMs}-${index}`} className={styles.row}>
                     <span className={styles.time}>{formatTime(line.tsMs)}</span>
-                    <span className={styles.summary}>{formatEventRowText(line)}</span>
+                    <span className={styles.summary}>
+                      {formatEventRowText(line, lang)}
+                    </span>
                   </div>
                 ))
               )}

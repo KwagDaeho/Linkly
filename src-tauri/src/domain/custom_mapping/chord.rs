@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use crate::domain::device::ButtonId;
+use crate::domain::modifier;
 use crate::domain::profile::{Activator, ComboActivator, CustomMappingEntry};
 use crate::platform::inject;
 
@@ -14,8 +15,31 @@ use super::state::{
 };
 
 pub(crate) fn combo_matches(combo: &ComboActivator, mods: &[String], keys: &[String]) -> bool {
-    normalize_combo_modifiers(&combo.modifiers) == *mods
+    modifiers_combo_equal(&normalize_combo_modifiers(&combo.modifiers), mods)
         && normalize_combo_keys(&combo.keys) == *keys
+}
+
+fn modifiers_combo_equal(stored: &[String], held: &[String]) -> bool {
+    if stored.len() != held.len() {
+        return false;
+    }
+    let held_set: HashSet<String> = held.iter().cloned().collect();
+    stored.iter().all(|required| modifier_requirement_met(required, &held_set))
+        && held.iter().all(|live| {
+            stored
+                .iter()
+                .any(|required| modifier_requirement_met(required, &HashSet::from([live.clone()])))
+        })
+}
+
+fn modifier_requirement_met(required: &str, held: &HashSet<String>) -> bool {
+    if held.contains(required) {
+        return true;
+    }
+    if let Some(pair) = modifier::legacy_sides(required) {
+        return held.contains(pair[0]) || held.contains(pair[1]);
+    }
+    false
 }
 
 /// Combo matched and `trigger` is the control that completed it (down edge or held HID).

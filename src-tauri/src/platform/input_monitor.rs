@@ -86,14 +86,6 @@ pub fn enabled() -> bool {
     ENABLED.load(Ordering::SeqCst)
 }
 
-fn is_standard_os_mouse(summary: &str) -> bool {
-    summary.starts_with("mouse left ")
-        || summary.starts_with("mouse right ")
-        || summary.starts_with("mouse middle ")
-        || summary.starts_with("mouse back ")
-        || summary.starts_with("mouse forward ")
-}
-
 pub fn activator_label(activator: &Activator) -> String {
     activator_summary(activator)
 }
@@ -145,33 +137,8 @@ pub fn publish_long_press(activator: &Activator) {
     });
 }
 
-fn viewer_channel(line: &InputEventLine) -> &'static str {
-    match line.kind.as_str() {
-        "keyDown" | "keyUp" | "flagsChanged" | "longPress" | "linkRemap" => "keyboard",
-        "mouseDown" | "mouseUp" if line.source == "os" && !is_standard_os_mouse(&line.summary) => {
-            "keyboard"
-        }
-        "mouseDown" | "mouseUp" | "scrollWheel" => "mouse",
-        _ if line.source == "hid" => "mouse",
-        _ if line.summary.contains("key ") => "keyboard",
-        _ => "mouse",
-    }
-}
-
-fn viewer_wants_channel(channel: &str) -> bool {
-    match channel {
-        "keyboard" => VIEWER_KEYBOARD.load(Ordering::SeqCst),
-        "mouse" => VIEWER_MOUSE.load(Ordering::SeqCst),
-        _ => false,
-    }
-}
-
 pub(crate) fn publish(line: InputEventLine) {
     if !enabled() {
-        return;
-    }
-    let channel = viewer_channel(&line);
-    if !viewer_wants_channel(channel) {
         return;
     }
     match EMIT_TX.try_send(line) {
@@ -233,4 +200,3 @@ pub fn on_hid_report(report: &LastReport) {
         detail,
     });
 }
-

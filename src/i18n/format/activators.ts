@@ -1,3 +1,4 @@
+import { CHORD_MODIFIER_ORDER } from "@/domain/keys/modifiers";
 import type {
   Activator,
   ButtonId,
@@ -55,7 +56,7 @@ export const formatComboActivator = (
   lang: Lang,
 ): string => {
   const parts: string[] = [];
-  for (const mod of ["Control", "Option", "Shift", "Meta"]) {
+  for (const mod of CHORD_MODIFIER_ORDER) {
     if (combo.modifiers.includes(mod)) {
       parts.push(formatKeyChord([mod], lang).replace(/\s+/g, ""));
     }

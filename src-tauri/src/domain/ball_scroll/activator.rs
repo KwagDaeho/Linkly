@@ -11,7 +11,11 @@ use super::state::{
     WAS_ACTIVE, IGNORE_BALL_MOTION_UNTIL,
 };
 
-const MODIFIER_KEYS: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
+const MODIFIER_KEYS: [&str; 12] = [
+    "Control", "Option", "Shift", "Meta",
+    "LeftControl", "RightControl", "LeftOption", "RightOption",
+    "LeftShift", "RightShift", "LeftMeta", "RightMeta",
+];
 
 pub fn note_catalog_button_edges(prev: ButtonState, state: ButtonState) {
     for id in state.pressed_edges(prev) {

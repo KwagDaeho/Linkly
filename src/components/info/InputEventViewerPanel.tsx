@@ -25,14 +25,16 @@ const EventChannel = ({
   latest,
   history,
   emptyLabel,
+  lang,
 }: {
   label: string;
   latest: InputEventLine | null;
   history: InputEventLine[];
   emptyLabel: string;
+  lang: import("@/types").Lang;
 }) => {
   const logRef = useRef<HTMLDivElement>(null);
-  const latestText = latest ? formatEventRowText(latest) : "";
+  const latestText = latest ? formatEventRowText(latest, lang) : "";
 
   useEffect(() => {
     const node = logRef.current;
@@ -61,7 +63,9 @@ const EventChannel = ({
           history.map((line, index) => (
             <div key={`${line.tsMs}-${index}`} className={styles.row}>
               <span className={styles.time}>{formatTime(line.tsMs)}</span>
-              <span className={styles.summary}>{formatEventRowText(line)}</span>
+              <span className={styles.summary}>
+                {formatEventRowText(line, lang)}
+              </span>
             </div>
           ))
         )}
@@ -71,7 +75,7 @@ const EventChannel = ({
 };
 
 export const InputEventViewerPanel = ({ active = true }: { active?: boolean }) => {
-  const { i18n } = usePrefs();
+  const { i18n, lang } = usePrefs();
   const { historyByChannel, latestByChannel, clear } = useInputEventStream(active);
 
   return (
@@ -87,12 +91,14 @@ export const InputEventViewerPanel = ({ active = true }: { active?: boolean }) =
         latest={latestByChannel.keyboard}
         history={historyByChannel.keyboard}
         emptyLabel={i18n.inputEventRowEmpty}
+        lang={lang}
       />
       <EventChannel
         label={i18n.inputEventMouse}
         latest={latestByChannel.mouse}
         history={historyByChannel.mouse}
         emptyLabel={i18n.inputEventRowEmpty}
+        lang={lang}
       />
     </Panel>
   );

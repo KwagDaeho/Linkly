@@ -147,11 +147,11 @@ globalStyle("button:disabled", {
   cursor: "not-allowed",
 });
 
-globalStyle("button:active:not(:disabled):not([data-font-scale-btn])", {
+globalStyle("button:active:not(:disabled):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
   transform: "translateY(1px)",
 });
 
-globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn])", {
+globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
   background: "var(--interaction-hover-button)",
 });
 

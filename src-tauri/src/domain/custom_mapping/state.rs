@@ -7,11 +7,25 @@ use parking_lot::Mutex;
 use crate::domain::chord_token::{button_id_for_capture_token, is_hardware_capture_token};
 use crate::domain::device::{ButtonId, ButtonState};
 use crate::domain::device::DeviceIdentityKey;
+use crate::domain::modifier::{self, LEGACY_MODIFIER_ORDER, SIDE_MODIFIER_ORDER};
 use crate::domain::profile::{
     effective_custom_mappings, Activator, ComboActivator, CustomMappingEntry, Profile,
 };
 
-pub(crate) const MODIFIER_ORDER: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
+pub(crate) const MODIFIER_ORDER: [&str; 12] = [
+    LEGACY_MODIFIER_ORDER[0],
+    LEGACY_MODIFIER_ORDER[1],
+    LEGACY_MODIFIER_ORDER[2],
+    LEGACY_MODIFIER_ORDER[3],
+    SIDE_MODIFIER_ORDER[0],
+    SIDE_MODIFIER_ORDER[1],
+    SIDE_MODIFIER_ORDER[2],
+    SIDE_MODIFIER_ORDER[3],
+    SIDE_MODIFIER_ORDER[4],
+    SIDE_MODIFIER_ORDER[5],
+    SIDE_MODIFIER_ORDER[6],
+    SIDE_MODIFIER_ORDER[7],
+];
 
 pub(crate) const FLAG_CONTROL: u64 = 0x0004_0000;
 pub(crate) const FLAG_OPTION: u64 = 0x0008_0000;
@@ -192,7 +206,7 @@ pub(crate) fn normalize_combo_keys(v: &[String]) -> Vec<String> {
 }
 
 pub(crate) fn is_modifier(name: &str) -> bool {
-    MODIFIER_ORDER.contains(&name)
+    modifier::is_modifier_name(name)
 }
 
 pub(crate) fn sync_active_buttons(active: &std::collections::HashMap<ButtonId, String>) {

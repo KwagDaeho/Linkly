@@ -127,13 +127,9 @@ pub(crate) fn key_activator_name(code: u16) -> String {
 }
 
 pub(crate) fn modifier_name(code: u16) -> Option<(&'static str, u64)> {
-    Some(match code {
-        0x38 | 0x3c => ("Shift", FLAG_SHIFT),
-        0x3b | 0x3e => ("Control", FLAG_CONTROL),
-        0x3a | 0x3d => ("Option", FLAG_OPTION),
-        0x37 | 0x36 => ("Meta", FLAG_COMMAND),
-        _ => return None,
-    })
+    let side = crate::domain::modifier::side_name_from_keycode(code)?;
+    let bit = crate::domain::modifier::flag_bit_for_side(side)?;
+    Some((side, bit))
 }
 
 pub(crate) fn chord_from_event(event: CGEventRef) -> Option<CaptureChord> {

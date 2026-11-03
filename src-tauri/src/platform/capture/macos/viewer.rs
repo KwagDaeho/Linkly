@@ -1,3 +1,6 @@
+use std::sync::atomic::{AtomicU64, Ordering};
+
+use crate::domain::modifier;
 use crate::platform::input_monitor::{self, InputEventLine};
 
 use super::keycodes::{
@@ -5,6 +8,36 @@ use super::keycodes::{
     FLAGS_CHANGED, KEY_DOWN, KEY_UP, KEYBOARD_EVENT_AUTOREPEAT, KEYBOARD_EVENT_KEYCODE, LEFT_DOWN,
     LEFT_UP, MOUSE_EVENT_BUTTON_NUMBER, OTHER_DOWN, OTHER_UP, RIGHT_DOWN, RIGHT_UP,
 };
+
+static LAST_CURSOR_EMIT_MS: AtomicU64 = AtomicU64::new(0);
+const CURSOR_MIN_INTERVAL_MS: u64 = 50;
+
+#[repr(C)]
+struct CGPoint {
+    x: f64,
+    y: f64,
+}
+
+#[link(name = "CoreGraphics", kind = "framework")]
+extern "C" {
+    fn CGEventGetLocation(event: CGEventRef) -> CGPoint;
+}
+
+fn key_display_name(code: u16) -> String {
+    modifier::side_name_from_keycode(code)
+        .map(str::to_string)
+        .unwrap_or_else(|| key_activator_name(code))
+}
+
+fn should_emit_cursor(ts_ms: u128) -> bool {
+    let now = ts_ms as u64;
+    let prev = LAST_CURSOR_EMIT_MS.load(Ordering::Relaxed);
+    if now.saturating_sub(prev) < CURSOR_MIN_INTERVAL_MS {
+        return false;
+    }
+    LAST_CURSOR_EMIT_MS.store(now, Ordering::Relaxed);
+    true
+}
 
 pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
     if !input_monitor::enabled() {
@@ -14,6 +47,10 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
     const SCROLL_WHEEL: u32 = 22;
     const SCROLL_DELTA_AXIS_1: u32 = 11;
     const SCROLL_DELTA_AXIS_2: u32 = 12;
+    const MOUSE_MOVED: u32 = 5;
+    const LEFT_MOUSE_DRAGGED: u32 = 6;
+    const RIGHT_MOUSE_DRAGGED: u32 = 7;
+    const OTHER_MOUSE_DRAGGED: u32 = 27;
 
     let ts_ms = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -29,30 +66,35 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
             }
             let code =
                 unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
-            let name = key_activator_name(code);
+            let name = key_display_name(code);
             let phase = if etype == KEY_DOWN { "down" } else { "up" };
             let kind = if etype == KEY_DOWN {
                 "keyDown".to_string()
             } else {
                 "keyUp".to_string()
             };
-            let summary = format!("key {name} {phase}");
+            let prefix = if modifier::is_modifier_name(&name) {
+                "mod"
+            } else {
+                "key"
+            };
+            let summary = format!("{prefix} {name} {phase}");
             (kind, summary)
         }
         FLAGS_CHANGED => {
-            let code =
-                unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
             if let Some((activator, down)) = modifier_down(event) {
                 let phase = if down { "down" } else { "up" };
                 if let crate::domain::profile::Activator::Key { name } = activator {
-                    let summary = format!("flags {name} {phase}");
+                    let summary = format!("mod {name} {phase}");
                     ("flagsChanged".into(), summary)
                 } else {
                     return;
                 }
             } else {
-                let name = key_activator_name(code);
-                let summary = format!("flags {name}");
+                let code =
+                    unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
+                let name = key_display_name(code);
+                let summary = format!("mod {name}");
                 ("flagsChanged".into(), summary)
             }
         }
@@ -79,6 +121,14 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
                 _ => format!("mouse event {phase}"),
             };
             (kind, summary)
+        }
+        MOUSE_MOVED | LEFT_MOUSE_DRAGGED | RIGHT_MOUSE_DRAGGED | OTHER_MOUSE_DRAGGED => {
+            if !should_emit_cursor(ts_ms) {
+                return;
+            }
+            let loc = unsafe { CGEventGetLocation(event) };
+            let summary = format!("cursor ({:.0},{:.0})", loc.x, loc.y);
+            ("mouseMoved".into(), summary)
         }
         SCROLL_WHEEL => {
             let dy =

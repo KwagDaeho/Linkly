@@ -91,6 +91,10 @@ pub fn ensure_tap_thread() {
         .name("key-capture-tap".into())
         .spawn(|| {
             const SCROLL_WHEEL: u32 = 22;
+            const MOUSE_MOVED: u32 = 5;
+            const LEFT_MOUSE_DRAGGED: u32 = 6;
+            const RIGHT_MOUSE_DRAGGED: u32 = 7;
+            const OTHER_MOUSE_DRAGGED: u32 = 27;
             let events = mask_bit(KEY_DOWN)
                 | mask_bit(KEY_UP)
                 | mask_bit(FLAGS_CHANGED)
@@ -100,7 +104,11 @@ pub fn ensure_tap_thread() {
                 | mask_bit(RIGHT_UP)
                 | mask_bit(OTHER_DOWN)
                 | mask_bit(OTHER_UP)
-                | mask_bit(SCROLL_WHEEL);
+                | mask_bit(SCROLL_WHEEL)
+                | mask_bit(MOUSE_MOVED)
+                | mask_bit(LEFT_MOUSE_DRAGGED)
+                | mask_bit(RIGHT_MOUSE_DRAGGED)
+                | mask_bit(OTHER_MOUSE_DRAGGED);
             let port = unsafe {
                 CGEventTapCreate(
                     0,

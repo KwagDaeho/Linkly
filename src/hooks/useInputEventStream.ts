@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  eventViewerChannel,
+  eventViewerChannels,
   type EventViewerChannel,
 } from "@/domain/input/eventViewer";
 import type { InputEventLine } from "@/types";
@@ -55,11 +55,13 @@ export const useInputEventStream = (
           mouse: [...previous.mouse],
         };
         for (const line of batch) {
-          const channel = eventViewerChannel(line);
-          if (onlyChannel !== undefined && channel !== onlyChannel) {
-            continue;
+          const channels = eventViewerChannels(line);
+          for (const channel of channels) {
+            if (onlyChannel !== undefined && channel !== onlyChannel) {
+              continue;
+            }
+            next[channel] = appendLine(next[channel], line);
           }
-          next[channel] = appendLine(next[channel], line);
         }
         return next;
       });

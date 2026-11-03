@@ -29,12 +29,12 @@ export const remove = style({
   justifySelf: "end",
 });
 
-globalStyle(`${row} select`, {
+globalStyle(`${row} [data-action-select], ${row} select`, {
   minWidth: 0,
   width: "100%",
 });
 
-globalStyle(`${row} select:disabled`, {
+globalStyle(`${row} [data-action-select][data-disabled="true"], ${row} select:disabled`, {
   opacity: 0.45,
   cursor: "not-allowed",
 });

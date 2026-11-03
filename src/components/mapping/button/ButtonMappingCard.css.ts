@@ -17,12 +17,12 @@ export const card = style({
   background: "var(--accent-soft)",
 });
 
-globalStyle(`${card} select`, {
+globalStyle(`${card} [data-action-select], ${card} select`, {
   minWidth: 0,
   width: "100%",
 });
 
-globalStyle(`${card} select:disabled`, {
+globalStyle(`${card} [data-action-select][data-disabled="true"], ${card} select:disabled`, {
   opacity: 0.45,
   cursor: "not-allowed",
 });

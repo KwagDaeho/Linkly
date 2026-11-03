@@ -3,6 +3,7 @@ import {
   activatorToCaptureToken,
   activatorToCustomKeyToken,
 } from "@/domain/keys/mouseKeyToken";
+import { keyModifierTokensMatch } from "@/domain/keys/modifiers";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
 import { ballScrollOf } from "@/domain/profile";
 import type { Activator, BallScrollSlot, Profile } from "@/types";
@@ -39,6 +40,15 @@ const conflictTokensFor = (activator: Activator): Set<string> => {
 /** Same physical control even when stored as device vs mouse, etc. */
 export const activatorsConflict = (a: Activator, b: Activator): boolean => {
   if (activatorsEqual(a, b)) {
+    return true;
+  }
+  const na = normalizeActivator(a);
+  const nb = normalizeActivator(b);
+  if (
+    na.type === "key" &&
+    nb.type === "key" &&
+    keyModifierTokensMatch(na.name, nb.name)
+  ) {
     return true;
   }
   const left = conflictTokensFor(a);

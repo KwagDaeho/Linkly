@@ -3,10 +3,11 @@ use std::sync::LazyLock;
 
 use parking_lot::Mutex;
 
+use crate::domain::modifier::{self, SIDE_MODIFIER_ORDER};
+
 use super::keycodes::{
     key_activator_name, keycode_name, modifier_name, CGEventRef, CGEventGetFlags,
-    CGEventGetIntegerValueField, FLAG_COMMAND, FLAG_CONTROL, FLAG_OPTION, FLAG_SHIFT,
-    KEYBOARD_EVENT_KEYCODE,
+    CGEventGetIntegerValueField, KEYBOARD_EVENT_KEYCODE,
 };
 use super::super::emit::emit_chord;
 use super::super::types::CaptureChord;
@@ -16,8 +17,6 @@ static HELD_MODS: LazyLock<Mutex<HashSet<String>>> =
 static HELD_KEYS: LazyLock<Mutex<Vec<String>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 static HELD_EXTRA: LazyLock<Mutex<Vec<String>>> = LazyLock::new(|| Mutex::new(Vec::new()));
 
-const MODIFIER_ORDER: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
-
 pub fn clear_combo_held() {
     HELD_MODS.lock().clear();
     HELD_KEYS.lock().clear();
@@ -26,7 +25,7 @@ pub fn clear_combo_held() {
 
 pub fn combo_held_parts() -> (Vec<String>, Vec<String>) {
     let held_mods = HELD_MODS.lock();
-    let mods: Vec<String> = MODIFIER_ORDER
+    let mods: Vec<String> = SIDE_MODIFIER_ORDER
         .iter()
         .filter(|m| held_mods.contains(**m))
         .map(|s| (*s).to_string())
@@ -43,25 +42,8 @@ pub fn combo_held_snapshot() -> Vec<String> {
     chord
 }
 
-fn mods_from_event_flags(flags: u64) -> HashSet<String> {
-    let mut mods = HashSet::new();
-    if flags & FLAG_CONTROL != 0 {
-        mods.insert("Control".into());
-    }
-    if flags & FLAG_OPTION != 0 {
-        mods.insert("Option".into());
-    }
-    if flags & FLAG_SHIFT != 0 {
-        mods.insert("Shift".into());
-    }
-    if flags & FLAG_COMMAND != 0 {
-        mods.insert("Meta".into());
-    }
-    mods
-}
-
 fn is_modifier(name: &str) -> bool {
-    MODIFIER_ORDER.contains(&name)
+    modifier::is_modifier_name(name)
 }
 
 fn push_unique(vec: &mut Vec<String>, token: &str) {
@@ -82,9 +64,19 @@ pub fn note_capture_token(token: &str, down: bool) {
     }
 }
 
-pub(crate) fn sync_mods_from_flags(event: CGEventRef) {
+pub(crate) fn note_modifier_flags_changed(event: CGEventRef) {
+    let code = unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
+    let Some((side, bit)) = modifier_name(code) else {
+        return;
+    };
     let flags = unsafe { CGEventGetFlags(event) };
-    *HELD_MODS.lock() = mods_from_event_flags(flags);
+    let down = flags & bit != 0;
+    let mut held = HELD_MODS.lock();
+    if down {
+        held.insert(side.to_string());
+    } else {
+        held.remove(side);
+    }
 }
 
 pub(crate) fn note_key_down(event: CGEventRef) {

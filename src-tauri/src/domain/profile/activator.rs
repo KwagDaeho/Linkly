@@ -117,6 +117,10 @@ impl Activator {
             | (Activator::Mouse { button: mb }, Activator::Device { button: id }) => {
                 mouse_button_for_catalog_button(*id).as_ref() == Some(mb)
             }
+            (
+                Activator::Key { name: a },
+                Activator::Key { name: b },
+            ) => crate::domain::modifier::key_activators_match(a, b),
             _ => false,
         }
     }

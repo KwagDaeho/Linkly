@@ -104,15 +104,19 @@ fn key_code(name: &str) -> Option<u16> {
 
 fn is_modifier(name: &str) -> Option<CGEventFlags> {
     match name.to_ascii_lowercase().as_str() {
-        "meta" | "cmd" | "command" | "left_meta" | "right_meta" | "left_command"
-        | "right_command" => Some(CGEventFlags::CGEventFlagCommand),
-        "alt" | "option" | "left_alt" | "right_alt" | "left_option" | "right_option" => {
-            Some(CGEventFlags::CGEventFlagAlternate)
+        "meta" | "cmd" | "command" | "left_meta" | "right_meta" | "leftmeta"
+        | "rightmeta" | "left_command" | "right_command" => {
+            Some(CGEventFlags::CGEventFlagCommand)
         }
-        "ctrl" | "control" | "left_ctrl" | "right_ctrl" | "left_control" | "right_control" => {
+        "alt" | "option" | "left_alt" | "right_alt" | "left_option" | "right_option"
+        | "leftoption" | "rightoption" => Some(CGEventFlags::CGEventFlagAlternate),
+        "ctrl" | "control" | "left_ctrl" | "right_ctrl" | "left_control"
+        | "right_control" | "leftcontrol" | "rightcontrol" => {
             Some(CGEventFlags::CGEventFlagControl)
         }
-        "shift" | "left_shift" | "right_shift" => Some(CGEventFlags::CGEventFlagShift),
+        "shift" | "left_shift" | "right_shift" | "leftshift" | "rightshift" => {
+            Some(CGEventFlags::CGEventFlagShift)
+        }
         "fn" | "function" => Some(CGEventFlags::CGEventFlagSecondaryFn),
         _ => None,
     }
@@ -134,6 +138,20 @@ fn modifier_keycode(flag: CGEventFlags) -> Option<u16> {
         Some(0x3f) // Fn
     } else {
         None
+    }
+}
+
+fn modifier_keycode_for_name(name: &str) -> Option<u16> {
+    match name.to_ascii_lowercase().as_str() {
+        "leftcontrol" | "left_control" | "left_ctrl" => Some(0x3b),
+        "rightcontrol" | "right_control" | "right_ctrl" => Some(0x3e),
+        "leftoption" | "left_option" | "left_alt" => Some(0x3a),
+        "rightoption" | "right_option" | "right_alt" => Some(0x3d),
+        "leftshift" | "left_shift" => Some(0x38),
+        "rightshift" | "right_shift" => Some(0x3c),
+        "leftmeta" | "left_meta" | "left_command" => Some(0x37),
+        "rightmeta" | "right_meta" | "right_command" => Some(0x36),
+        _ => modifier_keycode(is_modifier(name)?),
     }
 }
 
@@ -244,12 +262,10 @@ pub fn release_chord_hold(modifiers: &[String], keys: &[String]) {
         return;
     };
     let mut accumulated = CGEventFlags::empty();
-    let mod_flags: Vec<CGEventFlags> = modifiers
-        .iter()
-        .filter_map(|name| is_modifier(name))
-        .collect();
-    for flag in &mod_flags {
-        accumulated.insert(*flag);
+    for name in modifiers {
+        if let Some(flag) = is_modifier(name) {
+            accumulated.insert(flag);
+        }
     }
     for name in keys.iter().rev() {
         if is_modifier(name).is_some() {
@@ -259,11 +275,14 @@ pub fn release_chord_hold(modifiers: &[String], keys: &[String]) {
             post_key(&src, code, false, accumulated);
         }
     }
-    for flag in mod_flags.iter().rev() {
-        if let Some(code) = modifier_keycode(*flag) {
-            accumulated.remove(*flag);
-            post_key(&src, code, false, accumulated);
+    for name in modifiers.iter().rev() {
+        let Some(code) = modifier_keycode_for_name(name) else {
+            continue;
+        };
+        if let Some(flag) = is_modifier(name) {
+            accumulated.remove(flag);
         }
+        post_key(&src, code, false, accumulated);
     }
 }
 

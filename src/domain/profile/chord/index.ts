@@ -1,5 +1,10 @@
-export const CHORD_MODIFIERS = new Set(["Control", "Option", "Shift", "Meta"]);
-const MODIFIER_ORDER = ["Control", "Option", "Shift", "Meta"] as const;
+import {
+  CHORD_MODIFIER_ORDER,
+  CHORD_MODIFIER_TOKENS,
+} from "@/domain/keys/modifiers";
+
+export const CHORD_MODIFIERS = CHORD_MODIFIER_TOKENS;
+const MODIFIER_ORDER = CHORD_MODIFIER_ORDER;
 
 export const splitChord = (
   chord: string[],

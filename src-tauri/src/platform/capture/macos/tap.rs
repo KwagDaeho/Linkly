@@ -6,7 +6,7 @@ use crate::domain::profile::Activator;
 use crate::platform::app_bus;
 use crate::platform::inject;
 
-use super::combo::{emit_combo_preview, note_capture_token, note_key_down, note_key_up, sync_mods_from_flags};
+use super::combo::{emit_combo_preview, note_capture_token, note_key_down, note_key_up, note_modifier_flags_changed};
 use super::super::token::activator_capture_token;
 use super::keycodes::{
     chord_from_event, key_activator, modifier_down, CGEventRef, CGEventTapProxy,
@@ -38,7 +38,7 @@ pub(crate) unsafe extern "C" fn tap_callback(
         let combo = session::combo_trigger_capture();
         if etype == KEY_UP {
             if combo {
-                sync_mods_from_flags(event);
+                note_modifier_flags_changed(event);
                 let code =
                     unsafe { CGEventGetIntegerValueField(event, KEYBOARD_EVENT_KEYCODE) } as u16;
                 note_key_up(code);
@@ -47,7 +47,7 @@ pub(crate) unsafe extern "C" fn tap_callback(
             return std::ptr::null_mut();
         }
         if etype == FLAGS_CHANGED {
-            sync_mods_from_flags(event);
+            note_modifier_flags_changed(event);
             emit_combo_preview();
             return std::ptr::null_mut();
         }
@@ -72,14 +72,14 @@ pub(crate) unsafe extern "C" fn tap_callback(
                         return std::ptr::null_mut();
                     }
                     if combo {
-                        sync_mods_from_flags(event);
+                        note_modifier_flags_changed(event);
                         note_key_down(event);
                         emit_combo_preview();
                     } else {
                         emit_chord(chord);
                     }
                 } else if combo {
-                    sync_mods_from_flags(event);
+                    note_modifier_flags_changed(event);
                     emit_combo_preview();
                 }
             }

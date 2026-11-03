@@ -1,11 +1,14 @@
 import { comboEffectiveTrigger } from "@/domain/input";
 import { activatorToCaptureToken } from "@/domain/keys/mouseKeyToken";
-import { CHORD_MODIFIERS } from "@/domain/profile";
+import {
+  CHORD_MODIFIER_ORDER,
+  CHORD_MODIFIER_TOKENS,
+} from "@/domain/keys/modifiers";
 import type { Activator, ComboActivator } from "@/types";
 
 export const CAPTURE_HOLD_MS = 1000;
 
-const MODIFIER_ORDER = ["Control", "Option", "Shift", "Meta"] as const;
+const MODIFIER_ORDER = CHORD_MODIFIER_ORDER;
 
 const MOUSE_CAPTURE_TOKENS = new Set([
   "MouseLeft",
@@ -32,7 +35,7 @@ export const isCaptureMouseToken = (token: string): boolean => {
 export const normalizeCaptureSnapshot = (tokens: string[]): string[] => {
   const mods = MODIFIER_ORDER.filter((m) => tokens.includes(m));
   const modSet = new Set<string>(mods);
-  const rest = tokens.filter((t) => !CHORD_MODIFIERS.has(t) && !modSet.has(t));
+  const rest = tokens.filter((t) => !CHORD_MODIFIER_TOKENS.has(t) && !modSet.has(t));
   const seen = new Set<string>();
   const orderedRest: string[] = [];
   for (const token of rest) {
@@ -74,7 +77,7 @@ export const snapshotToComboActivator = (
     return null;
   }
   const modifiers = MODIFIER_ORDER.filter((m) => normalized.includes(m));
-  const nonMods = normalized.filter((t) => !CHORD_MODIFIERS.has(t));
+  const nonMods = normalized.filter((t) => !CHORD_MODIFIER_TOKENS.has(t));
   if (nonMods.length === 0) {
     return modifiers.length > 0 ? null : null;
   }
@@ -133,7 +136,7 @@ export const tokenToActivator = (token: string): Activator | null => {
       return { type: "mouse", button: { type: "other", number: n } };
     }
   }
-  if (CHORD_MODIFIERS.has(token)) {
+  if (CHORD_MODIFIER_TOKENS.has(token)) {
     return { type: "key", name: token };
   }
   return { type: "key", name: token };
@@ -152,5 +155,5 @@ export const snapshotIsValidCombo = (tokens: string[]): boolean => {
 
 export const snapshotIsValidCustomKey = (tokens: string[]): boolean => {
   const normalized = normalizeCaptureSnapshot(tokens);
-  return normalized.some((t) => !CHORD_MODIFIERS.has(t));
+  return normalized.some((t) => !CHORD_MODIFIER_TOKENS.has(t));
 };

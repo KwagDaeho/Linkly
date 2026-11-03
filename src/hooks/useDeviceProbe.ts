@@ -19,6 +19,19 @@ const sameReport = (
     previousReport.buttons.join() === nextReport.buttons.join()
   );
 };
+const sameDevice = (
+  previous: DeviceInfo | null,
+  next: DeviceInfo | null,
+): boolean => {
+  if (previous === null || next === null) {
+    return previous === next;
+  }
+  return (
+    previous.vendorId === next.vendorId &&
+    previous.productId === next.productId &&
+    previous.productName === next.productName
+  );
+};
 export const useDeviceProbe = () => {
   const [connected, setConnected] = useState<DeviceInfo | null>(null);
   const [report, setReport] = useState<LastReport | null>(null);
@@ -40,7 +53,11 @@ export const useDeviceProbe = () => {
       });
     }, REPORT_POLL_MS);
     const connectedIntervalId = window.setInterval(() => {
-      void tauri.getDeviceInfo().then(setConnected);
+      void tauri.getDeviceInfo().then((next) => {
+        setConnected((previous) =>
+          sameDevice(previous, next) ? previous : next,
+        );
+      });
     }, CONNECTED_POLL_MS);
     return () => {
       window.clearInterval(reportIntervalId);

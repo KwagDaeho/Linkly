@@ -6,7 +6,8 @@ use super::state::{self, find_mapping_for_button};
 
 /// Block parallel HID edges when this catalog button is remapped / not OS-passthrough.
 pub fn is_reserved_catalog_button(id: ButtonId) -> bool {
-    find_mapping_for_button(id).is_some_and(|e| state::entry_needs_app_handling(&e))
+    state::is_catalog_button_held(id)
+        || find_mapping_for_button(id).is_some_and(|e| state::entry_needs_app_handling(&e))
 }
 
 pub(crate) fn reconcile_active_os(maps: &mut ButtonMaps) {

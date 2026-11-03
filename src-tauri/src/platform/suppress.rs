@@ -20,6 +20,9 @@ use parking_lot::Mutex;
 use crate::domain::remap::{BIT_BACK, BIT_FORWARD, BIT_LEFT, BIT_MIDDLE, BIT_RIGHT};
 
 static SUPPRESS_MASK: AtomicU8 = AtomicU8::new(0);
+static GRACE_MASK: AtomicU8 = AtomicU8::new(0);
+static GRACE_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
+const CLICK_SUPPRESS_GRACE_MS: u64 = 72;
 /// When we synthesize mouse-down, OS still posts plain MouseMoved — suppress it
 /// so `inject::move_by` owns the stream (*MouseDragged).
 static SUPPRESS_MOTION: AtomicBool = AtomicBool::new(false);
@@ -59,6 +62,27 @@ pub fn set_suppress_mask(mask: u8) {
     SUPPRESS_MASK.store(mask, Ordering::SeqCst);
 }
 
+/// After a remapped catalog button releases, OS clicks can lag HID by a few ms.
+pub fn arm_catalog_click_grace(bits: u8) {
+    if bits == 0 {
+        return;
+    }
+    GRACE_MASK.store(bits, Ordering::SeqCst);
+    GRACE_UNTIL_MS.store(
+        now_ms().saturating_add(CLICK_SUPPRESS_GRACE_MS),
+        Ordering::SeqCst,
+    );
+}
+
+fn effective_suppress_mask() -> u8 {
+    let base = SUPPRESS_MASK.load(Ordering::SeqCst);
+    if now_ms() <= GRACE_UNTIL_MS.load(Ordering::SeqCst) {
+        return base | GRACE_MASK.load(Ordering::SeqCst);
+    }
+    GRACE_MASK.store(0, Ordering::SeqCst);
+    base
+}
+
 pub fn set_suppress_motion(suppress: bool) {
     SUPPRESS_MOTION.store(suppress, Ordering::SeqCst);
 }
@@ -87,7 +111,7 @@ fn cursor_lock_point() -> Option<(f64, f64)> {
 /// True while our tap is dropping OS events for this physical catalog button.
 pub fn os_button_suppressed(id: crate::domain::device::ButtonId) -> bool {
     use crate::domain::device::ButtonId;
-    let mask = SUPPRESS_MASK.load(Ordering::SeqCst);
+    let mask = effective_suppress_mask();
     let bit = match id {
         ButtonId::Left => BIT_LEFT,
         ButtonId::Right => BIT_RIGHT,
@@ -102,7 +126,7 @@ pub fn os_button_suppressed(id: crate::domain::device::ButtonId) -> bool {
 /// True while our tap is dropping OS events for this synthetic mouse button.
 pub fn os_mouse_button_suppressed(button: &crate::domain::profile::MouseClickButton) -> bool {
     use crate::domain::profile::MouseClickButton;
-    let mask = SUPPRESS_MASK.load(Ordering::SeqCst);
+    let mask = effective_suppress_mask();
     let bit = match button {
         MouseClickButton::Left => BIT_LEFT,
         MouseClickButton::Right => BIT_RIGHT,
@@ -128,6 +152,8 @@ pub fn arm_catalog_scroll_echo_suppress() {
 
 pub fn clear_suppress() {
     SUPPRESS_MASK.store(0, Ordering::SeqCst);
+    GRACE_MASK.store(0, Ordering::SeqCst);
+    GRACE_UNTIL_MS.store(0, Ordering::SeqCst);
     SUPPRESS_MOTION.store(false, Ordering::SeqCst);
     CURSOR_LOCK.store(false, Ordering::SeqCst);
     SCROLL_ARM_UNTIL_MS.store(0, Ordering::SeqCst);
@@ -146,7 +172,7 @@ fn should_suppress(etype: u32, button_number: i64) -> bool {
     {
         return true;
     }
-    let mask = SUPPRESS_MASK.load(Ordering::SeqCst);
+    let mask = effective_suppress_mask();
     if mask == 0 {
         return false;
     }

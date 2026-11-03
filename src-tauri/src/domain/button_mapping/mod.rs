@@ -11,4 +11,4 @@ pub use handler::{
 };
 pub use os_trigger::{offer_os_trigger, process_os_trigger_queue};
 pub use reserve::is_reserved_catalog_button;
-pub use state::{find_mapping_for_button, sync_from_profile, uses_os_watch};
+pub use state::{find_mapping_for_button, is_catalog_button_held, sync_from_profile, uses_os_watch};

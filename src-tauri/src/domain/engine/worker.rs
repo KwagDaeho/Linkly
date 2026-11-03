@@ -216,6 +216,12 @@ pub(crate) fn run(
                         let mut state = prev;
                         tilt_gate.apply(&mut state);
                         custom_mapping::sync_button_state(state);
+                        sync_catalog_suppress_mask(
+                            prev,
+                            state,
+                            &profile_snap,
+                            capture::input_capture_active(),
+                        );
                         custom_mapping::maintain_chords(
                             state,
                             &profile_snap,
@@ -226,6 +232,12 @@ pub(crate) fn run(
                             &mut key_repeats,
                         );
                         if state != prev {
+                            sync_catalog_suppress_mask(
+                                prev,
+                                state,
+                                &profile_snap,
+                                capture::input_capture_active(),
+                            );
                             apply_button_edges(
                                 prev,
                                 state,
@@ -236,6 +248,13 @@ pub(crate) fn run(
                                 &mut held,
                                 &mut scroll_repeats,
                                 &mut key_repeats,
+                            );
+                            arm_remap_release_grace(prev, state, &profile_snap);
+                            sync_catalog_suppress_mask(
+                                prev,
+                                state,
+                                &profile_snap,
+                                capture::input_capture_active(),
                             );
                             prev = state;
                             if let Some(rep) = last_report.lock().as_mut() {
@@ -335,39 +354,7 @@ pub(crate) fn run(
                     // Update suppress mask *before* inject so the tap can
                     // drop the OS click that arrives with this same report.
                     let capture_block = capture::input_capture_active();
-                    let (rl, rr, rm, rb, rf) = remap::remap_flags(&profile_snap);
-                    suppress::set_suppress_mask(remap::mask_for(
-                        state.left,
-                        state.right,
-                        state.middle,
-                        state.back,
-                        state.forward,
-                        (capture_block && state.left)
-                            || rl
-                            || ball_scroll::is_reserved_catalog_button(ButtonId::Left)
-                            || custom_mapping::is_reserved_catalog_button(ButtonId::Left)
-                            || button_mapping::is_reserved_catalog_button(ButtonId::Left),
-                        (capture_block && state.right)
-                            || rr
-                            || ball_scroll::is_reserved_catalog_button(ButtonId::Right)
-                            || custom_mapping::is_reserved_catalog_button(ButtonId::Right)
-                            || button_mapping::is_reserved_catalog_button(ButtonId::Right),
-                        (capture_block && state.middle)
-                            || rm
-                            || ball_scroll::is_reserved_catalog_button(ButtonId::Middle)
-                            || custom_mapping::is_reserved_catalog_button(ButtonId::Middle)
-                            || button_mapping::is_reserved_catalog_button(ButtonId::Middle),
-                        (capture_block && state.back)
-                            || rb
-                            || ball_scroll::is_reserved_catalog_button(ButtonId::Back)
-                            || custom_mapping::is_reserved_catalog_button(ButtonId::Back)
-                            || button_mapping::is_reserved_catalog_button(ButtonId::Back),
-                        (capture_block && state.forward)
-                            || rf
-                            || ball_scroll::is_reserved_catalog_button(ButtonId::Forward)
-                            || custom_mapping::is_reserved_catalog_button(ButtonId::Forward)
-                            || button_mapping::is_reserved_catalog_button(ButtonId::Forward),
-                    ));
+                    sync_catalog_suppress_mask(prev, state, &profile_snap, capture_block);
 
                     ball_scroll::tick();
                     inject::expire_restored_cursor_if_due();
@@ -533,6 +520,13 @@ pub(crate) fn run(
                             &mut scroll_repeats,
                             &mut key_repeats,
                         );
+                        arm_remap_release_grace(prev, state, &profile_snap);
+                        sync_catalog_suppress_mask(
+                            prev,
+                            state,
+                            &profile_snap,
+                            capture_block,
+                        );
                     });
 
                     prev = state;
@@ -563,6 +557,78 @@ pub(crate) fn run(
         drop(device);
         std::thread::sleep(Duration::from_millis(200));
     }
+}
+
+fn sticky_button_down(prev: ButtonState, state: ButtonState, id: ButtonId) -> bool {
+    state.is_down(id) || prev.is_down(id)
+}
+
+fn catalog_button_remap(profile: &Profile, id: ButtonId, legacy: bool) -> bool {
+    legacy
+        || ball_scroll::is_reserved_catalog_button(id)
+        || custom_mapping::is_reserved_catalog_button(id)
+        || button_mapping::is_reserved_catalog_button(id)
+}
+
+fn catalog_remap_bit(id: ButtonId) -> u8 {
+    use remap::{BIT_BACK, BIT_FORWARD, BIT_LEFT, BIT_MIDDLE, BIT_RIGHT};
+    match id {
+        ButtonId::Left => BIT_LEFT,
+        ButtonId::Right => BIT_RIGHT,
+        ButtonId::Middle => BIT_MIDDLE,
+        ButtonId::Back => BIT_BACK,
+        ButtonId::Forward => BIT_FORWARD,
+        _ => 0,
+    }
+}
+
+fn arm_remap_release_grace(prev: ButtonState, state: ButtonState, profile: &Profile) {
+    let (rl, rr, rm, rb, rf) = remap::remap_flags(profile);
+    let rows = [
+        (ButtonId::Left, rl),
+        (ButtonId::Right, rr),
+        (ButtonId::Middle, rm),
+        (ButtonId::Back, rb),
+        (ButtonId::Forward, rf),
+    ];
+    let mut grace = 0u8;
+    for (id, legacy) in rows {
+        if !state.released_edges(prev).contains(&id) {
+            continue;
+        }
+        if !catalog_button_remap(profile, id, legacy) {
+            continue;
+        }
+        grace |= catalog_remap_bit(id);
+    }
+    suppress::arm_catalog_click_grace(grace);
+}
+
+/// Keep OS click suppression aligned with HID (incl. idle polls while buttons stay down).
+fn sync_catalog_suppress_mask(
+    prev: ButtonState,
+    state: ButtonState,
+    profile: &Profile,
+    capture_block: bool,
+) {
+    let (rl, rr, rm, rb, rf) = remap::remap_flags(profile);
+    suppress::set_suppress_mask(remap::mask_for(
+        sticky_button_down(prev, state, ButtonId::Left),
+        sticky_button_down(prev, state, ButtonId::Right),
+        sticky_button_down(prev, state, ButtonId::Middle),
+        sticky_button_down(prev, state, ButtonId::Back),
+        sticky_button_down(prev, state, ButtonId::Forward),
+        (capture_block && state.left)
+            || catalog_button_remap(profile, ButtonId::Left, rl),
+        (capture_block && state.right)
+            || catalog_button_remap(profile, ButtonId::Right, rr),
+        (capture_block && state.middle)
+            || catalog_button_remap(profile, ButtonId::Middle, rm),
+        (capture_block && state.back)
+            || catalog_button_remap(profile, ButtonId::Back, rb),
+        (capture_block && state.forward)
+            || catalog_button_remap(profile, ButtonId::Forward, rf),
+    ));
 }
 
 fn apply_button_edges(

@@ -67,6 +67,7 @@ pub fn handle_catalog_button_transitions(
         let Some(entry_id) = maps.active_catalog_buttons.remove(&id) else {
             continue;
         };
+        state::set_catalog_button_held(id, false);
         out_skip_release.insert(id);
         let inject_id = state::entry_by_id(&entry_id)
             .map(|e| inject_button_for_entry(&e))
@@ -88,6 +89,9 @@ pub fn handle_catalog_button_transitions(
 
     for id in state.pressed_edges(prev) {
         if skip_press.contains(&id) {
+            if find_mapping_for_button(id).is_some_and(|e| state::entry_needs_app_handling(&e)) {
+                out_skip_press.insert(id);
+            }
             continue;
         }
         if maps.active_catalog_buttons.contains_key(&id) {
@@ -102,6 +106,7 @@ pub fn handle_catalog_button_transitions(
         }
         out_skip_press.insert(id);
         maps.active_catalog_buttons.insert(id, entry.id.clone());
+        state::set_catalog_button_held(id, true);
         let inject_id = inject_button_for_entry(&entry);
         fire_button_press(
             entry.id.clone(),
@@ -161,6 +166,7 @@ pub fn reset_pressed_state(maps: &mut ButtonMaps, profile: &Profile) {
     maps.scroll_repeats.clear();
     maps.key_repeats.clear();
     maps.active_catalog_buttons.clear();
+    state::clear_catalog_buttons_held();
     super::os_trigger::clear_os_active(maps);
     if crate::platform::inject::synthetic_buttons_held() {
         use crate::domain::profile::MouseClickButton;

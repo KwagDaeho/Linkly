@@ -1,4 +1,5 @@
 use parking_lot::Mutex;
+use std::collections::HashSet;
 use std::sync::LazyLock;
 
 use crate::domain::device::ButtonId;
@@ -11,6 +12,27 @@ use crate::domain::remap;
 
 static ENTRIES: LazyLock<Mutex<Vec<ButtonMappingEntry>>> =
     LazyLock::new(|| Mutex::new(Vec::new()));
+
+/// HID worker is mid–button-mapping press (until release edge).
+static CATALOG_BUTTONS_HELD: LazyLock<Mutex<HashSet<ButtonId>>> =
+    LazyLock::new(|| Mutex::new(HashSet::new()));
+
+pub fn set_catalog_button_held(id: ButtonId, held: bool) {
+    let mut guard = CATALOG_BUTTONS_HELD.lock();
+    if held {
+        guard.insert(id);
+    } else {
+        guard.remove(&id);
+    }
+}
+
+pub fn is_catalog_button_held(id: ButtonId) -> bool {
+    CATALOG_BUTTONS_HELD.lock().contains(&id)
+}
+
+pub fn clear_catalog_buttons_held() {
+    CATALOG_BUTTONS_HELD.lock().clear();
+}
 
 fn entries_changed(prev: &[ButtonMappingEntry], next: &[ButtonMappingEntry]) -> bool {
     if prev.len() != next.len() {

@@ -33,6 +33,14 @@ describe("groupCatalogEntries", () => {
     expect(hangul).toEqual(sorted);
   });
 
+  it("sorts Japanese letter keys A–Z (same key order as English)", () => {
+    const ja = groupCatalogEntries()
+      .find((g) => g.id === "letters")
+      ?.subcategories?.find((s) => s.id === "ja")?.entries;
+    const letters = ja?.map((e) => e.id.replace("key_ja_", "")).join("");
+    expect(letters).toBe("abcdefghijklmnopqrstuvwxyz");
+  });
+
   it("includes injectable function keys F1–F20 only", () => {
     const fkeys = groupCatalogEntries().find((g) => g.id === "function_keys");
     expect(fkeys?.entries.some((e) => e.id === "fkey_1")).toBe(true);

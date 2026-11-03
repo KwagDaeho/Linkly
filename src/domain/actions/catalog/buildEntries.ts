@@ -82,11 +82,7 @@ const sortedPhysicalForSubcategory = (
       return ha.localeCompare(hb, "ko");
     });
   }
-  return [...QWERTY_PHYSICAL].sort((a, b) => {
-    const ha = JA_KEY_LABEL[a] ?? a;
-    const hb = JA_KEY_LABEL[b] ?? b;
-    return ha.localeCompare(hb, "ja");
-  });
+  return EN_LETTERS;
 };
 
 const modifierEntries = (): CatalogEntry[] => {
@@ -124,7 +120,16 @@ const editingEntries = (): CatalogEntry[] => {
     { id: "key_help", stroke: ["Help"] },
     { id: "key_clear", stroke: ["Clear"] },
     { id: "key_caps_lock", stroke: ["CapsLock"] },
-    { id: "key_print_screen", stroke: ["F13"] },
+  ];
+  return keys.map(({ id, stroke }) => ({
+    id,
+    category: "editing" as const,
+    action: { type: "key_stroke" as const, keys: stroke },
+  }));
+};
+
+const navigationEntries = (): CatalogEntry[] => {
+  const keys: { id: string; stroke: string[] }[] = [
     { id: "arrow_left", stroke: ["Left"] },
     { id: "arrow_right", stroke: ["Right"] },
     { id: "arrow_up", stroke: ["Up"] },
@@ -132,7 +137,7 @@ const editingEntries = (): CatalogEntry[] => {
   ];
   return keys.map(({ id, stroke }) => ({
     id,
-    category: "editing" as const,
+    category: "navigation" as const,
     action: { type: "key_stroke" as const, keys: stroke },
   }));
 };
@@ -227,6 +232,7 @@ export const buildGeneratedCatalogEntries = (): CatalogEntry[] => {
   return [
     ...modifierEntries(),
     ...editingEntries(),
+    ...navigationEntries(),
     ...functionKeyEntries(),
     ...mouseEntries(),
     ...letterEntriesFor("en"),

@@ -1,5 +1,4 @@
-import { comboActivatorToSnapshot } from "@/domain/capture";
-import { beginHoldCaptureListening } from "@/domain/capture/holdCapture";
+import { beginHoldCaptureListening, comboActivatorToSnapshot } from "@/domain/capture";
 import { comboIsValid, newCustomMappingEntry } from "@/domain/profile";
 import { newButtonMappingEntry } from "@/domain/profile/button";
 import type {

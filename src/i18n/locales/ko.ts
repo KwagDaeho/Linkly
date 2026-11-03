@@ -176,6 +176,7 @@ export const ko = {
     basic: "기본",
     modifiers: "보조키",
     editing: "편집 키",
+    navigation: "방향 키",
     function_keys: "펑션 키",
     mouse: "마우스",
     letters: "문자 키",

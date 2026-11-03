@@ -75,7 +75,6 @@ export const editingKeyEntryLabel = (id: string, lang: Lang): string | null => {
     key_help: "Help",
     key_clear: "Clear",
     key_caps_lock: "Caps Lock",
-    key_print_screen: "Print Screen (F13)",
   };
   const en: Record<string, string> = {
     key_space: "Space",
@@ -92,7 +91,6 @@ export const editingKeyEntryLabel = (id: string, lang: Lang): string | null => {
     key_help: "Help",
     key_clear: "Clear",
     key_caps_lock: "Caps Lock",
-    key_print_screen: "Print Screen (F13)",
   };
   const table = lang === "ko" ? ko : en;
   return table[id] ?? null;

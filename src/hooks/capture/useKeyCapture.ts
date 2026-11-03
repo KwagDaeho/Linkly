@@ -241,6 +241,7 @@ export const useKeyCapture = (
       return;
     }
     if (
+      captureMode === "chord_hold" ||
       captureMode === "button_mapping_capture" ||
       captureMode === "ball_scroll"
     ) {
@@ -354,6 +355,9 @@ export const useKeyCapture = (
             }
             if (hitCaptureCancelAtPointer()) {
               exitHoldListening();
+              return;
+            }
+            if (shouldDropActivatorCaptureEvent()) {
               return;
             }
             void import("@/services/tauri").then((tauri) => {

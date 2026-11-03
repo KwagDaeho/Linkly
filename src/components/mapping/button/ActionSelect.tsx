@@ -39,8 +39,8 @@ interface ActionSelectProps {
 }
 
 const MENU_GAP_PX = 4;
-/** Fixed while open — avoids width jump when hovering letters (3rd column). */
-const MENU_WIDTH_PX = 560;
+/** Every depth column uses the same width; menu grows right when 3rd column appears. */
+export const MENU_COL_WIDTH_PX = 168;
 /** Dropdown height cap (columns scroll inside). */
 const MENU_HEIGHT_CAP_PX = 280;
 const MENU_MIN_USABLE_PX = 140;
@@ -50,7 +50,11 @@ interface MenuLayout {
   left: number;
   width: number;
   height: number;
+  columnCount: 2 | 3;
 }
+
+const menuColumnCount = (hasSubcategories: boolean): 2 | 3 =>
+  hasSubcategories ? 3 : 2;
 
 const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
   if (entry.special === "custom_key") {
@@ -65,9 +69,13 @@ const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
   return entryLabel(entry.id, lang);
 };
 
-const layoutMenu = (trigger: HTMLButtonElement): MenuLayout => {
+const layoutMenu = (
+  trigger: HTMLButtonElement,
+  columnCount: 2 | 3,
+  anchorLeft: number | null,
+): MenuLayout => {
   const rect = trigger.getBoundingClientRect();
-  const width = Math.max(rect.width, MENU_WIDTH_PX);
+  const width = Math.max(rect.width, columnCount * MENU_COL_WIDTH_PX);
   const viewportPad = 8;
   const spaceBelow =
     window.innerHeight - rect.bottom - viewportPad - MENU_GAP_PX;
@@ -82,14 +90,14 @@ const layoutMenu = (trigger: HTMLButtonElement): MenuLayout => {
   const top = openBelow
     ? rect.bottom + MENU_GAP_PX
     : Math.max(viewportPad, rect.top - height - MENU_GAP_PX);
-  let left = rect.left;
+  let left = anchorLeft ?? rect.left;
   if (left + width > window.innerWidth - viewportPad) {
     left = Math.max(viewportPad, window.innerWidth - width - viewportPad);
   }
   if (left < viewportPad) {
     left = viewportPad;
   }
-  return { top, left, width, height };
+  return { top, left, width, height, columnCount };
 };
 
 export const ActionSelect = (props: ActionSelectProps) => {
@@ -102,6 +110,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuAnchorLeftRef = useRef<number | null>(null);
   const [open, setOpen] = useState(false);
   const [menuLayout, setMenuLayout] = useState<MenuLayout | null>(null);
   const [activeCategory, setActiveCategory] = useState<ActionCategoryId>(() =>
@@ -140,12 +149,18 @@ export const ActionSelect = (props: ActionSelectProps) => {
     if (trigger === null) {
       return;
     }
-    setMenuLayout(layoutMenu(trigger));
-  }, []);
+    const columnCount = menuColumnCount(hasSubcategories);
+    const next = layoutMenu(trigger, columnCount, menuAnchorLeftRef.current);
+    if (menuAnchorLeftRef.current === null) {
+      menuAnchorLeftRef.current = next.left;
+    }
+    setMenuLayout(next);
+  }, [hasSubcategories]);
 
   useEffect(() => {
     if (!open) {
       setMenuLayout(null);
+      menuAnchorLeftRef.current = null;
       return;
     }
     const selection = findCatalogSelectionForPickValue(value);
@@ -160,7 +175,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
     syncMenuLayout();
     const frame = requestAnimationFrame(() => syncMenuLayout());
     return () => cancelAnimationFrame(frame);
-  }, [open, syncMenuLayout]);
+  }, [open, hasSubcategories, syncMenuLayout]);
 
   useEffect(() => {
     if (!open) {
@@ -231,6 +246,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
               maxWidth: menuLayout.width,
               height: menuLayout.height,
               maxHeight: menuLayout.height,
+              gridTemplateColumns: `repeat(${menuLayout.columnCount}, ${MENU_COL_WIDTH_PX}px)`,
             }}
           >
             <div className={styles.categoryPane} role="presentation">
@@ -378,10 +394,23 @@ export const ActionSelect = (props: ActionSelectProps) => {
           setOpen((previous) => {
             const next = !previous;
             if (next && triggerRef.current !== null) {
-              setMenuLayout(layoutMenu(triggerRef.current));
+              menuAnchorLeftRef.current = null;
+              const group =
+                groups.find((g) => g.id === activeCategory) ?? groups[0];
+              const columnCount = menuColumnCount(
+                (group?.subcategories?.length ?? 0) > 0,
+              );
+              const layout = layoutMenu(
+                triggerRef.current,
+                columnCount,
+                null,
+              );
+              menuAnchorLeftRef.current = layout.left;
+              setMenuLayout(layout);
             }
             if (!next) {
               setMenuLayout(null);
+              menuAnchorLeftRef.current = null;
             }
             return next;
           });

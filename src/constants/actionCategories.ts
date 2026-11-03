@@ -4,6 +4,7 @@ export const ACTION_CATEGORY_ORDER: ActionCategoryId[] = [
   "basic",
   "modifiers",
   "editing",
+  "navigation",
   "function_keys",
   "mouse",
   "letters",

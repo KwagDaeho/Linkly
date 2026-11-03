@@ -76,7 +76,7 @@ export const chevron = style({
 export const menu = style({
   position: "fixed",
   zIndex: 9000,
-  display: "flex",
+  display: "grid",
   alignItems: "stretch",
   boxSizing: "border-box",
   minHeight: 0,
@@ -91,8 +91,8 @@ export const menu = style({
 
 const paneHost = style({
   minHeight: 0,
+  minWidth: 0,
   height: "100%",
-  alignSelf: "stretch",
   display: "flex",
   flexDirection: "column",
   overflow: "hidden",
@@ -102,6 +102,7 @@ const paneHost = style({
 export const paneViewport = style({
   flex: "1 1 0",
   minHeight: 0,
+  minWidth: 0,
   height: "100%",
   maxHeight: "100%",
   overscrollBehavior: "contain",
@@ -110,8 +111,6 @@ export const paneViewport = style({
 export const categoryPane = style([
   paneHost,
   {
-    flex: "1 1 0",
-    minWidth: 0,
     borderRight: "1px solid var(--line)",
   },
 ]);
@@ -119,28 +118,14 @@ export const categoryPane = style([
 export const subcategoryPane = style([
   paneHost,
   {
-    flex: "1 1 0",
-    minWidth: 0,
     borderRight: "1px solid var(--line)",
   },
 ]);
 
-export const entryPane = style([
-  paneHost,
-  {
-    flex: "1 1 0",
-    minWidth: 0,
-  },
-]);
+export const entryPane = style([paneHost]);
 
 /** Second column when there is no subcategory pane (category → entries). */
-export const entryPaneTwoCol = style([
-  paneHost,
-  {
-    flex: "1 1 0",
-    minWidth: 0,
-  },
-]);
+export const entryPaneTwoCol = style([paneHost]);
 
 globalStyle(`${paneHost} ${overlayScrollArea.root}`, {
   flex: "1 1 0",

@@ -175,6 +175,7 @@ export const en = {
     basic: "Basic",
     modifiers: "Modifiers",
     editing: "Editing keys",
+    navigation: "Arrow keys",
     function_keys: "Function keys",
     mouse: "Mouse",
     letters: "Letter keys",

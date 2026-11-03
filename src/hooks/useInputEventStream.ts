@@ -39,6 +39,7 @@ export const useInputEventStream = (
       }
       return;
     }
+    let unlisten: (() => void) | undefined;
     let cancelled = false;
 
     const flush = () => {
@@ -64,8 +65,11 @@ export const useInputEventStream = (
       });
     };
 
-    const unlistenPromise = import("@tauri-apps/api/event").then(({ listen }) =>
-      listen<InputEventLine>("input-event", (event) => {
+    void import("@tauri-apps/api/event").then(async ({ listen }) => {
+      if (cancelled) {
+        return;
+      }
+      const off = await listen<InputEventLine>("input-event", (event) => {
         if (cancelled) {
           return;
         }
@@ -73,15 +77,20 @@ export const useInputEventStream = (
         if (flushTimerRef.current === null) {
           flushTimerRef.current = window.setTimeout(flush, FLUSH_MS);
         }
-      }),
-    );
+      });
+      if (cancelled) {
+        off();
+        return;
+      }
+      unlisten = off;
+    });
     return () => {
       cancelled = true;
       if (flushTimerRef.current !== null) {
         window.clearTimeout(flushTimerRef.current);
         flushTimerRef.current = null;
       }
-      void unlistenPromise.then((unlisten) => unlisten());
+      unlisten?.();
     };
   }, [active, onlyChannel]);
 

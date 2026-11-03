@@ -1,12 +1,22 @@
 import { publishToast } from "@/components/ui/toast/toastBus";
 import { usePrefs } from "@/hooks/prefs";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PERMISSION_POLL_MS } from "../constants/polling";
+import { PERMISSION_POLL_IDLE_MS, PERMISSION_POLL_MS } from "../constants/polling";
 import { pinPermissionPanelInDev, skipPermissionRelaunchInDev } from "../constants/devUi";
 import * as tauri from "../services/tauri";
 import type { PermissionStatus } from "../types";
 
 const RESTART_TOAST_DELAY_MS = 400;
+
+const permissionStatusEqual = (
+  left: PermissionStatus | null,
+  right: PermissionStatus,
+): boolean =>
+  left !== null &&
+  left.accessibility === right.accessibility &&
+  left.inputMonitoring === right.inputMonitoring &&
+  left.postEvent === right.postEvent &&
+  left.ready === right.ready;
 
 export const usePermissions = () => {
   const { i18n } = usePrefs();
@@ -56,13 +66,27 @@ export const usePermissions = () => {
 
   useEffect(() => {
     void refresh();
-    const intervalId = window.setInterval(() => {
-      void tauri.getPermissionStatus().then(setPermissionStatus);
-    }, PERMISSION_POLL_MS);
-    return () => {
-      window.clearInterval(intervalId);
+    let intervalId = 0;
+    const tick = () => {
+      void tauri.getPermissionStatus().then((next) => {
+        setPermissionStatus((previous) =>
+          permissionStatusEqual(previous, next) ? previous : next,
+        );
+      });
     };
-  }, [refresh]);
+    const arm = (ms: number) => {
+      if (intervalId !== 0) {
+        window.clearInterval(intervalId);
+      }
+      intervalId = window.setInterval(tick, ms);
+    };
+    arm(permissionGateVisible ? PERMISSION_POLL_MS : PERMISSION_POLL_IDLE_MS);
+    return () => {
+      if (intervalId !== 0) {
+        window.clearInterval(intervalId);
+      }
+    };
+  }, [refresh, permissionGateVisible]);
 
   const grantAccess = useCallback(async () => {
     await tauri.requestPermission("accessibility");

@@ -77,6 +77,11 @@ pub fn set_viewer_channel(channel: &str, on: bool) {
     sync_enabled_from_viewers();
 }
 
+/// Start the input-event emit thread at app launch (not from the CGEventTap callback).
+pub fn warmup_emit_pipeline() {
+    let _ = &*EMIT_TX;
+}
+
 pub fn enabled() -> bool {
     ENABLED.load(Ordering::SeqCst)
 }

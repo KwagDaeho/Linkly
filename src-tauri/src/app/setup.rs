@@ -85,6 +85,7 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     app.state::<AppState>().engine.start();
 
     capture::register_app_handle(app.handle().clone());
+    crate::platform::input_monitor::warmup_emit_pipeline();
     let profile = app.state::<AppState>().engine.profile();
     if watch::needs_os_event_watch(&profile) || crate::platform::input_monitor::enabled() {
         capture::ensure_watch_tap();

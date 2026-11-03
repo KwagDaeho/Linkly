@@ -8,6 +8,7 @@ import {
 import {
   applyKeyCapture,
   CAPTURE_HOLD_MS,
+  armActivatorCaptureGrace,
   captureModeOf,
   captureSessionFor,
   comboActivatorToSnapshot,
@@ -16,6 +17,7 @@ import {
   mergeCaptureSnapshot,
   normalizeCaptureSnapshot,
   resolveActivatorCapture,
+  shouldDropActivatorCaptureEvent,
   snapshotIsValidCombo,
   snapshotIsValidCustomKey,
   snapshotToComboActivator,
@@ -238,6 +240,12 @@ export const useKeyCapture = (
     if (captureMode === "off") {
       return;
     }
+    if (
+      captureMode === "button_mapping_capture" ||
+      captureMode === "ball_scroll"
+    ) {
+      armActivatorCaptureGrace();
+    }
     let cancelled = false;
     const unlistenPromise = import("@tauri-apps/api/event").then(
       async ({ listen }) => {
@@ -298,6 +306,9 @@ export const useKeyCapture = (
                 setEditor(null);
                 return;
               }
+              if (shouldDropActivatorCaptureEvent()) {
+                return;
+              }
               void (async () => {
                 const accepted = await onActivatorAssignedRef.current(
                   activeEditor.slot,
@@ -315,6 +326,9 @@ export const useKeyCapture = (
               }
               if (hitCaptureCancelAtPointer()) {
                 setEditor(null);
+                return;
+              }
+              if (shouldDropActivatorCaptureEvent()) {
                 return;
               }
               void (async () => {
@@ -396,6 +410,13 @@ export const useKeyCapture = (
                   event.payload,
                 );
                 if (result === null) {
+                  return;
+                }
+                if (
+                  (result.kind === "assign" ||
+                    result.kind === "assign_button_mapping") &&
+                  shouldDropActivatorCaptureEvent()
+                ) {
                   return;
                 }
                 if (result.kind === "stop_listening") {

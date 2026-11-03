@@ -1,6 +1,9 @@
 import { createContext, useContext, useState } from "react";
 import { ACTIVATOR_REJECT_DUPLICATE } from "@/domain/editors/activatorCapture";
-import { findScopedActivatorConflict } from "@/domain/profile/triggerConflict";
+import {
+  DuplicateActivatorError,
+  findScopedActivatorConflict,
+} from "@/domain/profile/triggerConflict";
 import { useKeyCapture } from "@/hooks/capture/useKeyCapture";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
@@ -68,7 +71,10 @@ export const useEditorState = (): EditorContextValue => {
       try {
         await ballScroll.assignActivator(slot, activator);
         return true;
-      } catch {
+      } catch (error) {
+        if (error instanceof DuplicateActivatorError) {
+          rejectDuplicateActivator();
+        }
         return false;
       }
     },
@@ -99,7 +105,10 @@ export const useEditorState = (): EditorContextValue => {
         }
         await buttonMappings.updateActivator(entryId, next);
         return true;
-      } catch {
+      } catch (error) {
+        if (error instanceof DuplicateActivatorError) {
+          rejectDuplicateActivator();
+        }
         return false;
       }
     },

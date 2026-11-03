@@ -17,6 +17,7 @@ export const MappingTriggerButton = (props: MappingTriggerButtonProps) => {
       type="button"
       className={styles.trigger}
       data-mapping-trigger=""
+      data-capture-ignore-activator=""
       onClick={props.onClick}
     >
       {keys === null || keys.length === 0 ? (

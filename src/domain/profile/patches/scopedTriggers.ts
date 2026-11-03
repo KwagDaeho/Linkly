@@ -27,6 +27,7 @@ import {
   scopedButtonMappingsOf,
   scopedCustomMappingsOf,
 } from "../triggerScope";
+import { assertScopedActivatorAvailable } from "../triggerConflict";
 
 const ensureDeviceOverride = (
   profile: Profile,
@@ -110,11 +111,17 @@ export const withScopedButtonMappingAdded = (
   profile: Profile,
   scope: TriggerScope,
   entry: ButtonMappingEntry,
-): Profile =>
-  withScopedButtonMappings(profile, scope, [
+): Profile => {
+  if (entry.activator !== null) {
+    assertScopedActivatorAvailable(profile, scope, entry.activator, {
+      buttonMappingEntryId: entry.id,
+    });
+  }
+  return withScopedButtonMappings(profile, scope, [
     ...scopedButtonMappingsOf(profile, scope),
     entry,
   ]);
+};
 
 export const withScopedButtonMappingRemoved = (
   profile: Profile,
@@ -135,6 +142,11 @@ export const withScopedButtonMappingActivator = (
   entryId: string,
   activator: ButtonMappingEntry["activator"],
 ): Profile => {
+  if (activator !== null) {
+    assertScopedActivatorAvailable(profile, scope, activator, {
+      buttonMappingEntryId: entryId,
+    });
+  }
   const nextEntries = scopedButtonMappingsOf(profile, scope).map((entry) =>
     entry.id === entryId ? { ...entry, activator } : entry,
   );

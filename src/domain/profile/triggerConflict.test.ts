@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { findButtonMappingActivatorConflict } from "@/domain/profile/triggerConflict";
+import {
+  activatorsConflict,
+  findButtonMappingActivatorConflict,
+} from "@/domain/profile/triggerConflict";
 import type { Profile } from "@/types";
 
 const baseProfile = (): Profile =>
@@ -49,5 +52,24 @@ describe("findButtonMappingActivatorConflict", () => {
         "a",
       ),
     ).toBeNull();
+  });
+
+  it("treats catalog left and mouse left as the same trigger", () => {
+    const profile = baseProfile();
+    profile.buttonMappings![0].activator = { type: "device", button: "left" };
+    expect(
+      findButtonMappingActivatorConflict(
+        profile,
+        { kind: "common" },
+        { type: "mouse", button: "left" },
+        "b",
+      ),
+    ).toBe("a");
+    expect(
+      activatorsConflict(
+        { type: "device", button: "left" },
+        { type: "mouse", button: "left" },
+      ),
+    ).toBe(true);
   });
 });

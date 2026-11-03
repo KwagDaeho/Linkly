@@ -21,8 +21,12 @@ export {
   captureSessionFor,
   captureSessionForEditor,
 } from "./session";
+export { armActivatorCaptureGrace } from "./captureArm";
+export { shouldDropActivatorCaptureEvent } from "./activatorCaptureGate";
 export {
   CAPTURE_CANCEL_ATTR,
+  CAPTURE_IGNORE_ACTIVATOR_ATTR,
   ensurePointerHitTracking,
   hitCaptureCancelAtPointer,
+  hitCaptureIgnoresActivatorsAtPointer,
 } from "./pointerHit";

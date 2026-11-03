@@ -23,6 +23,7 @@ export const ButtonMappingActivatorEditor = (
   const rejectedMessage = activatorRejectedMessage(editor.rejected, {
     left: i18n.activatorRejectedLeft,
     tilt: i18n.activatorRejectedTilt,
+    duplicate: i18n.buttonMappingAlreadyRegistered,
   });
   const waitingLabel =
     rejectedMessage !== null

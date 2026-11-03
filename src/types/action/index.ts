@@ -31,7 +31,9 @@ export type SystemCommand =
   | "next_track"
   | "play_pause"
   | "move_space_left"
-  | "move_space_right";
+  | "move_space_right"
+  | "input_source_next"
+  | "input_source_previous";
 
 export type MacroStep =
   | { type: "key_stroke"; keys: string[] }
@@ -53,10 +55,8 @@ export type ActionCategoryId =
   | "basic"
   | "modifiers"
   | "editing"
-  | "arrows"
   | "function_keys"
-  | "mouse_buttons"
-  | "mouse_actions"
+  | "mouse"
   | "letters"
   | "browser"
   | "edit"

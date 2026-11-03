@@ -198,6 +198,16 @@ export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
     action: { type: "key_stroke", keys: ["Ctrl", "Meta", "Space"] },
   },
   {
+    id: "input_source_next",
+    category: "system",
+    action: { type: "system", command: "input_source_next" },
+  },
+  {
+    id: "input_source_previous",
+    category: "system",
+    action: { type: "system", command: "input_source_previous" },
+  },
+  {
     id: "force_quit",
     category: "system",
     action: { type: "key_stroke", keys: ["Meta", "Alt", "Escape"] },

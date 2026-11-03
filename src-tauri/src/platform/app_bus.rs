@@ -33,6 +33,18 @@ where
     }
 }
 
+/// Run on the Tauri main thread when registered; otherwise run immediately (HID worker).
+pub fn run_on_main_or_else<F>(f: F)
+where
+    F: FnOnce() + Send + 'static,
+{
+    if let Some(app) = APP.get() {
+        let _ = app.run_on_main_thread(f);
+    } else {
+        f();
+    }
+}
+
 pub fn request_exit() {
     if let Some(app) = APP.get() {
         let handle = app.clone();

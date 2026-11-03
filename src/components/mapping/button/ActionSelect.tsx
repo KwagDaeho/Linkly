@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 
 import {
@@ -21,6 +28,8 @@ import type {
   CatalogEntry,
 } from "@/types";
 
+import { OverlayScrollArea } from "@/components/layout/OverlayScrollArea";
+
 import * as styles from "./ActionSelect.css";
 
 interface ActionSelectProps {
@@ -29,14 +38,18 @@ interface ActionSelectProps {
   disabled?: boolean;
 }
 
-const MENU_ESTIMATE_PX = 320;
 const MENU_GAP_PX = 4;
+/** Fixed while open — avoids width jump when hovering letters (3rd column). */
+const MENU_WIDTH_PX = 560;
+/** Dropdown height cap (columns scroll inside). */
+const MENU_HEIGHT_CAP_PX = 280;
+const MENU_MIN_USABLE_PX = 140;
 
 interface MenuLayout {
   top: number;
   left: number;
-  minWidth: number;
-  maxHeight: number;
+  width: number;
+  height: number;
 }
 
 const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
@@ -52,27 +65,31 @@ const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
   return entryLabel(entry.id, lang);
 };
 
-const layoutMenu = (
-  trigger: HTMLButtonElement,
-  threeColumn: boolean,
-): MenuLayout => {
+const layoutMenu = (trigger: HTMLButtonElement): MenuLayout => {
   const rect = trigger.getBoundingClientRect();
-  const minWidth = Math.max(rect.width, threeColumn ? 520 : 352);
+  const width = Math.max(rect.width, MENU_WIDTH_PX);
   const viewportPad = 8;
-  let top = rect.bottom + MENU_GAP_PX;
-  let maxHeight = Math.min(
-    MENU_ESTIMATE_PX,
-    window.innerHeight - top - viewportPad,
+  const spaceBelow =
+    window.innerHeight - rect.bottom - viewportPad - MENU_GAP_PX;
+  const spaceAbove = rect.top - viewportPad - MENU_GAP_PX;
+  const openBelow =
+    spaceBelow >= MENU_MIN_USABLE_PX || spaceBelow >= spaceAbove;
+  const available = openBelow ? spaceBelow : spaceAbove;
+  const height = Math.min(
+    MENU_HEIGHT_CAP_PX,
+    Math.max(MENU_MIN_USABLE_PX, available),
   );
-  if (maxHeight < 160) {
-    top = Math.max(viewportPad, rect.top - MENU_ESTIMATE_PX - MENU_GAP_PX);
-    maxHeight = Math.min(MENU_ESTIMATE_PX, rect.top - viewportPad - MENU_GAP_PX);
+  const top = openBelow
+    ? rect.bottom + MENU_GAP_PX
+    : Math.max(viewportPad, rect.top - height - MENU_GAP_PX);
+  let left = rect.left;
+  if (left + width > window.innerWidth - viewportPad) {
+    left = Math.max(viewportPad, window.innerWidth - width - viewportPad);
   }
-  const left = Math.min(
-    rect.left,
-    Math.max(viewportPad, window.innerWidth - minWidth - viewportPad),
-  );
-  return { top, left, minWidth, maxHeight };
+  if (left < viewportPad) {
+    left = viewportPad;
+  }
+  return { top, left, width, height };
 };
 
 export const ActionSelect = (props: ActionSelectProps) => {
@@ -123,11 +140,8 @@ export const ActionSelect = (props: ActionSelectProps) => {
     if (trigger === null) {
       return;
     }
-    const threeCol =
-      (groups.find((g) => g.id === activeCategory)?.subcategories?.length ?? 0) >
-      0;
-    setMenuLayout(layoutMenu(trigger, threeCol));
-  }, [activeCategory, groups]);
+    setMenuLayout(layoutMenu(trigger));
+  }, []);
 
   useEffect(() => {
     if (!open) {
@@ -137,8 +151,16 @@ export const ActionSelect = (props: ActionSelectProps) => {
     const selection = findCatalogSelectionForPickValue(value);
     setActiveCategory(selection.category);
     setActiveSubcategory(selection.subcategory);
+  }, [open, value, lang]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      return;
+    }
     syncMenuLayout();
-  }, [open, value, lang, syncMenuLayout]);
+    const frame = requestAnimationFrame(() => syncMenuLayout());
+    return () => cancelAnimationFrame(frame);
+  }, [open, syncMenuLayout]);
 
   useEffect(() => {
     if (!open) {
@@ -197,14 +219,25 @@ export const ActionSelect = (props: ActionSelectProps) => {
             id={listId}
             role="listbox"
             data-action-select-menu=""
+            data-columns={hasSubcategories ? "3" : "2"}
+            onWheel={(event) => {
+              event.stopPropagation();
+            }}
             style={{
               top: menuLayout.top,
               left: menuLayout.left,
-              minWidth: menuLayout.minWidth,
-              maxHeight: menuLayout.maxHeight,
+              width: menuLayout.width,
+              minWidth: menuLayout.width,
+              maxWidth: menuLayout.width,
+              height: menuLayout.height,
+              maxHeight: menuLayout.height,
             }}
           >
             <div className={styles.categoryPane} role="presentation">
+              <OverlayScrollArea
+                className={styles.paneViewport}
+                contentKey={`${lang}-${groups.length}-${menuLayout.height}`}
+              >
               {groups.map((group) => {
                 const isActive = group.id === activeCategory;
                 return (
@@ -236,15 +269,22 @@ export const ActionSelect = (props: ActionSelectProps) => {
                       aria-hidden
                     />
                     <span className={styles.menuRowLabel}>{group.label}</span>
-                    <span className={styles.rowChevron} aria-hidden>
-                      ›
-                    </span>
+                    {(group.subcategories?.length ?? 0) > 0 ? (
+                      <span className={styles.rowChevron} aria-hidden>
+                        ›
+                      </span>
+                    ) : null}
                   </button>
                 );
               })}
+              </OverlayScrollArea>
             </div>
             {hasSubcategories && activeGroup.subcategories !== undefined ? (
               <div className={styles.subcategoryPane} role="presentation">
+                <OverlayScrollArea
+                  className={styles.paneViewport}
+                  contentKey={`${activeCategory}-${lang}-${menuLayout.height}`}
+                >
                 {activeGroup.subcategories.map((sub) => {
                   const isActive = sub.id === activeSubGroup?.id;
                   return (
@@ -272,9 +312,19 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     </button>
                   );
                 })}
+                </OverlayScrollArea>
               </div>
             ) : null}
-            <div className={styles.entryPane} role="presentation">
+            <div
+              className={
+                hasSubcategories ? styles.entryPane : styles.entryPaneTwoCol
+              }
+              role="presentation"
+            >
+              <OverlayScrollArea
+                className={styles.paneViewport}
+                contentKey={`${activeCategory}-${activeSubGroup?.id ?? ""}-${visibleEntries.length}-${menuLayout.height}`}
+              >
               {visibleEntries.map((entry) => {
                 const pickValue = catalogEntryPickValue(entry);
                 const selected = pickValue === value;
@@ -297,6 +347,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                   </button>
                 );
               })}
+              </OverlayScrollArea>
             </div>
           </div>,
           document.body,
@@ -324,7 +375,16 @@ export const ActionSelect = (props: ActionSelectProps) => {
           if (disabled) {
             return;
           }
-          setOpen((previous) => !previous);
+          setOpen((previous) => {
+            const next = !previous;
+            if (next && triggerRef.current !== null) {
+              setMenuLayout(layoutMenu(triggerRef.current));
+            }
+            if (!next) {
+              setMenuLayout(null);
+            }
+            return next;
+          });
         }}
       >
         <span className={styles.triggerLabel}>{displayLabel}</span>

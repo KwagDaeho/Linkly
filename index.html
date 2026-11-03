@@ -57,8 +57,7 @@
           <h1 class="boot-brand">Linkly</h1>
           <p class="boot-tag">[ Loading ]</p>
           <div class="boot-actions" id="boot-fallback-actions" aria-live="polite">
-            <button type="button" id="boot-reload">Reload UI</button>
-            <button type="button" id="boot-hard-reload">Hard reload</button>
+            <button type="button" id="boot-reload">Reload</button>
           </div>
         </div>
       </main>
@@ -67,21 +66,11 @@
       (function () {
         var actions = document.getElementById("boot-fallback-actions");
         var reload = document.getElementById("boot-reload");
-        var hard = document.getElementById("boot-hard-reload");
         var show = function () {
           if (actions) actions.classList.add("is-visible");
         };
         window.setTimeout(show, 6000);
         if (reload) reload.addEventListener("click", function () { location.reload(); });
-        if (hard) {
-          hard.addEventListener("click", function () {
-            if (location.search.indexOf("boot=") >= 0) {
-              location.reload();
-              return;
-            }
-            location.href = location.pathname + "?boot=" + Date.now() + location.hash;
-          });
-        }
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>

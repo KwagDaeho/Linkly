@@ -65,13 +65,13 @@ describe("formatEventRowText", () => {
         line({ kind: "flagsChanged", summary: "mod RightMeta down" }),
         "en",
       ),
-    ).toBe("[ command(right) ] Down");
+    ).toBe("[ command(R) ] Down");
     expect(
       formatEventRowText(
         line({ kind: "flagsChanged", summary: "mod LeftShift up" }),
         "en",
       ),
-    ).toBe("[ shift(left) ] Up");
+    ).toBe("[ shift(L) ] Up");
   });
 
   it("uses the same bracket Up/Down for mouse buttons", () => {

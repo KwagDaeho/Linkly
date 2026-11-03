@@ -1,51 +1,42 @@
 import type { Lang } from "@/types";
+import {
+  formatGenericModifierWord,
+  formatSidedModifierWord,
+} from "@/domain/keys/modifierLabel";
 
 /** Viewer row labels — plain text in `[ name ] Up/Down` (not chord pill symbols). */
 export const formatViewerInputName = (token: string, lang: Lang): string => {
+  const sided = formatSidedModifierWord(token, lang);
+  if (sided !== null) {
+    return sided;
+  }
+  const generic = formatGenericModifierWord(token);
+  if (generic !== null) {
+    return generic;
+  }
   switch (token) {
-    case "LeftMeta":
-      return lang === "ko" ? "command(Left)" : "command(left)";
-    case "RightMeta":
-      return lang === "ko" ? "command(Right)" : "command(right)";
-    case "Meta":
-      return "command";
-    case "LeftOption":
-      return lang === "ko" ? "option(Left)" : "option(left)";
-    case "RightOption":
-      return lang === "ko" ? "option(Right)" : "option(right)";
-    case "Option":
-      return "option";
-    case "LeftControl":
-      return lang === "ko" ? "control(Left)" : "control(left)";
-    case "RightControl":
-      return lang === "ko" ? "control(Right)" : "control(right)";
-    case "Control":
-      return "control";
-    case "LeftShift":
-      return lang === "ko" ? "shift(Left)" : "shift(left)";
-    case "RightShift":
-      return lang === "ko" ? "shift(Right)" : "shift(right)";
-    case "Shift":
-      return "shift";
     case "Left":
-      return lang === "ko" ? "arrow(Left)" : "arrow(left)";
+      return lang === "ko" ? "arrow(L)" : "arrow(l)";
     case "Right":
-      return lang === "ko" ? "arrow(Right)" : "arrow(right)";
+      return lang === "ko" ? "arrow(R)" : "arrow(r)";
     case "Up":
-      return lang === "ko" ? "arrow(Up)" : "arrow(up)";
+      return lang === "ko" ? "arrow(U)" : "arrow(u)";
     case "Down":
-      return lang === "ko" ? "arrow(Down)" : "arrow(down)";
+      return lang === "ko" ? "arrow(D)" : "arrow(d)";
     case "Escape":
       return "Escape";
     case "Return":
-      return lang === "ko" ? "Return" : "Return";
+      return "Return";
     case "Space":
-      return lang === "ko" ? "Space" : "Space";
+      return "Space";
     case "Tab":
       return "Tab";
     case "Delete":
-      return lang === "ko" ? "Delete" : "Delete";
+      return "Delete";
     default:
+      if (/^f\d+$/i.test(token)) {
+        return token.toUpperCase();
+      }
       if (token.startsWith("keycode_")) {
         return lang === "ko" ? `keycode(${token.slice(8)})` : `keycode(${token.slice(8)})`;
       }

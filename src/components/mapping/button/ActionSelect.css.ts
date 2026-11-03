@@ -1,12 +1,14 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import * as overlayScrollArea from "../../layout/OverlayScrollArea.css";
+
 export const root = style({
   position: "relative",
   minWidth: 0,
   width: "100%",
   selectors: {
     '&[data-open="true"]': {
-      zIndex: 1,
+      zIndex: 100,
     },
   },
 });
@@ -75,9 +77,9 @@ export const menu = style({
   position: "fixed",
   zIndex: 9000,
   display: "flex",
-  minWidth: "min(100%, 22rem)",
-  maxWidth: "min(36rem, calc(100vw - 1rem))",
-  maxHeight: "min(20rem, calc(100vh - 1rem))",
+  alignItems: "stretch",
+  boxSizing: "border-box",
+  minHeight: 0,
   border: "1px solid var(--line)",
   borderRadius: "0.5rem",
   background: "var(--panel-solid)",
@@ -87,36 +89,73 @@ export const menu = style({
   overflow: "hidden",
 });
 
-export const categoryPane = style({
-  flex: "0 0 10.5rem",
-  maxWidth: "38%",
-  borderRight: "1px solid var(--line)",
-  background: "var(--panel-solid)",
-  overflowY: "auto",
-  overscrollBehavior: "contain",
+const paneHost = style({
+  minHeight: 0,
+  height: "100%",
+  alignSelf: "stretch",
   display: "flex",
   flexDirection: "column",
+  overflow: "hidden",
+  background: "var(--panel-solid)",
 });
 
-export const subcategoryPane = style({
-  flex: "0 0 8.5rem",
-  maxWidth: "32%",
-  borderRight: "1px solid var(--line)",
-  background: "var(--panel-solid)",
-  overflowY: "auto",
+export const paneViewport = style({
+  flex: "1 1 0",
+  minHeight: 0,
+  height: "100%",
+  maxHeight: "100%",
   overscrollBehavior: "contain",
-  display: "flex",
-  flexDirection: "column",
 });
 
-export const entryPane = style({
-  flex: "1 1 12rem",
-  minWidth: 0,
-  background: "var(--panel-solid)",
-  overflowY: "auto",
-  overscrollBehavior: "contain",
+export const categoryPane = style([
+  paneHost,
+  {
+    flex: "1 1 0",
+    minWidth: 0,
+    borderRight: "1px solid var(--line)",
+  },
+]);
+
+export const subcategoryPane = style([
+  paneHost,
+  {
+    flex: "1 1 0",
+    minWidth: 0,
+    borderRight: "1px solid var(--line)",
+  },
+]);
+
+export const entryPane = style([
+  paneHost,
+  {
+    flex: "1 1 0",
+    minWidth: 0,
+  },
+]);
+
+/** Second column when there is no subcategory pane (category → entries). */
+export const entryPaneTwoCol = style([
+  paneHost,
+  {
+    flex: "1 1 0",
+    minWidth: 0,
+  },
+]);
+
+globalStyle(`${paneHost} ${overlayScrollArea.root}`, {
+  flex: "1 1 0",
+  minHeight: 0,
+  height: "100%",
   display: "flex",
   flexDirection: "column",
+  overflow: "hidden",
+});
+
+globalStyle(`${paneHost} ${overlayScrollArea.viewport}`, {
+  flex: "1 1 0",
+  minHeight: 0,
+  height: "100%",
+  maxHeight: "100%",
 });
 
 export const menuRow = style({

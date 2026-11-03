@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { groupCatalogEntries } from "@/domain/actions";
+import { letterKeyDisplayHint } from "@/domain/actions/catalog/buildEntries";
 
 describe("groupCatalogEntries", () => {
   it("splits letter keys into en/ko/ja subcategories", () => {
@@ -11,14 +12,39 @@ describe("groupCatalogEntries", () => {
     expect(letters?.subcategories?.[0]?.entries.length).toBeGreaterThan(20);
   });
 
-  it("includes function keys through F200", () => {
-    const fkeys = groupCatalogEntries().find((g) => g.id === "function_keys");
-    expect(fkeys?.entries.some((e) => e.id === "fkey_1")).toBe(true);
-    expect(fkeys?.entries.some((e) => e.id === "fkey_200")).toBe(true);
+  it("sorts English letters A–Z", () => {
+    const en = groupCatalogEntries()
+      .find((g) => g.id === "letters")
+      ?.subcategories?.find((s) => s.id === "en")?.entries;
+    const letters = en?.map((e) => e.id.replace("key_en_", "")).join("");
+    expect(letters).toBe("abcdefghijklmnopqrstuvwxyz");
   });
 
-  it("includes mouse buttons through 30", () => {
-    const buttons = groupCatalogEntries().find((g) => g.id === "mouse_buttons");
-    expect(buttons?.entries.some((e) => e.id === "mouse_btn_30")).toBe(true);
+  it("sorts Korean letters in 가나다 order", () => {
+    const ko = groupCatalogEntries()
+      .find((g) => g.id === "letters")
+      ?.subcategories?.find((s) => s.id === "ko")?.entries;
+    const hangul =
+      ko?.map((e) => {
+        const ch = e.id.replace("key_ko_", "");
+        return letterKeyDisplayHint("ko", ch) ?? ch;
+      }) ?? [];
+    const sorted = [...hangul].sort((a, b) => a.localeCompare(b, "ko"));
+    expect(hangul).toEqual(sorted);
+  });
+
+  it("includes injectable function keys F1–F20 only", () => {
+    const fkeys = groupCatalogEntries().find((g) => g.id === "function_keys");
+    expect(fkeys?.entries.some((e) => e.id === "fkey_1")).toBe(true);
+    expect(fkeys?.entries.some((e) => e.id === "fkey_20")).toBe(true);
+    expect(fkeys?.entries.some((e) => e.id === "fkey_21")).toBe(false);
+  });
+
+  it("merges mouse clicks, scroll, and extra buttons", () => {
+    const mouse = groupCatalogEntries().find((g) => g.id === "mouse");
+    expect(mouse?.entries.some((e) => e.id === "mouse_left")).toBe(true);
+    expect(mouse?.entries.some((e) => e.id === "double_click")).toBe(true);
+    expect(mouse?.entries.some((e) => e.id === "mouse_btn_32")).toBe(true);
+    expect(mouse?.entries.some((e) => e.id === "mouse_btn_33")).toBe(false);
   });
 });

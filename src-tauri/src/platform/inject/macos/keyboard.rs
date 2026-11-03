@@ -206,6 +206,55 @@ pub(super) fn post_key(src: &CGEventSource, code: u16, key_down: bool, flags: CG
     }
 }
 
+fn plist_modifier_flags(mod_plist: u32) -> CGEventFlags {
+    let mut flags = CGEventFlags::empty();
+    if mod_plist & 131_072 != 0 {
+        flags.insert(CGEventFlags::CGEventFlagShift);
+    }
+    if mod_plist & 262_144 != 0 {
+        flags.insert(CGEventFlags::CGEventFlagControl);
+    }
+    if mod_plist & 524_288 != 0 {
+        flags.insert(CGEventFlags::CGEventFlagAlternate);
+    }
+    if mod_plist & 1_048_576 != 0 {
+        flags.insert(CGEventFlags::CGEventFlagCommand);
+    }
+    if flags.is_empty() && mod_plist != 0 {
+        return CGEventFlags::from_bits_truncate(mod_plist as u64);
+    }
+    flags
+}
+
+/// Post one key tap using modifier bitmask from `AppleSymbolicHotKeys` parameter 3.
+pub(super) fn tap_key_with_modifier_plist(key_code: u16, mod_plist: u32) {
+    let Some(src) = source() else {
+        return;
+    };
+    let flags = plist_modifier_flags(mod_plist);
+    let mut held = CGEventFlags::empty();
+    let mod_steps: [(CGEventFlags, u16); 4] = [
+        (CGEventFlags::CGEventFlagShift, 0x38),
+        (CGEventFlags::CGEventFlagControl, 0x3b),
+        (CGEventFlags::CGEventFlagAlternate, 0x3a),
+        (CGEventFlags::CGEventFlagCommand, 0x37),
+    ];
+    for (flag, code) in mod_steps {
+        if flags.contains(flag) {
+            held.insert(flag);
+            post_key(&src, code, true, held);
+        }
+    }
+    post_key(&src, key_code, true, flags);
+    post_key(&src, key_code, false, flags);
+    for (flag, code) in mod_steps.iter().rev() {
+        if flags.contains(*flag) {
+            held.remove(*flag);
+            post_key(&src, *code, false, held);
+        }
+    }
+}
+
 fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
     match name {
         "MouseLeft" => Some(MouseClickButton::Left),

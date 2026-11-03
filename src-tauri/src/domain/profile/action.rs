@@ -143,4 +143,8 @@ pub enum SystemCommand {
     MoveSpaceLeft,
     /// Mission Control: move right a Space (default ⌃→).
     MoveSpaceRight,
+    /// Input menu order — next keyboard layout (TIS, not user hotkey).
+    InputSourceNext,
+    /// Input menu order — previous keyboard layout.
+    InputSourcePrevious,
 }

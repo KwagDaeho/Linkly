@@ -4,10 +4,8 @@ export const ACTION_CATEGORY_ORDER: ActionCategoryId[] = [
   "basic",
   "modifiers",
   "editing",
-  "arrows",
   "function_keys",
-  "mouse_buttons",
-  "mouse_actions",
+  "mouse",
   "letters",
   "browser",
   "edit",
@@ -23,9 +21,10 @@ export const LETTER_SUBCATEGORY_ORDER: ActionLetterSubcategoryId[] = [
   "ja",
 ];
 
-/** Inclusive — macOS exposes F1–F24 in our key map; F25+ use keycode tokens. */
-export const FUNCTION_KEY_MAC_MAX = 24;
-export const FUNCTION_KEY_CATALOG_MAX = 200;
+/** macOS inject + key map (see keyboard.rs `function_key_code`). */
+export const FUNCTION_KEY_CATALOG_MAX = 20;
 
+/** Karabiner-style Button6… (CG `Other` uses number = karabiner − 1). */
 export const MOUSE_EXTRA_BUTTON_MIN = 6;
-export const MOUSE_EXTRA_BUTTON_MAX = 30;
+/** Practical HID / gaming-mice upper bound (Button32). */
+export const MOUSE_EXTRA_BUTTON_MAX = 32;

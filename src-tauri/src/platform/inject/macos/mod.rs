@@ -1,6 +1,7 @@
 //! Shared macOS inject state and helpers used across pointer / mouse / action.
 
 mod action;
+mod input_source;
 mod keyboard;
 mod mouse;
 mod overlay_panel;

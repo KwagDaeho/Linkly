@@ -1,4 +1,5 @@
 import type { Lang } from "@/types";
+import { catalogModifierLabel } from "@/domain/keys/modifierLabel";
 import {
   letterKeyDisplayHint,
 } from "@/domain/actions/catalog/buildEntries";
@@ -34,20 +35,18 @@ export const resolveGeneratedEntryLabel = (
   if (id.startsWith("key_ko_")) {
     const letter = id.slice("key_ko_".length);
     const hangul = letterKeyDisplayHint("ko", letter);
-    const upper = letter.toUpperCase();
     if (hangul !== undefined) {
-      return lang === "ko" ? `${hangul} (${upper})` : `${hangul} · ${upper}`;
+      return hangul;
     }
-    return upper;
+    return letter.toUpperCase();
   }
   if (id.startsWith("key_ja_")) {
     const letter = id.slice("key_ja_".length);
     const kana = letterKeyDisplayHint("ja", letter);
-    const upper = letter.toUpperCase();
     if (kana !== undefined) {
-      return lang === "ko" ? `${kana} · ${upper}` : `${kana} · ${upper}`;
+      return kana;
     }
-    return upper;
+    return letter.toUpperCase();
   }
   const parsed = parseGeneratedEntryId(id);
   if (parsed?.kind === "key" && id.startsWith("key_")) {
@@ -57,26 +56,7 @@ export const resolveGeneratedEntryLabel = (
 };
 
 export const modifierEntryLabel = (id: string, lang: Lang): string | null => {
-  const labels: Record<string, { ko: string; en: string }> = {
-    mod_left_command: { ko: "⌘ (왼쪽)", en: "⌘ Left" },
-    mod_right_command: { ko: "⌘ (오른쪽)", en: "⌘ Right" },
-    mod_left_shift: { ko: "⇧ (왼쪽)", en: "⇧ Left" },
-    mod_right_shift: { ko: "⇧ (오른쪽)", en: "⇧ Right" },
-    mod_left_option: { ko: "⌥ (왼쪽)", en: "⌥ Left" },
-    mod_right_option: { ko: "⌥ (오른쪽)", en: "⌥ Right" },
-    mod_left_control: { ko: "⌃ (왼쪽)", en: "⌃ Left" },
-    mod_right_control: { ko: "⌃ (오른쪽)", en: "⌃ Right" },
-    mod_fn: { ko: "fn", en: "fn" },
-    mod_command: { ko: "⌘ (Command)", en: "⌘ Command" },
-    mod_shift: { ko: "⇧ (Shift)", en: "⇧ Shift" },
-    mod_option: { ko: "⌥ (Option)", en: "⌥ Option" },
-    mod_control: { ko: "⌃ (Control)", en: "⌃ Control" },
-  };
-  const row = labels[id];
-  if (row === undefined) {
-    return null;
-  }
-  return lang === "ko" ? row.ko : row.en;
+  return catalogModifierLabel(id, lang);
 };
 
 export const editingKeyEntryLabel = (id: string, lang: Lang): string | null => {

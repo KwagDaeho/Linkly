@@ -6,6 +6,7 @@ use crate::domain::device::ButtonId;
 use crate::domain::ball_scroll;
 use crate::domain::profile::{Action, Activator, MacroStep, MouseClickButton, SystemCommand};
 
+use super::input_source::{select_next_input_source, select_previous_input_source};
 use super::keyboard::{
     keystroke, keystroke_isolated, media_mute, media_next, media_play_pause, media_previous,
     media_volume_down, media_volume_up, post_key,
@@ -120,6 +121,8 @@ fn system_command(cmd: &SystemCommand) {
         SystemCommand::PlayPause => media_play_pause(),
         SystemCommand::MoveSpaceLeft => move_space(true),
         SystemCommand::MoveSpaceRight => move_space(false),
+        SystemCommand::InputSourceNext => select_next_input_source(),
+        SystemCommand::InputSourcePrevious => select_previous_input_source(),
     }
 }
 

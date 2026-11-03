@@ -4,6 +4,7 @@ export type {
   MouseClickButton,
   SystemCommand,
   ActionCategoryId,
+  ActionLetterSubcategoryId,
   CatalogEntry,
 } from "./action";
 export type {

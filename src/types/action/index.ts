@@ -51,18 +51,27 @@ export type Action =
 
 export type ActionCategoryId =
   | "basic"
-  | "mouse"
+  | "modifiers"
+  | "editing"
+  | "arrows"
+  | "function_keys"
+  | "mouse_buttons"
+  | "mouse_actions"
+  | "letters"
   | "browser"
   | "edit"
-  | "keys"
   | "system"
   | "media"
   | "launch"
   | "custom";
 
+export type ActionLetterSubcategoryId = "en" | "ko" | "ja";
+
 export type CatalogEntry = {
   id: string;
   category: ActionCategoryId;
+  /** Nested picker (e.g. letters → en/ko/ja). */
+  subcategory?: ActionLetterSubcategoryId;
   action: Action;
   /** Special UI tokens — not real actions until confirmed in a modal. */
   special?: "custom_key" | "macro" | "open_app";

@@ -24,7 +24,16 @@ extern "C" {
 }
 
 fn key_code(name: &str) -> Option<u16> {
-    Some(match name.to_ascii_lowercase().as_str() {
+    let lower = name.to_ascii_lowercase();
+    if let Some(rest) = lower.strip_prefix("keycode_") {
+        return rest.parse().ok();
+    }
+    if let Some(rest) = lower.strip_prefix('f') {
+        if let Ok(n) = rest.parse::<u32>() {
+            return function_key_code(n);
+        }
+    }
+    Some(match lower.as_str() {
         "a" => 0x00,
         "s" => 0x01,
         "d" => 0x02,
@@ -92,12 +101,47 @@ fn key_code(name: &str) -> Option<u16> {
         "f10" => 0x6d,
         "f11" => 0x67,
         "f12" => 0x6f,
+        "forwarddelete" | "forward_delete" => 0x75,
+        "home" => 0x73,
+        "end" => 0x77,
+        "pageup" | "page_up" => 0x74,
+        "pagedown" | "page_down" => 0x79,
+        "help" => 0x72,
+        "insert" => 0x72,
+        "clear" => 0x47,
+        "capslock" | "caps_lock" => 0x39,
         "volume_up" | "sound_up" => 0x48,
         "volume_down" | "sound_down" => 0x49,
         "mute" | "sound_mute" => 0x4a,
         "play" | "play_pause" | "playpause" => 0x42,
         "next" | "next_track" | "nexttrack" => 0x43,
         "previous" | "previous_track" | "previoustrack" => 0x44,
+        _ => return None,
+    })
+}
+
+fn function_key_code(n: u32) -> Option<u16> {
+    Some(match n {
+        1 => 0x7a,
+        2 => 0x78,
+        3 => 0x63,
+        4 => 0x76,
+        5 => 0x60,
+        6 => 0x61,
+        7 => 0x62,
+        8 => 0x64,
+        9 => 0x65,
+        10 => 0x6d,
+        11 => 0x67,
+        12 => 0x6f,
+        13 => 0x69,
+        14 => 0x6b,
+        15 => 0x71,
+        16 => 0x6a,
+        17 => 0x40,
+        18 => 0x4f,
+        19 => 0x50,
+        20 => 0x5a,
         _ => return None,
     })
 }
@@ -184,14 +228,16 @@ fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
 
 fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
     let mut flags = CGEventFlags::empty();
-    let mut mod_order: Vec<CGEventFlags> = Vec::new();
+    let mut mod_keys: Vec<String> = Vec::new();
     let mut main_key: Option<u16> = None;
     let mut main_mouse: Option<MouseClickButton> = None;
     for k in keys {
-        if let Some(f) = is_modifier(k) {
-            if !flags.contains(f) {
-                flags.insert(f);
-                mod_order.push(f);
+        if is_modifier(k).is_some() {
+            if !mod_keys.iter().any(|existing| existing.eq_ignore_ascii_case(k)) {
+                mod_keys.push(k.clone());
+                if let Some(f) = is_modifier(k) {
+                    flags.insert(f);
+                }
             }
         } else if let Some(code) = key_code(k) {
             main_key = Some(code);
@@ -203,9 +249,11 @@ fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
     }
 
     let mut accumulated = CGEventFlags::empty();
-    for flag in &mod_order {
-        if let Some(mk) = modifier_keycode(*flag) {
-            accumulated.insert(*flag);
+    for name in &mod_keys {
+        if let Some(mk) = modifier_keycode_for_name(name) {
+            if let Some(f) = is_modifier(name) {
+                accumulated.insert(f);
+            }
             post_key(src, mk, true, accumulated);
         }
     }
@@ -218,18 +266,22 @@ fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
         post_key(src, code, true, flags);
         post_key(src, code, false, flags);
     } else {
-        for flag in mod_order.iter().rev() {
-            if let Some(mk) = modifier_keycode(*flag) {
-                accumulated.remove(*flag);
+        for name in mod_keys.iter().rev() {
+            if let Some(mk) = modifier_keycode_for_name(name) {
+                if let Some(f) = is_modifier(name) {
+                    accumulated.remove(f);
+                }
                 post_key(src, mk, false, accumulated);
             }
         }
         return;
     }
 
-    for flag in mod_order.iter().rev() {
-        if let Some(mk) = modifier_keycode(*flag) {
-            accumulated.remove(*flag);
+    for name in mod_keys.iter().rev() {
+        if let Some(mk) = modifier_keycode_for_name(name) {
+            if let Some(f) = is_modifier(name) {
+                accumulated.remove(f);
+            }
             post_key(src, mk, false, accumulated);
         }
     }

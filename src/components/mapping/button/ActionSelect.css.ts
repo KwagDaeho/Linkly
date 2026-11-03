@@ -88,8 +88,19 @@ export const menu = style({
 });
 
 export const categoryPane = style({
-  flex: "0 0 11.5rem",
-  maxWidth: "45%",
+  flex: "0 0 10.5rem",
+  maxWidth: "38%",
+  borderRight: "1px solid var(--line)",
+  background: "var(--panel-solid)",
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  display: "flex",
+  flexDirection: "column",
+});
+
+export const subcategoryPane = style({
+  flex: "0 0 8.5rem",
+  maxWidth: "32%",
   borderRight: "1px solid var(--line)",
   background: "var(--panel-solid)",
   overflowY: "auto",

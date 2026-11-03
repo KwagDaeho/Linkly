@@ -1,4 +1,4 @@
-export { t, buttonLabel, entryLabel, categoryLabel } from "./translate";
+export { t, buttonLabel, entryLabel, categoryLabel, subcategoryLabel } from "./translate";
 export { describeAction } from "./format/action";
 export { groupCatalog } from "./format/catalog";
 export {

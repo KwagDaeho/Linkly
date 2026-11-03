@@ -1,12 +1,25 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 
-import { findCatalogEntry } from "@/domain/actions";
+import {
+  findCatalogEntry,
+  findCatalogSelectionForPickValue,
+} from "@/domain/actions";
 import { catalogEntryPickValue } from "@/domain/actions/catalogPickValue";
 import { catalogValueForAction } from "@/domain/profile";
-import { describeAction, entryLabel, groupCatalog } from "@/i18n";
+import {
+  describeAction,
+  entryLabel,
+  groupCatalog,
+  subcategoryLabel,
+} from "@/i18n";
 import { usePrefs } from "@/hooks";
-import type { Action, ActionCategoryId, CatalogEntry } from "@/types";
+import type {
+  Action,
+  ActionCategoryId,
+  ActionLetterSubcategoryId,
+  CatalogEntry,
+} from "@/types";
 
 import * as styles from "./ActionSelect.css";
 
@@ -39,23 +52,12 @@ const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
   return entryLabel(entry.id, lang);
 };
 
-const findCategoryForValue = (
-  groups: ReturnType<typeof groupCatalog>,
-  value: string,
-): ActionCategoryId => {
-  for (const group of groups) {
-    for (const entry of group.entries) {
-      if (catalogEntryPickValue(entry) === value) {
-        return group.id;
-      }
-    }
-  }
-  return groups[0]?.id ?? "basic";
-};
-
-const layoutMenu = (trigger: HTMLButtonElement): MenuLayout => {
+const layoutMenu = (
+  trigger: HTMLButtonElement,
+  threeColumn: boolean,
+): MenuLayout => {
   const rect = trigger.getBoundingClientRect();
-  const minWidth = Math.max(rect.width, 352);
+  const minWidth = Math.max(rect.width, threeColumn ? 520 : 352);
   const viewportPad = 8;
   let top = rect.bottom + MENU_GAP_PX;
   let maxHeight = Math.min(
@@ -86,8 +88,11 @@ export const ActionSelect = (props: ActionSelectProps) => {
   const [open, setOpen] = useState(false);
   const [menuLayout, setMenuLayout] = useState<MenuLayout | null>(null);
   const [activeCategory, setActiveCategory] = useState<ActionCategoryId>(() =>
-    findCategoryForValue(groups, value),
+    findCatalogSelectionForPickValue(value).category,
   );
+  const [activeSubcategory, setActiveSubcategory] = useState<
+    ActionLetterSubcategoryId | undefined
+  >(() => findCatalogSelectionForPickValue(value).subcategory);
 
   const displayLabel =
     matched === undefined
@@ -97,20 +102,41 @@ export const ActionSelect = (props: ActionSelectProps) => {
   const activeGroup =
     groups.find((group) => group.id === activeCategory) ?? groups[0];
 
+  const hasSubcategories =
+    activeGroup?.subcategories !== undefined &&
+    activeGroup.subcategories.length > 0;
+
+  const activeSubGroup =
+    hasSubcategories && activeSubcategory !== undefined
+      ? activeGroup?.subcategories?.find((sub) => sub.id === activeSubcategory)
+      : hasSubcategories
+        ? activeGroup?.subcategories?.[0]
+        : undefined;
+
+  const visibleEntries =
+    activeSubGroup !== undefined
+      ? activeSubGroup.entries
+      : (activeGroup?.entries ?? []);
+
   const syncMenuLayout = useCallback(() => {
     const trigger = triggerRef.current;
     if (trigger === null) {
       return;
     }
-    setMenuLayout(layoutMenu(trigger));
-  }, []);
+    const threeCol =
+      (groups.find((g) => g.id === activeCategory)?.subcategories?.length ?? 0) >
+      0;
+    setMenuLayout(layoutMenu(trigger, threeCol));
+  }, [activeCategory, groups]);
 
   useEffect(() => {
     if (!open) {
       setMenuLayout(null);
       return;
     }
-    setActiveCategory(findCategoryForValue(groups, value));
+    const selection = findCatalogSelectionForPickValue(value);
+    setActiveCategory(selection.category);
+    setActiveSubcategory(selection.subcategory);
     syncMenuLayout();
   }, [open, value, lang, syncMenuLayout]);
 
@@ -189,9 +215,21 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     data-action-select-item=""
                     aria-selected={isActive}
                     className={`${styles.categoryRow} ${isActive ? styles.categoryRowActive : ""}`}
-                    onMouseEnter={() => setActiveCategory(group.id)}
-                    onFocus={() => setActiveCategory(group.id)}
-                    onClick={() => setActiveCategory(group.id)}
+                    onMouseEnter={() => {
+                      setActiveCategory(group.id);
+                      const firstSub = group.subcategories?.[0]?.id;
+                      setActiveSubcategory(firstSub);
+                    }}
+                    onFocus={() => {
+                      setActiveCategory(group.id);
+                      const firstSub = group.subcategories?.[0]?.id;
+                      setActiveSubcategory(firstSub);
+                    }}
+                    onClick={() => {
+                      setActiveCategory(group.id);
+                      const firstSub = group.subcategories?.[0]?.id;
+                      setActiveSubcategory(firstSub);
+                    }}
                   >
                     <span
                       className={`${styles.radio} ${isActive ? styles.radioOn : ""}`}
@@ -205,8 +243,39 @@ export const ActionSelect = (props: ActionSelectProps) => {
                 );
               })}
             </div>
+            {hasSubcategories && activeGroup.subcategories !== undefined ? (
+              <div className={styles.subcategoryPane} role="presentation">
+                {activeGroup.subcategories.map((sub) => {
+                  const isActive = sub.id === activeSubGroup?.id;
+                  return (
+                    <button
+                      key={sub.id}
+                      type="button"
+                      role="option"
+                      data-action-select-item=""
+                      aria-selected={isActive}
+                      className={`${styles.categoryRow} ${isActive ? styles.categoryRowActive : ""}`}
+                      onMouseEnter={() => setActiveSubcategory(sub.id)}
+                      onFocus={() => setActiveSubcategory(sub.id)}
+                      onClick={() => setActiveSubcategory(sub.id)}
+                    >
+                      <span
+                        className={`${styles.radio} ${isActive ? styles.radioOn : ""}`}
+                        aria-hidden
+                      />
+                      <span className={styles.menuRowLabel}>
+                        {subcategoryLabel(sub.id, lang)}
+                      </span>
+                      <span className={styles.rowChevron} aria-hidden>
+                        ›
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : null}
             <div className={styles.entryPane} role="presentation">
-              {activeGroup.entries.map((entry) => {
+              {visibleEntries.map((entry) => {
                 const pickValue = catalogEntryPickValue(entry);
                 const selected = pickValue === value;
                 const label = entryDisplayLabel(entry, lang);

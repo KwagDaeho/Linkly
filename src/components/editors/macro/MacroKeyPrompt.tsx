@@ -1,10 +1,4 @@
-import {
-  Button,
-  ChordPreview,
-  Modal,
-  ModalFooter,
-  Muted,
-} from "@/components/ui";
+import { Button, ChordPreview, Modal, ModalFooter, Muted } from "@/components/ui";
 
 interface MacroKeyPromptProps {
   title: string;

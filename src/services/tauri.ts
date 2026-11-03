@@ -31,24 +31,17 @@ export const isDeviceConnected = async (): Promise<boolean> => {
 export const getLastReport = async (): Promise<LastReport | null> => {
   return invoke<LastReport | null>("get_last_report");
 };
-export const setInputEventMonitorEnabled = async (
-  enabled: boolean,
-): Promise<void> => {
+export const setInputEventMonitorEnabled = async (enabled: boolean): Promise<void> => {
   await invoke("set_input_event_monitor_enabled", { enabled });
 };
 
-export const setEventViewerChannel = async (
-  channel: "keyboard" | "mouse",
-  enabled: boolean,
-): Promise<void> => {
+export const setEventViewerChannel = async (channel: "keyboard" | "mouse", enabled: boolean): Promise<void> => {
   await invoke("set_event_viewer_channel", { channel, enabled });
 };
 export const getPermissionStatus = async (): Promise<PermissionStatus> => {
   return invoke<PermissionStatus>("permission_status");
 };
-export const requestPermission = async (
-  kind: "accessibility" | "input_monitoring",
-): Promise<boolean> => {
+export const requestPermission = async (kind: "accessibility" | "input_monitoring"): Promise<boolean> => {
   void kind;
   return invoke<boolean>("request_accessibility");
 };
@@ -81,9 +74,7 @@ export const CAPTURE_SESSION_OFF: CaptureSession = {
   activatorCapture: false,
   uiModal: false,
 };
-export const applyCaptureSession = async (
-  session: CaptureSession,
-): Promise<void> => {
+export const applyCaptureSession = async (session: CaptureSession): Promise<void> => {
   await invoke("apply_capture_session", { session });
 };
 export const setKeyCapture = async (active: boolean): Promise<void> => {
@@ -92,14 +83,10 @@ export const setKeyCapture = async (active: boolean): Promise<void> => {
 export const setActivatorCapture = async (active: boolean): Promise<void> => {
   await invoke("set_activator_capture", { active });
 };
-export const setComboActivatorCapture = async (
-  active: boolean,
-): Promise<void> => {
+export const setComboActivatorCapture = async (active: boolean): Promise<void> => {
   await invoke("set_combo_activator_capture", { active });
 };
-export const setComboTriggerCapture = async (
-  active: boolean,
-): Promise<void> => {
+export const setComboTriggerCapture = async (active: boolean): Promise<void> => {
   await invoke("set_combo_trigger_capture", { active });
 };
 export const setUiModal = async (active: boolean): Promise<void> => {

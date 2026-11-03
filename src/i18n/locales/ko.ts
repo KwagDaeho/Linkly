@@ -35,8 +35,7 @@ export const ko = {
   accessibilityRestartToast: "손쉬운 사용 권한이 허용되었습니다. 앱을 재시작합니다…",
   accessibilityRestarting: "앱을 재시작하는 중입니다. 잠시만 기다려주세요.",
   accessibilityRestartRetry: "재시작 다시 시도",
-  accessibilityRestartFailed:
-    "자동 재시작에 실패했습니다. 아래 버튼을 누르거나 앱을 종료한 뒤 다시 실행해주세요.",
+  accessibilityRestartFailed: "자동 재시작에 실패했습니다. 아래 버튼을 누르거나 앱을 종료한 뒤 다시 실행해주세요.",
   grantAccess: "권한 요청",
   buttonMapping: "단일 트리거",
   buttonMappingEmpty: "추가 버튼을 눌러 단일 트리거를 만드세요.",
@@ -66,45 +65,37 @@ export const ko = {
   ballScrollHold: "홀딩키",
   ballScrollToggleHelp:
     "해당 키를 누르면 그 때부터 볼의 움직임이 스크롤로 전환됩니다. 다시 누르면 원래대로 돌아갑니다.",
-  ballScrollHoldHelp:
-    "해당 키를 누르고 있는 동안 볼의 움직임이 스크롤로 전환됩니다.",
+  ballScrollHoldHelp: "해당 키를 누르고 있는 동안 볼의 움직임이 스크롤로 전환됩니다.",
   ballScrollInvertVertical: "상하 반전",
   ballScrollInvertHorizontal: "좌우 반전",
   ballScrollSpeed: "스크롤 속도",
   ballScrollKey: "키 입력",
-  ballScrollActivatorHintToggle:
-    "토글키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
-  ballScrollActivatorHintHold:
-    "홀딩키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
+  ballScrollActivatorHintToggle: "토글키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
+  ballScrollActivatorHintHold: "홀딩키로 사용할 키를 입력하세요.\nEsc 키를 누르면 취소됩니다.",
   ballScrollOn: "켜짐",
   comboMapping: "조합 트리거",
   customButtonMapping: "조합 트리거",
   stateOn: "ON",
   stateOff: "OFF",
   customMappingAdd: "추가",
-  customMappingHelp:
-    "키·버튼을 동시에 눌렀을 때만 트리거됩니다. 예: A 누른 채 L, ⌘+Fn1",
+  customMappingHelp: "키·버튼을 동시에 눌렀을 때만 트리거됩니다. 예: A 누른 채 L, ⌘+Fn1",
   customMappingEmpty: "추가 버튼을 눌러 커스텀 매핑을 만드세요.",
   customMappingTrigger: "트리거",
   customMappingSetTrigger: "트리거 입력",
   customMappingTriggerTitle: "조합 트리거",
-  customMappingTriggerHint:
-    "1) 키 조합을 동시에 입력 2) 버튼 입력 3) 저장",
+  customMappingTriggerHint: "1) 키 조합을 동시에 입력 2) 버튼 입력 3) 저장",
   customMappingTriggerCaptureHint:
     "트리거 입력 버튼을 누른 후, 트리거 키 조합을 1초 이상 유지하세요.\n트리거 입력 중 ESC 키를 누르면 취소됩니다.",
   customMappingTriggerConfirmHint: "미리보기를 확인한 뒤 저장하세요.",
   customMappingTriggerWaiting: "키 조합 입력…",
   customMappingTriggerButtonWaiting: "버튼 입력…",
-  customMappingTriggerInputHint:
-    "조합을 완성할 키·마우스·트랙볼 버튼을 누르세요.",
+  customMappingTriggerInputHint: "조합을 완성할 키·마우스·트랙볼 버튼을 누르세요.",
   customMappingTriggerInputWaiting: "입력 대기…",
-  customMappingTriggerIncomplete:
-    "조합 입력을 완성해 주세요.",
+  customMappingTriggerIncomplete: "조합 입력을 완성해 주세요.",
   customMappingTriggerReset: "초기화",
   remove: "삭제",
   activatorTitle: "키 입력",
-  activatorHint:
-    "키, 마우스 버튼, 트랙볼 버튼(L 포함) 하나를 누르세요. Esc로 취소합니다.",
+  activatorHint: "키, 마우스 버튼, 트랙볼 버튼(L 포함) 하나를 누르세요. Esc로 취소합니다.",
   activatorWaiting: "입력 대기…",
   activatorRejectedLeft: "왼쪽 클릭은 사용할 수 없습니다.",
   activatorRejectedTilt: "휠 틸트는 사용할 수 없습니다.",
@@ -147,8 +138,7 @@ export const ko = {
   fontSizeDecrease: "글자 크기 줄이기",
   fontSizeIncrease: "글자 크기 키우기",
   customKeyTitle: "커스텀 키",
-  customKeyHint:
-    "입력 시작 버튼을 누른 후, 키 조합을 1초 이상 유지하세요.\n입력 중 ESC 키를 누르면 취소됩니다.",
+  customKeyHint: "입력 시작 버튼을 누른 후, 키 조합을 1초 이상 유지하세요.\n입력 중 ESC 키를 누르면 취소됩니다.",
   customKeyWaiting: "입력 대기…",
   captureStartInput: "입력 시작",
   captureStartTrigger: "트리거 입력",
@@ -158,8 +148,7 @@ export const ko = {
   captureInputWaiting: "[ 입력 대기 중 ]",
   captureHoldRecognizing: "입력 인식중…",
   captureInProgressTag: "[ 입력중 ]",
-  buttonMappingInputHint:
-    "매핑할 키·마우스·트랙볼 버튼을 입력하세요.\nEsc 키를 누르면 취소됩니다.",
+  buttonMappingInputHint: "매핑할 키·마우스·트랙볼 버튼을 입력하세요.\nEsc 키를 누르면 취소됩니다.",
   buttonMappingCaptureWaiting: "입력 대기…",
   buttonMappingAlreadyRegistered: "이미 등록된 트리거입니다.",
   openAppTitle: "앱 열기",

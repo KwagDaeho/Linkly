@@ -1,16 +1,15 @@
 import { AppShell } from "@/components/layout";
+import { AppProviders, ViewerProviders } from "@/components/providers";
 import { EventViewerRoot } from "@/windows/EventViewerRoot";
-import { AppProviders } from "./providers";
 
-const isEventViewerRoute = () =>
-  /^#\/viewer\/(keyboard|mouse)$/.test(window.location.hash);
+const isEventViewerRoute = () => /^#\/viewer\/(keyboard|mouse)$/.test(window.location.hash);
 
 const App = () => {
   if (isEventViewerRoute()) {
     return (
-      <AppProviders>
+      <ViewerProviders>
         <EventViewerRoot />
-      </AppProviders>
+      </ViewerProviders>
     );
   }
   return (

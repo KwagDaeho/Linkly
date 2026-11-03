@@ -1,9 +1,6 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
-import {
-  footerSpaceBelowBorderPx,
-  footerSpaceBottomPx,
-} from "@/components/ui/panelLayout";
+import { footerSpaceBelowBorderPx, footerSpaceBottomPx } from "@/components/ui/panelLayout";
 
 export const footer = style({
   display: "flex",
@@ -41,6 +38,7 @@ export const footerMain = style({
 /** Smaller than header hero mark — app info block only. */
 export const footerBrandMark = style({
   margin: 0,
+  paddingRight: 5,
   fontFamily: '"Futura", "Avenir Next", "Gill Sans", sans-serif',
   fontWeight: 700,
   fontSize: "2.75rem",

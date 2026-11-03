@@ -11,18 +11,10 @@ const onOff = (on: boolean): string => (on ? "ON" : "OFF");
 
 export const PermissionPanel = () => {
   const { i18n } = usePrefs();
-  const {
-    grantAccess,
-    permissionRestarting,
-    permissionStatus,
-    openAccessibilitySettings,
-  } = useSession();
+  const { grantAccess, permissionRestarting, permissionStatus, openAccessibilitySettings } = useSession();
 
-  const axOn =
-    permissionStatus !== null &&
-    (permissionStatus.accessibility || permissionStatus.postEvent);
-  const inputOn =
-    permissionStatus !== null && permissionStatus.inputMonitoring;
+  const axOn = permissionStatus !== null && (permissionStatus.accessibility || permissionStatus.postEvent);
+  const inputOn = permissionStatus !== null && permissionStatus.inputMonitoring;
 
   return (
     <Panel variant="plain">
@@ -46,9 +38,7 @@ export const PermissionPanel = () => {
         <>
           <p className={styles.permRestarting}>{i18n.accessibilityRestarting}</p>
           <Row>
-            <Button onClick={() => void tauri.relaunchApp()}>
-              {i18n.accessibilityRestartRetry}
-            </Button>
+            <Button onClick={() => void tauri.relaunchApp()}>{i18n.accessibilityRestartRetry}</Button>
           </Row>
         </>
       ) : (

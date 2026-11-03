@@ -2205,7 +2205,7 @@ dependencies = [
 
 [[package]]
 name = "linkly"
-version = "1.5.0"
+version = "1.5.1"
 dependencies = [
  "cocoa",
  "core-foundation 0.10.1",

@@ -63,7 +63,7 @@ pub fn entry_by_id(id: &str) -> Option<ButtonMappingEntry> {
 
 pub fn hid_button_for_activator(activator: &Activator) -> Option<ButtonId> {
     match activator {
-        Activator::Device { button } => Some(*button),
+        Activator::Huge { button } => Some(*button),
         Activator::Mouse { button } => hid_button_for_mouse(button),
         Activator::Key { .. } => None,
     }
@@ -80,14 +80,14 @@ pub fn hid_button_for_mouse(button: &MouseClickButton) -> Option<ButtonId> {
     }
 }
 
-pub fn find_mapping_for_button(id: ButtonId) -> Option<ButtonMappingEntry> {
+pub fn find_huge(id: ButtonId) -> Option<ButtonMappingEntry> {
     ENTRIES
         .lock()
         .iter()
         .find(|entry| {
             matches!(
                 entry.activator,
-                Some(Activator::Device { button }) if button == id
+                Some(Activator::Huge { button }) if button == id
             )
         })
         .cloned()

@@ -13,12 +13,12 @@ use super::state::{
 
 const MODIFIER_KEYS: [&str; 4] = ["Control", "Option", "Shift", "Meta"];
 
-pub fn note_catalog_button_edges(prev: ButtonState, state: ButtonState) {
+pub fn note_huge_edges(prev: ButtonState, state: ButtonState) {
     for id in state.pressed_edges(prev) {
-        on_down(&Activator::Device { button: id });
+        on_down(&Activator::Huge { button: id });
     }
     for id in state.released_edges(prev) {
-        on_up(&Activator::Device { button: id });
+        on_up(&Activator::Huge { button: id });
     }
 }
 

@@ -44,7 +44,7 @@ export const findScopedActivatorConflict = (
   ) {
     return true;
   }
-  const ballScroll = ballScrollOf(profile);
+  const ballScroll = ballScrollOf(profile.ballScroll);
   if (except?.ballScrollSlot !== "toggle") {
     const toggle = ballScroll.toggleActivator;
     if (

@@ -30,7 +30,9 @@ pub(crate) unsafe extern "C" fn tap_callback(
         return event;
     }
 
-    super::viewer::emit_viewer_event(etype, event);
+    if crate::platform::input_monitor::enabled() {
+        super::viewer::emit_viewer_event(etype, event);
+    }
 
     if session::capture_active() {
         let combo = session::combo_trigger_capture();

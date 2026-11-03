@@ -11,7 +11,7 @@ use crate::domain::profile::{Action, Activator, ButtonBinding, Profile};
 use crate::domain::remap;
 use crate::domain::link_event::{self, LinkPhase};
 
-use super::state::{self, entry_by_id, find_huge, inject_button_for_entry};
+use super::state::{self, entry_by_id, find_mapping_for_button, inject_button_for_entry};
 
 pub struct ButtonMaps {
     pub pending: HashMap<String, PendingHold>,
@@ -19,8 +19,8 @@ pub struct ButtonMaps {
     pub scroll_repeats: HashMap<String, ScrollRepeat>,
     pub key_repeats: HashMap<String, ActionRepeat>,
     pub active_os: HashMap<String, crate::domain::profile::Activator>,
-    /// HUGE button currently driving a button-mapping row (HID path).
-    pub active_huge: HashMap<ButtonId, String>,
+    /// catalog button currently driving a button-mapping row (HID path).
+    pub active_catalog_buttons: HashMap<ButtonId, String>,
 }
 
 impl Default for ButtonMaps {
@@ -31,7 +31,7 @@ impl Default for ButtonMaps {
             scroll_repeats: HashMap::new(),
             key_repeats: HashMap::new(),
             active_os: HashMap::new(),
-            active_huge: HashMap::new(),
+            active_catalog_buttons: HashMap::new(),
         }
     }
 }
@@ -43,13 +43,13 @@ impl ButtonMaps {
         self.scroll_repeats.clear();
         self.key_repeats.clear();
         self.active_os.clear();
-        self.active_huge.clear();
+        self.active_catalog_buttons.clear();
         super::os_trigger::clear_os_active(self);
     }
 }
 
-/// Button-mapping rows keyed by `Activator::Huge` — OS trigger queue does not see these.
-pub fn handle_huge_transitions(
+/// Button-mapping rows keyed by `Activator::Device` — OS trigger queue does not see these.
+pub fn handle_catalog_button_transitions(
     prev: ButtonState,
     state: ButtonState,
     profile: &Profile,
@@ -64,7 +64,7 @@ pub fn handle_huge_transitions(
         if skip_release.contains(&id) {
             continue;
         }
-        let Some(entry_id) = maps.active_huge.remove(&id) else {
+        let Some(entry_id) = maps.active_catalog_buttons.remove(&id) else {
             continue;
         };
         out_skip_release.insert(id);
@@ -73,7 +73,7 @@ pub fn handle_huge_transitions(
             .unwrap_or(id);
         let input = state::entry_by_id(&entry_id)
             .and_then(|e| e.activator.clone())
-            .unwrap_or(Activator::Huge { button: id });
+            .unwrap_or(Activator::Device { button: id });
         apply_binding_release(
             entry_id,
             inject_id,
@@ -90,18 +90,18 @@ pub fn handle_huge_transitions(
         if skip_press.contains(&id) {
             continue;
         }
-        if maps.active_huge.contains_key(&id) {
+        if maps.active_catalog_buttons.contains_key(&id) {
             out_skip_press.insert(id);
             continue;
         }
-        let Some(entry) = find_huge(id) else {
+        let Some(entry) = find_mapping_for_button(id) else {
             continue;
         };
         if !state::entry_needs_app_handling(&entry) {
             continue;
         }
         out_skip_press.insert(id);
-        maps.active_huge.insert(id, entry.id.clone());
+        maps.active_catalog_buttons.insert(id, entry.id.clone());
         let inject_id = inject_button_for_entry(&entry);
         fire_button_press(
             entry.id.clone(),
@@ -124,7 +124,7 @@ pub(crate) fn fire_button_press(
 ) {
     let input = entry_by_id(&entry_id)
         .and_then(|e| e.activator.clone())
-        .unwrap_or(Activator::Huge { button: inject_id });
+        .unwrap_or(Activator::Device { button: inject_id });
     apply_binding_press(
         entry_id,
         inject_id,
@@ -160,7 +160,7 @@ pub fn reset_pressed_state(maps: &mut ButtonMaps, profile: &Profile) {
     }
     maps.scroll_repeats.clear();
     maps.key_repeats.clear();
-    maps.active_huge.clear();
+    maps.active_catalog_buttons.clear();
     super::os_trigger::clear_os_active(maps);
     if crate::platform::inject::synthetic_buttons_held() {
         use crate::domain::profile::MouseClickButton;

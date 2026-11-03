@@ -51,11 +51,11 @@ impl BallScrollSettings {
         self.hold_activator.as_ref()
     }
 
-    pub fn is_reserved_huge(&self, id: ButtonId) -> bool {
+    pub fn is_reserved_catalog_button(&self, id: ButtonId) -> bool {
         self.toggle_armed()
             .into_iter()
             .chain(self.hold_armed())
-            .any(|a| matches!(a, Activator::Huge { button } if *button == id))
+            .any(|a| matches!(a, Activator::Device { button } if *button == id))
     }
 
     pub fn uses_os_watch(&self) -> bool {

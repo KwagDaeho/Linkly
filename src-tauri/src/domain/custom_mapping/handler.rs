@@ -19,9 +19,9 @@ use super::state::{
     self, effective_sorted_modifiers, sync_active_buttons, ACTIVE_BUTTONS, CHORD_REEVAL,
 };
 
-fn combo_huge_button(combo: &ComboActivator) -> ButtonId {
+fn combo_device_button(combo: &ComboActivator) -> ButtonId {
     match combo.effective_trigger() {
-        Some(Activator::Huge { button }) => button,
+        Some(Activator::Device { button }) => button,
         _ => ButtonId::Left,
     }
 }
@@ -31,7 +31,7 @@ pub struct CustomMaps {
     pub held: HashMap<String, Action>,
     pub scroll_repeats: HashMap<String, ScrollRepeat>,
     pub key_repeats: HashMap<String, ActionRepeat>,
-    /// Physical HUGE button → active custom entry id.
+    /// Physical catalog button → active custom entry id.
     pub active: HashMap<ButtonId, String>,
     /// OS trigger activator → entry id (mouse N, key, …).
     pub active_os: HashMap<String, Activator>,
@@ -54,7 +54,7 @@ impl CustomMaps {
     pub fn clear(&mut self) {
         for (id, action) in self.held.drain() {
             if let Some(entry) = entry_by_id(&id) {
-                inject::release_action(combo_huge_button(&entry.activator), &action);
+                inject::release_action(combo_device_button(&entry.activator), &action);
             }
         }
         self.pending.clear();
@@ -77,7 +77,7 @@ pub(crate) fn fire_custom_press(
     let mods = effective_sorted_modifiers();
     let input = entry_by_id(&entry_id)
         .and_then(|e| e.activator.effective_trigger())
-        .unwrap_or(Activator::Huge { button });
+        .unwrap_or(Activator::Device { button });
     inject::with_chord_action(&mods, || {
         release_active_chord();
         apply_binding_press(
@@ -181,7 +181,7 @@ pub fn handle_transitions(
         ACTIVE_BUTTONS.lock().remove(&id);
         let input = entry_by_id(&entry_id)
             .and_then(|e| e.activator.effective_trigger())
-            .unwrap_or(Activator::Huge { button: id });
+            .unwrap_or(Activator::Device { button: id });
         apply_binding_release(
             entry_id,
             id,
@@ -230,7 +230,7 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
                 return None;
             }
             let button = entry_by_id(entry_id)
-                .map(|e| combo_huge_button(&e.activator))
+                .map(|e| combo_device_button(&e.activator))
                 .unwrap_or(ButtonId::Left);
             let mods = super::state::effective_sorted_modifiers();
             if let Some(entry) = entry_by_id(entry_id) {
@@ -261,7 +261,7 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
         &profile.pointer,
         |entry_id| {
             entry_by_id(entry_id)
-                .map(|e| combo_huge_button(&e.activator))
+                .map(|e| combo_device_button(&e.activator))
                 .unwrap_or(ButtonId::Left)
         },
     );
@@ -272,7 +272,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         let Some(entry) = entry_by_id(entry_id) else {
             continue;
         };
-        let id = combo_huge_button(&entry.activator);
+        let id = combo_device_button(&entry.activator);
         if action_needs_pointer_takeover(id, action) {
             return true;
         }
@@ -281,7 +281,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         let Some(entry) = entry_by_id(entry_id) else {
             continue;
         };
-        let id = combo_huge_button(&entry.activator);
+        let id = combo_device_button(&entry.activator);
         if is_physical_mouse_button(id)
             || action_needs_pointer_takeover(id, &hold.click)
             || (hold.long_fired && action_needs_pointer_takeover(id, &hold.long_press))
@@ -290,7 +290,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
         }
     }
     for entry in state::entries().iter() {
-        let id = combo_huge_button(&entry.activator);
+        let id = combo_device_button(&entry.activator);
         if !down.is_down(id) {
             continue;
         }

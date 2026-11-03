@@ -83,7 +83,7 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
           />
         ) : null}
         <div ref={logScrollRef} className={styles.logScrollWrap}>
-          <OverlayScrollArea className={styles.logTall} contentKey={`${channel}-${history.length}`}>
+          <OverlayScrollArea className={styles.logTall} contentKey={channel}>
             <div role="log" aria-label={logLabel}>
               {history.length === 0 ? (
                 <p className={styles.logEmpty}>{i18n.inputEventRowEmpty}</p>

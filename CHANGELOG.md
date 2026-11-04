@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## [1.5.1] — 2026-11-04
+
+### Fixed
+
+- **Fn1–3 / catalog bindings** — engine and OS suppress now follow the same `buttonMappings` list as the Trigger tab (no stale `profile.buttons` middle-click default).
+- **RB remapping** — suppress flags use synced list bindings; reduces ghost right-clicks and viewer noise when RB is remapped.
+- **Chord → left click** — avoid stuck synthetic left button after combo triggers.
+- **RB + ball motion** — hold, trackpad, and suppress/tap ordering improvements on shared HID.
+- **Triggers** — duplicate activators rejected per scope; ball-scroll activators read from `profile.ballScroll`.
+- **Remap** — tighter OS click suppress for mapped catalog buttons.
+
+### Added
+
+- **Action picker** — Karabiner-style categories, 3-level letters (en/ko/ja), F1–F200, input-source cycle actions.
+- **Event viewer** — live keyboard/mouse stream; L/R modifier lines in viewer.
+- **Performance** — input emit warmup, viewer scroll stability, adaptive permission polling, probe/device scan throttles.
+
+### Changed
+
+- **ActionSelect** — layout SSOT, combo capture UX, cleaner action labels.
+
 ## [1.5.0] — 2026-11-02
 
 ### Fixed

@@ -100,6 +100,21 @@ pub fn mouse_down(button: &MouseClickButton) {
     }
 }
 
+/// Clear WindowServer "button down" without touching synthetic `buttons_down` (remapped catalog hold).
+pub fn neutralize_os_mouse_button(button: &MouseClickButton) {
+    let (_, up, cg_btn, number, other) = cg_button(button);
+    let src = if other { hid_source() } else { source() };
+    let Some(src) = src else {
+        return;
+    };
+    let pos = cursor_pos();
+    if let Ok(e) = CGEvent::new_mouse_event(src, up, pos, cg_btn) {
+        e.set_integer_value_field(EventField::MOUSE_EVENT_BUTTON_NUMBER, number);
+        e.set_integer_value_field(EventField::MOUSE_EVENT_CLICK_STATE, 0);
+        e.post(CGEventTapLocation::Session);
+    }
+}
+
 pub fn mouse_up(button: &MouseClickButton) {
     let (_, up, cg_btn, number, other) = cg_button(button);
     let src = if other { hid_source() } else { source() };

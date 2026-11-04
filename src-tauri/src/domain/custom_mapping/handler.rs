@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 
-use crate::domain::device::{ButtonId, ButtonState};
+use crate::domain::device::{ButtonId, ButtonState, sticky_catalog_button_down};
 use crate::domain::engine::input::{
     apply_binding_press, apply_binding_release, cancel_regular_binding,
     fire_due_key_repeats_for, take_due_scroll_repeats_for,
@@ -267,7 +267,12 @@ pub fn fire_due_ticks(maps: &mut CustomMaps, profile: &Profile, threshold: Durat
     );
 }
 
-pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &Profile) -> bool {
+pub fn pointer_takeover_active(
+    maps: &CustomMaps,
+    prev: ButtonState,
+    down: &ButtonState,
+    profile: &Profile,
+) -> bool {
     for (entry_id, action) in &maps.held {
         let Some(entry) = entry_by_id(entry_id) else {
             continue;
@@ -291,7 +296,7 @@ pub fn pointer_takeover_active(maps: &CustomMaps, down: &ButtonState, profile: &
     }
     for entry in state::entries().iter() {
         let id = combo_device_button(&entry.activator);
-        if !down.is_down(id) {
+        if !sticky_catalog_button_down(prev, *down, id) {
             continue;
         }
         if maps.active.contains_key(&id) {

@@ -71,6 +71,18 @@ pub fn shared_pointer_mode() -> bool {
 pub fn synthetic_buttons_held() -> bool {
     false
 }
+pub fn neutralize_os_mouse_button(_button: &crate::domain::profile::MouseClickButton) {}
+pub struct CatalogPhysicalDrag;
+impl CatalogPhysicalDrag {
+    pub fn set(&mut self, _button: &crate::domain::profile::MouseClickButton, _down: bool) {}
+}
+impl Default for CatalogPhysicalDrag {
+    fn default() -> Self {
+        Self
+    }
+}
+pub fn set_catalog_physical_drag(_drag: CatalogPhysicalDrag) {}
+pub fn clear_catalog_physical_drag() {}
 pub fn press_action(
     _id: ButtonId,
     _action: &Action,

@@ -9,7 +9,7 @@ use std::time::{Duration, Instant};
 
 use crate::domain::ball_scroll;
 use crate::domain::custom_mapping;
-use crate::domain::device::{ButtonId, ButtonState};
+use crate::domain::device::{ButtonId, ButtonState, CATALOG_MOUSE_BUTTONS, sticky_catalog_button_down};
 use crate::domain::link_event::{self, LinkPhase};
 use crate::domain::profile::{Action, Activator, ButtonBinding, Profile};
 use crate::domain::remap;
@@ -120,9 +120,14 @@ fn physical_button_needs_takeover(id: ButtonId, profile: &Profile) -> bool {
         || !remap::action_is_native_for(id, &b.click)
 }
 
+pub(crate) fn catalog_button_needs_pointer_takeover(id: ButtonId, profile: &Profile) -> bool {
+    CATALOG_MOUSE_BUTTONS.contains(&id) && physical_button_needs_takeover(id, profile)
+}
+
 pub(crate) fn pointer_takeover_active(
     held: &HashMap<ButtonId, Action>,
     pending: &HashMap<ButtonId, PendingHold>,
+    prev: ButtonState,
     down: &ButtonState,
     profile: &Profile,
 ) -> bool {
@@ -144,15 +149,10 @@ pub(crate) fn pointer_takeover_active(
         return true;
     }
     // Auto-click / remapped physical buttons: OS *Dragged is suppressed while held.
-    [
-        ButtonId::Left,
-        ButtonId::Right,
-        ButtonId::Middle,
-        ButtonId::Back,
-        ButtonId::Forward,
-    ]
-    .into_iter()
-    .any(|id| down.is_down(id) && physical_button_needs_takeover(id, profile))
+    CATALOG_MOUSE_BUTTONS.into_iter().any(|id| {
+        sticky_catalog_button_down(prev, *down, id)
+            && physical_button_needs_takeover(id, profile)
+    })
 }
 
 pub(crate) fn fire_due_long_presses(

@@ -60,10 +60,11 @@ export type ActionCategoryId =
   | "mouse"
   | "letters"
   | "browser"
-  | "edit"
+  | "document"
+  | "display"
   | "system"
+  | "app"
   | "media"
-  | "launch"
   | "custom";
 
 export type ActionLetterSubcategoryId = "en" | "ko" | "ja";

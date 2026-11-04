@@ -63,7 +63,7 @@ export const triggerLabel = style({
 
 export const chevron = style({
   position: "absolute",
-  right: "0.55rem",
+  right: "calc(0.55rem + 8px)",
   top: "50%",
   transform: "translateY(-50%)",
   flexShrink: 0,
@@ -196,37 +196,56 @@ export const entryRow = style([
     selectors: {
       "&:hover:not(:disabled)": {
         background: "var(--accent-soft)",
+        color: "var(--accent)",
       },
     },
   },
 ]);
 
+/** Current mapping — distinct from hover (`--accent-soft`). */
 export const entryRowSelected = style({
-  background: "var(--accent-soft)",
+  background: "color-mix(in srgb, var(--accent) 9%, var(--panel-solid))",
+  color: "var(--accent)",
+  boxShadow: "inset 3px 0 0 var(--accent)",
+  selectors: {
+    "&:hover:not(:disabled)": {
+      background: "var(--accent-soft)",
+      color: "var(--accent)",
+    },
+  },
 });
 
 export const rowChevron = style({
   marginLeft: "auto",
+  marginRight: 8,
   flexShrink: 0,
   opacity: 0.45,
   fontSize: "0.7rem",
   pointerEvents: "none",
 });
 
-export const radio = style({
+/** Mapped action indicator (entry rows only; right side). */
+export const selectionMark = style({
   flexShrink: 0,
   width: 12,
   height: 12,
+  marginLeft: "auto",
+  marginRight: 8,
   borderRadius: "50%",
   border: "1.5px solid var(--line-strong, var(--line))",
   boxSizing: "border-box",
   pointerEvents: "none",
 });
 
-export const radioOn = style({
+export const selectionMarkOn = style({
   borderColor: "var(--accent)",
   boxShadow: "inset 0 0 0 3px var(--accent)",
 });
+
+/** @deprecated use selectionMark — kept for theme selectors if any */
+export const radio = selectionMark;
+
+export const radioOn = selectionMarkOn;
 
 globalStyle(`${root}[data-disabled="true"] ${trigger}`, {
   opacity: 0.45,

@@ -388,4 +388,79 @@ impl ButtonState {
             .filter(|&id| !self.is_down(id) && prev.is_down(id))
             .collect()
     }
+
+    fn set_down(&mut self, id: ButtonId, down: bool) {
+        match id {
+            ButtonId::Left => self.left = down,
+            ButtonId::Right => self.right = down,
+            ButtonId::Middle => self.middle = down,
+            ButtonId::Back => self.back = down,
+            ButtonId::Forward => self.forward = down,
+            ButtonId::Fn1 => self.fn1 = down,
+            ButtonId::Fn2 => self.fn2 = down,
+            ButtonId::Fn3 => self.fn3 = down,
+            ButtonId::WheelTiltLeft => self.tilt_left = down,
+            ButtonId::WheelTiltRight => self.tilt_right = down,
+        }
+    }
+}
+
+/// Primary L/R/M/Back/Forward — debounce HID bit dropouts while the ball moves.
+pub const CATALOG_MOUSE_BUTTONS: [ButtonId; 5] = [
+    ButtonId::Left,
+    ButtonId::Right,
+    ButtonId::Middle,
+    ButtonId::Back,
+    ButtonId::Forward,
+];
+
+/// Hold through single-frame 0 in the HID button byte (same SSOT as suppress mask).
+pub fn sticky_catalog_button_down(prev: ButtonState, state: ButtonState, id: ButtonId) -> bool {
+    if CATALOG_MOUSE_BUTTONS.contains(&id) {
+        state.is_down(id) || prev.is_down(id)
+    } else {
+        state.is_down(id)
+    }
+}
+
+const CATALOG_BUTTON_OFF_FRAMES: u8 = 2;
+
+/// Filters noisy primary-button bits; Fn / tilt come from caller unchanged.
+pub struct CatalogButtonDebounce {
+    stable: ButtonState,
+    off_streak: [u8; 5],
+}
+
+impl Default for CatalogButtonDebounce {
+    fn default() -> Self {
+        Self {
+            stable: ButtonState::default(),
+            off_streak: [0; 5],
+        }
+    }
+}
+
+impl CatalogButtonDebounce {
+    pub fn filter(&mut self, raw: ButtonState) -> ButtonState {
+        let mut next = self.stable;
+        for (i, id) in CATALOG_MOUSE_BUTTONS.iter().enumerate() {
+            if raw.is_down(*id) {
+                self.off_streak[i] = 0;
+                next.set_down(*id, true);
+            } else if self.stable.is_down(*id) {
+                self.off_streak[i] = self.off_streak[i].saturating_add(1);
+                if self.off_streak[i] >= CATALOG_BUTTON_OFF_FRAMES {
+                    next.set_down(*id, false);
+                }
+            } else {
+                next.set_down(*id, false);
+            }
+        }
+        self.stable = next;
+        next
+    }
+
+    pub fn reset(&mut self) {
+        *self = Self::default();
+    }
 }

@@ -12,14 +12,16 @@ use crate::domain::ball_scroll;
 use crate::domain::button_mapping::{self, ButtonMaps};
 use crate::domain::custom_mapping::{self, CustomMaps};
 use crate::domain::device::{
-    device_identity_key, ButtonId, ButtonState, DeviceIdentityKey, DeviceInfo, InputDeviceStatus,
-    ParsedReport, is_wireless_receiver_pid,
+    device_identity_key, ButtonId, ButtonState, CatalogButtonDebounce, DeviceIdentityKey,
+    DeviceInfo, InputDeviceStatus, ParsedReport, is_wireless_receiver_pid,
+    sticky_catalog_button_down,
 };
 use crate::domain::engine::input::{
-    binding_of, fire_due_key_repeats, fire_due_long_presses, fire_due_scroll_repeats,
-    handle_button_transitions, pointer_takeover_active, take_due_scroll_repeats,
-    tilt_pan_stream_dx_notches, tilt_side_sustain, tilt_uses_pan_stream, ActionRepeat,
-    PendingHold, ScrollRepeat, TiltHoldGate,
+    binding_of, catalog_button_needs_pointer_takeover, fire_due_key_repeats,
+    fire_due_long_presses, fire_due_scroll_repeats, handle_button_transitions,
+    pointer_takeover_active, take_due_scroll_repeats, tilt_pan_stream_dx_notches,
+    tilt_side_sustain, tilt_uses_pan_stream, ActionRepeat, PendingHold, ScrollRepeat,
+    TiltHoldGate,
 };
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{effective_long_press_ms, Action, Profile};
@@ -44,7 +46,7 @@ pub(crate) fn run(
     rf_last_hid_input: Arc<Mutex<Option<Instant>>>,
 ) {
     let mut prev = ButtonState::default();
-    let mut prev_raw = ButtonState::default();
+    let mut button_debounce = CatalogButtonDebounce::default();
     let mut held: HashMap<ButtonId, Action> = HashMap::new();
     let mut pending: HashMap<ButtonId, PendingHold> = HashMap::new();
     let mut scroll_repeats: HashMap<ButtonId, ScrollRepeat> = HashMap::new();
@@ -238,6 +240,7 @@ pub(crate) fn run(
                                 &profile_snap,
                                 capture::input_capture_active(),
                             );
+                            neutralize_remapped_catalog_presses(prev, state, &profile_snap);
                             apply_button_edges(
                                 prev,
                                 state,
@@ -311,7 +314,10 @@ pub(crate) fn run(
                     let raw_buttons = parsed.buttons;
 
                     let now = Instant::now();
-                    let mut state = raw_buttons;
+                    let mut state = button_debounce.filter(raw_buttons);
+                    state.fn1 = raw_buttons.fn1;
+                    state.fn2 = raw_buttons.fn2;
+                    state.fn3 = raw_buttons.fn3;
                     let left_sustain =
                         tilt_side_sustain(&profile_snap, ButtonId::WheelTiltLeft);
                     let right_sustain =
@@ -356,6 +362,7 @@ pub(crate) fn run(
                     let capture_block = capture::input_capture_active();
                     sync_catalog_suppress_mask(prev, state, &profile_snap, capture_block);
 
+                    sync_catalog_physical_drag(&profile_snap, prev, state);
                     ball_scroll::tick();
                     inject::expire_restored_cursor_if_due();
                     inject::tick_restore_cursor(parsed.dx as f64, parsed.dy as f64);
@@ -405,11 +412,13 @@ pub(crate) fn run(
                         let takeover = pointer_takeover_active(
                             &held,
                             &pending,
+                            prev,
                             &state,
                             &profile_snap,
                         ) || session.with_maps(&profile_snap, |custom_maps, _| {
                             custom_mapping::pointer_takeover_active(
                                 custom_maps,
+                                prev,
                                 &state,
                                 &profile_snap,
                             )
@@ -530,7 +539,6 @@ pub(crate) fn run(
                     });
 
                     prev = state;
-                    prev_raw = raw_buttons;
                     suppress::set_suppress_motion(inject::synthetic_buttons_held());
                 }
                 Err(err) => {
@@ -550,7 +558,8 @@ pub(crate) fn run(
         key_repeats.clear();
         tilt_gate = TiltHoldGate::default();
         prev = ButtonState::default();
-        prev_raw = ButtonState::default();
+        button_debounce.reset();
+        inject::clear_catalog_physical_drag();
         suppress::sync_scroll_transform(false);
         suppress::clear_suppress();
         // Drop device → release exclusive claim so OS can take it if remap off.
@@ -560,7 +569,36 @@ pub(crate) fn run(
 }
 
 fn sticky_button_down(prev: ButtonState, state: ButtonState, id: ButtonId) -> bool {
-    state.is_down(id) || prev.is_down(id)
+    sticky_catalog_button_down(prev, state, id)
+}
+
+fn sync_catalog_physical_drag(profile: &Profile, prev: ButtonState, state: ButtonState) {
+    let mut drag = inject::CatalogPhysicalDrag::default();
+    for id in crate::domain::device::CATALOG_MOUSE_BUTTONS {
+        if sticky_catalog_button_down(prev, state, id)
+            && catalog_button_needs_pointer_takeover(id, profile)
+        {
+            if let Some(btn) = inject::default_mouse_button(id) {
+                drag.set(&btn, true);
+            }
+        }
+    }
+    inject::set_catalog_physical_drag(drag);
+}
+
+fn neutralize_remapped_catalog_presses(
+    prev: ButtonState,
+    state: ButtonState,
+    profile: &Profile,
+) {
+    for id in state.pressed_edges(prev) {
+        if !catalog_button_needs_pointer_takeover(id, profile) {
+            continue;
+        }
+        if let Some(btn) = inject::default_mouse_button(id) {
+            inject::neutralize_os_mouse_button(&btn);
+        }
+    }
 }
 
 fn catalog_button_remap(profile: &Profile, id: ButtonId, legacy: bool) -> bool {

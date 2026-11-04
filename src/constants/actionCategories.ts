@@ -9,10 +9,11 @@ export const ACTION_CATEGORY_ORDER: ActionCategoryId[] = [
   "mouse",
   "letters",
   "browser",
-  "edit",
+  "document",
+  "display",
   "system",
+  "app",
   "media",
-  "launch",
   "custom",
 ];
 

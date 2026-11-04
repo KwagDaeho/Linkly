@@ -255,7 +255,7 @@ pub fn move_by(dx: f64, dy: f64) {
     let point = clamp_to_displays(CGPoint::new(from.x + dx, from.y + dy));
     *cursor_state().lock() = point;
 
-    let held = *buttons_down().lock();
+    let held = super::move_drag_buttons();
     let (etype, cg_btn, number) = held.drag_kind().unwrap_or((
         CGEventType::MouseMoved,
         CGMouseButton::Left,

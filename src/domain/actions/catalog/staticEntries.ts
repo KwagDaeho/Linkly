@@ -1,6 +1,6 @@
 import type { CatalogEntry } from "@/types";
 
-/** Hand-curated actions (browser, edit, system, …). */
+/** Hand-curated actions (browser, document, display, system, app, …). */
 export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
   { id: "default", category: "basic", action: { type: "default" } },
   { id: "disabled", category: "basic", action: { type: "disabled" } },
@@ -73,129 +73,105 @@ export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
 
   {
     id: "copy",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "copy" },
   },
   {
     id: "cut",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "cut" },
   },
   {
     id: "paste",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "paste" },
   },
   {
     id: "undo",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "undo" },
   },
   {
     id: "redo",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "redo" },
   },
   {
     id: "save",
-    category: "edit",
+    category: "document",
     action: { type: "system", command: "save" },
   },
   {
     id: "select_all",
-    category: "edit",
+    category: "document",
     action: { type: "key_stroke", keys: ["Meta", "A"] },
   },
   {
     id: "duplicate",
-    category: "edit",
+    category: "document",
     action: { type: "key_stroke", keys: ["Meta", "D"] },
   },
   {
     id: "find_in_document",
-    category: "edit",
+    category: "document",
     action: { type: "key_stroke", keys: ["Meta", "F"] },
   },
   {
     id: "find_next",
-    category: "edit",
+    category: "document",
     action: { type: "key_stroke", keys: ["Meta", "G"] },
   },
   {
     id: "find_previous",
-    category: "edit",
+    category: "document",
     action: { type: "key_stroke", keys: ["Meta", "Shift", "G"] },
   },
 
   {
     id: "mission_control",
-    category: "system",
+    category: "display",
     action: { type: "system", command: "mission_control" },
   },
   {
     id: "move_space_left",
-    category: "system",
+    category: "display",
     action: { type: "system", command: "move_space_left" },
   },
   {
     id: "move_space_right",
-    category: "system",
+    category: "display",
     action: { type: "system", command: "move_space_right" },
   },
   {
-    id: "app_expose",
-    category: "system",
-    action: { type: "system", command: "app_expose" },
-  },
-  {
     id: "show_desktop",
-    category: "system",
+    category: "display",
     action: { type: "system", command: "show_desktop" },
   },
   {
     id: "launchpad",
-    category: "system",
+    category: "display",
     action: { type: "system", command: "launchpad" },
   },
   {
-    id: "spotlight",
-    category: "system",
-    action: { type: "system", command: "spotlight" },
-  },
-  {
-    id: "app_switcher",
-    category: "system",
-    action: { type: "system", command: "app_switcher" },
-  },
-  {
-    id: "close_window",
-    category: "system",
-    action: { type: "system", command: "close_window" },
-  },
-  {
-    id: "lock_screen",
-    category: "system",
-    action: { type: "key_stroke", keys: ["Ctrl", "Meta", "Q"] },
-  },
-  {
     id: "screenshot_full",
-    category: "system",
+    category: "display",
     action: { type: "key_stroke", keys: ["Meta", "Shift", "3"] },
   },
   {
     id: "screenshot_region",
-    category: "system",
+    category: "display",
     action: { type: "key_stroke", keys: ["Meta", "Shift", "4"] },
   },
   {
     id: "screenshot_window",
-    category: "system",
+    category: "display",
     action: { type: "key_stroke", keys: ["Meta", "Shift", "4", "Space"] },
   },
+
   {
-    id: "emoji_picker",
+    id: "spotlight",
     category: "system",
-    action: { type: "key_stroke", keys: ["Ctrl", "Meta", "Space"] },
+    action: { type: "system", command: "spotlight" },
   },
   {
     id: "input_source_next",
@@ -208,24 +184,79 @@ export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
     action: { type: "system", command: "input_source_previous" },
   },
   {
+    id: "lock_screen",
+    category: "system",
+    action: { type: "key_stroke", keys: ["Ctrl", "Meta", "Q"] },
+  },
+  {
     id: "force_quit",
     category: "system",
     action: { type: "key_stroke", keys: ["Meta", "Alt", "Escape"] },
   },
   {
-    id: "minimize_window",
+    id: "emoji_picker",
     category: "system",
+    action: { type: "key_stroke", keys: ["Ctrl", "Meta", "Space"] },
+  },
+
+  {
+    id: "app_expose",
+    category: "app",
+    action: { type: "system", command: "app_expose" },
+  },
+  {
+    id: "app_switcher",
+    category: "app",
+    action: { type: "system", command: "app_switcher" },
+  },
+  {
+    id: "close_window",
+    category: "app",
+    action: { type: "system", command: "close_window" },
+  },
+  {
+    id: "minimize_window",
+    category: "app",
     action: { type: "key_stroke", keys: ["Meta", "M"] },
   },
   {
     id: "hide_app",
-    category: "system",
+    category: "app",
     action: { type: "key_stroke", keys: ["Meta", "H"] },
   },
   {
     id: "quit_app",
-    category: "system",
+    category: "app",
     action: { type: "key_stroke", keys: ["Meta", "Q"] },
+  },
+  {
+    id: "open_safari",
+    category: "app",
+    action: { type: "open_app", bundle_id: "com.apple.Safari" },
+  },
+  {
+    id: "open_finder",
+    category: "app",
+    action: { type: "open_app", bundle_id: "com.apple.finder" },
+  },
+  {
+    id: "open_settings",
+    category: "app",
+    action: {
+      type: "open_app",
+      bundle_id: "com.apple.systempreferences",
+    },
+  },
+  {
+    id: "open_terminal",
+    category: "app",
+    action: { type: "open_app", bundle_id: "com.apple.Terminal" },
+  },
+  {
+    id: "open_app_pick",
+    category: "app",
+    action: { type: "open_app", bundle_id: "" },
+    special: "open_app",
   },
 
   {
@@ -257,36 +288,6 @@ export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
     id: "play_pause",
     category: "media",
     action: { type: "system", command: "play_pause" },
-  },
-
-  {
-    id: "open_safari",
-    category: "launch",
-    action: { type: "open_app", bundle_id: "com.apple.Safari" },
-  },
-  {
-    id: "open_finder",
-    category: "launch",
-    action: { type: "open_app", bundle_id: "com.apple.finder" },
-  },
-  {
-    id: "open_settings",
-    category: "launch",
-    action: {
-      type: "open_app",
-      bundle_id: "com.apple.systempreferences",
-    },
-  },
-  {
-    id: "open_terminal",
-    category: "launch",
-    action: { type: "open_app", bundle_id: "com.apple.Terminal" },
-  },
-  {
-    id: "open_app_pick",
-    category: "launch",
-    action: { type: "open_app", bundle_id: "" },
-    special: "open_app",
   },
 
   {

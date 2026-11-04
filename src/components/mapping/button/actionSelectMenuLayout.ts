@@ -14,8 +14,11 @@ export interface MenuLayout {
   columnCount: 2 | 3;
 }
 
-export const menuColumnCount = (hasSubcategories: boolean): 2 | 3 =>
-  hasSubcategories ? 3 : 2;
+export const menuColumnCount = (
+  hasSubcategories: boolean,
+  letterSubcategorySelected: boolean,
+): 2 | 3 =>
+  hasSubcategories && letterSubcategorySelected ? 3 : 2;
 
 /** Fallback before DOM measure: 1st-depth category list natural height. */
 export const firstColumnContentHeightPx = (categoryCount: number): number =>

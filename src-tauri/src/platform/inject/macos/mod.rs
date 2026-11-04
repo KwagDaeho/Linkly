@@ -79,6 +79,32 @@ fn cursor_pos() -> CGPoint {
 
 static CURSOR: OnceLock<Mutex<CGPoint>> = OnceLock::new();
 static BUTTONS_DOWN: OnceLock<Mutex<ButtonsDown>> = OnceLock::new();
+static CATALOG_PHYSICAL_DRAG: OnceLock<Mutex<ButtonsDown>> = OnceLock::new();
+
+/// Remapped catalog button held on the trackball (not synthetic inject state).
+pub struct CatalogPhysicalDrag(ButtonsDown);
+
+impl Default for CatalogPhysicalDrag {
+    fn default() -> Self {
+        Self(ButtonsDown::default())
+    }
+}
+
+impl CatalogPhysicalDrag {
+    pub fn set(&mut self, button: &MouseClickButton, down: bool) {
+        self.0.set(button, down);
+    }
+}
+
+pub fn set_catalog_physical_drag(drag: CatalogPhysicalDrag) {
+    *catalog_physical_drag().lock() = drag.0;
+}
+
+pub fn clear_catalog_physical_drag() {
+    *catalog_physical_drag().lock() = ButtonsDown::default();
+}
+
+pub use mouse::neutralize_os_mouse_button;
 
 #[derive(Default, Clone, Copy)]
 struct ButtonsDown {
@@ -152,6 +178,19 @@ fn cursor_state() -> &'static Mutex<CGPoint> {
 
 fn buttons_down() -> &'static Mutex<ButtonsDown> {
     BUTTONS_DOWN.get_or_init(|| Mutex::new(ButtonsDown::default()))
+}
+
+fn catalog_physical_drag() -> &'static Mutex<ButtonsDown> {
+    CATALOG_PHYSICAL_DRAG.get_or_init(|| Mutex::new(ButtonsDown::default()))
+}
+
+pub(super) fn move_drag_buttons() -> ButtonsDown {
+    let synth = *buttons_down().lock();
+    if synth.any() {
+        synth
+    } else {
+        *catalog_physical_drag().lock()
+    }
 }
 
 fn sync_motion_suppress() {

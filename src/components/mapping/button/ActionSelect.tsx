@@ -32,6 +32,10 @@ import { OverlayScrollArea } from "@/components/layout/OverlayScrollArea";
 
 import * as styles from "./ActionSelect.css";
 import {
+  closeOtherActionSelects,
+  registerActionSelectInstance,
+} from "./actionSelectCoordinator";
+import {
   firstColumnContentHeightPx,
   layoutActionSelectMenu,
   menuColumnCount,
@@ -68,6 +72,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
   const value = catalogValueForAction(props.action);
   const disabled = props.disabled === true;
   const listId = useId();
+  const instanceId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -81,6 +86,20 @@ export const ActionSelect = (props: ActionSelectProps) => {
     ActionLetterSubcategoryId | undefined
   >(() => findCatalogSelectionForPickValue(value).subcategory);
 
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    setMenuLayout(null);
+    menuAnchorLeftRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    return registerActionSelectInstance(instanceId, closeMenu);
+  }, [instanceId, closeMenu]);
+
+  const openMenu = useCallback(() => {
+    closeOtherActionSelects(instanceId);
+    setOpen(true);
+  }, [instanceId]);
   const displayLabel =
     matched === undefined
       ? describeAction(props.action, lang)
@@ -93,24 +112,32 @@ export const ActionSelect = (props: ActionSelectProps) => {
     activeGroup?.subcategories !== undefined &&
     activeGroup.subcategories.length > 0;
 
+  const letterSubcategorySelected =
+    hasSubcategories && activeSubcategory !== undefined;
+
+  const showEntryPane = !hasSubcategories || letterSubcategorySelected;
+
   const activeSubGroup =
-    hasSubcategories && activeSubcategory !== undefined
-      ? activeGroup?.subcategories?.find((sub) => sub.id === activeSubcategory)
-      : hasSubcategories
-        ? activeGroup?.subcategories?.[0]
-        : undefined;
+    letterSubcategorySelected && activeGroup?.subcategories !== undefined
+      ? activeGroup.subcategories.find((sub) => sub.id === activeSubcategory)
+      : undefined;
 
   const visibleEntries =
     activeSubGroup !== undefined
       ? activeSubGroup.entries
-      : (activeGroup?.entries ?? []);
+      : hasSubcategories
+        ? []
+        : (activeGroup?.entries ?? []);
 
   const syncMenuLayout = useCallback(() => {
     const trigger = triggerRef.current;
     if (trigger === null) {
       return;
     }
-    const columnCount = menuColumnCount(hasSubcategories);
+    const columnCount = menuColumnCount(
+      hasSubcategories,
+      letterSubcategorySelected,
+    );
     const oneDepHeight = resolveOneDepHeightPx(menuRef.current, groups.length);
     const next = layoutActionSelectMenu(
       trigger,
@@ -122,7 +149,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
       menuAnchorLeftRef.current = next.left;
     }
     setMenuLayout(next);
-  }, [groups.length, hasSubcategories]);
+  }, [groups.length, hasSubcategories, letterSubcategorySelected]);
 
   useEffect(() => {
     if (!open) {
@@ -142,7 +169,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
     syncMenuLayout();
     const frame = requestAnimationFrame(() => syncMenuLayout());
     return () => cancelAnimationFrame(frame);
-  }, [open, hasSubcategories, syncMenuLayout]);
+  }, [open, hasSubcategories, letterSubcategorySelected, syncMenuLayout]);
 
   useEffect(() => {
     if (!open) {
@@ -161,36 +188,57 @@ export const ActionSelect = (props: ActionSelectProps) => {
     if (!open) {
       return;
     }
-    const onPointerDown = (event: PointerEvent) => {
-      const target = event.target as Node;
+    const isInsideThisSelect = (target: Node): boolean => {
       if (rootRef.current?.contains(target)) {
-        return;
+        return true;
       }
       if (menuRef.current?.contains(target)) {
+        return true;
+      }
+      return false;
+    };
+    const dismissIfOutside = (event: Event) => {
+      const target = event.target;
+      if (!(target instanceof Node)) {
         return;
       }
-      setOpen(false);
+      if (isInsideThisSelect(target)) {
+        return;
+      }
+      closeMenu();
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setOpen(false);
+        closeMenu();
       }
     };
-    window.addEventListener("pointerdown", onPointerDown, true);
+    window.addEventListener("pointerdown", dismissIfOutside, true);
+    window.addEventListener("mousedown", dismissIfOutside, true);
     window.addEventListener("keydown", onKeyDown);
     return () => {
-      window.removeEventListener("pointerdown", onPointerDown, true);
+      window.removeEventListener("pointerdown", dismissIfOutside, true);
+      window.removeEventListener("mousedown", dismissIfOutside, true);
       window.removeEventListener("keydown", onKeyDown);
     };
-  }, [open]);
+  }, [open, closeMenu]);
 
   const pick = (next: string) => {
     if (disabled) {
       return;
     }
     props.onPick(next);
-    setOpen(false);
+    closeMenu();
   };
+
+  const focusCategory = (group: (typeof groups)[number]) => {
+    setActiveCategory(group.id);
+    setActiveSubcategory(undefined);
+  };
+
+  const menuColumnCountCurrent = menuColumnCount(
+    hasSubcategories,
+    letterSubcategorySelected,
+  );
 
   const menu =
     open && menuLayout !== null && activeGroup !== undefined
@@ -201,7 +249,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
             id={listId}
             role="listbox"
             data-action-select-menu=""
-            data-columns={hasSubcategories ? "3" : "2"}
+            data-columns={String(menuColumnCountCurrent)}
             onWheel={(event) => {
               event.stopPropagation();
             }}
@@ -233,32 +281,14 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     data-action-select-item=""
                     aria-selected={isActive}
                     className={`${styles.categoryRow} ${isActive ? styles.categoryRowActive : ""}`}
-                    onMouseEnter={() => {
-                      setActiveCategory(group.id);
-                      const firstSub = group.subcategories?.[0]?.id;
-                      setActiveSubcategory(firstSub);
-                    }}
-                    onFocus={() => {
-                      setActiveCategory(group.id);
-                      const firstSub = group.subcategories?.[0]?.id;
-                      setActiveSubcategory(firstSub);
-                    }}
-                    onClick={() => {
-                      setActiveCategory(group.id);
-                      const firstSub = group.subcategories?.[0]?.id;
-                      setActiveSubcategory(firstSub);
-                    }}
+                    onMouseEnter={() => focusCategory(group)}
+                    onFocus={() => focusCategory(group)}
+                    onClick={() => focusCategory(group)}
                   >
-                    <span
-                      className={`${styles.radio} ${isActive ? styles.radioOn : ""}`}
-                      aria-hidden
-                    />
                     <span className={styles.menuRowLabel}>{group.label}</span>
-                    {(group.subcategories?.length ?? 0) > 0 ? (
-                      <span className={styles.rowChevron} aria-hidden>
-                        ›
-                      </span>
-                    ) : null}
+                    <span className={styles.rowChevron} aria-hidden>
+                      ›
+                    </span>
                   </button>
                 );
               })}
@@ -273,7 +303,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                   persistentScrollbar
                 >
                 {activeGroup.subcategories.map((sub) => {
-                  const isActive = sub.id === activeSubGroup?.id;
+                  const isActive = sub.id === activeSubcategory;
                   return (
                     <button
                       key={sub.id}
@@ -286,10 +316,6 @@ export const ActionSelect = (props: ActionSelectProps) => {
                       onFocus={() => setActiveSubcategory(sub.id)}
                       onClick={() => setActiveSubcategory(sub.id)}
                     >
-                      <span
-                        className={`${styles.radio} ${isActive ? styles.radioOn : ""}`}
-                        aria-hidden
-                      />
                       <span className={styles.menuRowLabel}>
                         {subcategoryLabel(sub.id, lang)}
                       </span>
@@ -302,6 +328,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                 </OverlayScrollArea>
               </div>
             ) : null}
+            {showEntryPane ? (
             <div
               className={
                 hasSubcategories ? styles.entryPane : styles.entryPaneTwoCol
@@ -310,7 +337,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
             >
               <OverlayScrollArea
                 className={styles.paneViewport}
-                contentKey={`${activeCategory}-${activeSubGroup?.id ?? ""}-${visibleEntries.length}-${menuLayout.height}`}
+                contentKey={`${activeCategory}-${activeSubcategory ?? ""}-${visibleEntries.length}-${menuLayout.height}`}
                 persistentScrollbar
               >
               {visibleEntries.map((entry) => {
@@ -327,16 +354,19 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     className={`${styles.entryRow} ${selected ? styles.entryRowSelected : ""}`}
                     onClick={() => pick(pickValue)}
                   >
-                    <span
-                      className={`${styles.radio} ${selected ? styles.radioOn : ""}`}
-                      aria-hidden
-                    />
                     <span className={styles.menuRowLabel}>{label}</span>
+                    {selected ? (
+                      <span
+                        className={`${styles.selectionMark} ${styles.selectionMarkOn}`}
+                        aria-hidden
+                      />
+                    ) : null}
                   </button>
                 );
               })}
               </OverlayScrollArea>
             </div>
+            ) : null}
           </div>,
           document.body,
         )
@@ -359,34 +389,37 @@ export const ActionSelect = (props: ActionSelectProps) => {
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-controls={open ? listId : undefined}
+        onPointerDown={(event) => {
+          if (disabled || event.button !== 0) {
+            return;
+          }
+          closeOtherActionSelects(instanceId);
+        }}
         onClick={() => {
           if (disabled) {
             return;
           }
-          setOpen((previous) => {
-            const next = !previous;
-            if (next && triggerRef.current !== null) {
-              menuAnchorLeftRef.current = null;
-              const group =
-                groups.find((g) => g.id === activeCategory) ?? groups[0];
-              const columnCount = menuColumnCount(
-                (group?.subcategories?.length ?? 0) > 0,
-              );
-              const layout = layoutActionSelectMenu(
-                triggerRef.current,
-                columnCount,
-                null,
-                firstColumnContentHeightPx(groups.length),
-              );
-              menuAnchorLeftRef.current = layout.left;
-              setMenuLayout(layout);
-            }
-            if (!next) {
-              setMenuLayout(null);
-              menuAnchorLeftRef.current = null;
-            }
-            return next;
-          });
+          if (open) {
+            closeMenu();
+            return;
+          }
+          openMenu();
+          if (triggerRef.current !== null) {
+            menuAnchorLeftRef.current = null;
+            const group =
+              groups.find((g) => g.id === activeCategory) ?? groups[0];
+            const hasSubs = (group?.subcategories?.length ?? 0) > 0;
+            const subSelected = hasSubs && activeSubcategory !== undefined;
+            const columnCount = menuColumnCount(hasSubs, subSelected);
+            const layout = layoutActionSelectMenu(
+              triggerRef.current,
+              columnCount,
+              null,
+              firstColumnContentHeightPx(groups.length),
+            );
+            menuAnchorLeftRef.current = layout.left;
+            setMenuLayout(layout);
+          }
         }}
       >
         <span className={styles.triggerLabel}>{displayLabel}</span>

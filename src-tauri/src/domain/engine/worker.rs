@@ -362,6 +362,31 @@ pub(crate) fn run(
                     let capture_block = capture::input_capture_active();
                     sync_catalog_suppress_mask(prev, state, &profile_snap, capture_block);
 
+                    let button_transition = state != prev;
+                    if button_transition {
+                        neutralize_remapped_catalog_presses(prev, state, &profile_snap);
+                        session.with_maps(&profile_snap, |custom_maps, button_maps| {
+                            apply_button_edges(
+                                prev,
+                                state,
+                                &profile_snap,
+                                custom_maps,
+                                button_maps,
+                                &mut pending,
+                                &mut held,
+                                &mut scroll_repeats,
+                                &mut key_repeats,
+                            );
+                            arm_remap_release_grace(prev, state, &profile_snap);
+                            sync_catalog_suppress_mask(
+                                prev,
+                                state,
+                                &profile_snap,
+                                capture_block,
+                            );
+                        });
+                    }
+
                     sync_catalog_physical_drag(&profile_snap, prev, state);
                     ball_scroll::tick();
                     inject::expire_restored_cursor_if_due();
@@ -415,11 +440,14 @@ pub(crate) fn run(
                             prev,
                             &state,
                             &profile_snap,
-                        ) || session.with_maps(&profile_snap, |custom_maps, _| {
+                        ) || session.with_maps(&profile_snap, |custom_maps, button_maps| {
                             custom_mapping::pointer_takeover_active(
                                 custom_maps,
                                 prev,
                                 &state,
+                                &profile_snap,
+                            ) || button_mapping::pointer_takeover_active(
+                                button_maps,
                                 &profile_snap,
                             )
                         });
@@ -518,24 +546,26 @@ pub(crate) fn run(
                         );
                         fire_due_key_repeats(&mut key_repeats, &profile_snap.pointer);
 
-                        apply_button_edges(
-                            prev,
-                            state,
-                            &profile_snap,
-                            custom_maps,
-                            button_maps,
-                            &mut pending,
-                            &mut held,
-                            &mut scroll_repeats,
-                            &mut key_repeats,
-                        );
-                        arm_remap_release_grace(prev, state, &profile_snap);
-                        sync_catalog_suppress_mask(
-                            prev,
-                            state,
-                            &profile_snap,
-                            capture_block,
-                        );
+                        if !button_transition {
+                            apply_button_edges(
+                                prev,
+                                state,
+                                &profile_snap,
+                                custom_maps,
+                                button_maps,
+                                &mut pending,
+                                &mut held,
+                                &mut scroll_repeats,
+                                &mut key_repeats,
+                            );
+                            arm_remap_release_grace(prev, state, &profile_snap);
+                            sync_catalog_suppress_mask(
+                                prev,
+                                state,
+                                &profile_snap,
+                                capture_block,
+                            );
+                        }
                     });
 
                     prev = state;

@@ -23,8 +23,8 @@ static SUPPRESS_MASK: AtomicU8 = AtomicU8::new(0);
 static GRACE_MASK: AtomicU8 = AtomicU8::new(0);
 static GRACE_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
 const CLICK_SUPPRESS_GRACE_MS: u64 = 72;
-/// When we synthesize mouse-down, OS still posts plain MouseMoved — suppress it
-/// so `inject::move_by` owns the stream (*MouseDragged).
+/// When we synthesize mouse-down, OS still posts *MouseDragged — suppress those
+/// so `inject::move_by` owns the stream. Plain `MouseMoved` (trackpad) stays.
 static SUPPRESS_MOTION: AtomicBool = AtomicBool::new(false);
 /// While set, MouseMoved is rewritten to this point (ball-scroll pin).
 static CURSOR_LOCK: AtomicBool = AtomicBool::new(false);
@@ -167,7 +167,7 @@ fn should_suppress(etype: u32, button_number: i64) -> bool {
     if SUPPRESS_MOTION.load(Ordering::SeqCst)
         && matches!(
             etype,
-            EVENT_MOUSE_MOVED | EVENT_LEFT_DRAGGED | EVENT_RIGHT_DRAGGED | EVENT_OTHER_DRAGGED
+            EVENT_LEFT_DRAGGED | EVENT_RIGHT_DRAGGED | EVENT_OTHER_DRAGGED
         )
     {
         return true;
@@ -178,7 +178,9 @@ fn should_suppress(etype: u32, button_number: i64) -> bool {
     }
     match etype {
         1 | 2 | 6 => mask & BIT_LEFT != 0,
-        3 | 4 | 7 => mask & BIT_RIGHT != 0,
+        3 | 4 => mask & BIT_RIGHT != 0,
+        // Do not swallow RightMouseDragged (7): trackpad moves while a ghost
+        // right-down would otherwise freeze until RB release.
         25 | 26 | 27 => match button_number {
             2 => mask & BIT_MIDDLE != 0,
             3 => mask & BIT_BACK != 0,

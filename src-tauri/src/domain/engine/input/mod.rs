@@ -509,6 +509,7 @@ pub(crate) fn apply_binding_press<K>(
             fire_action_pulse(inject_id, &pulse, &profile.pointer);
         }
     } else if inject::shared_pointer_mode()
+        && !synth_native_if_suppressed
         && remap::action_is_native_for(inject_id, &binding.click)
         && !(synth_native_if_suppressed
             && crate::platform::suppress::os_button_suppressed(inject_id))
@@ -517,6 +518,13 @@ pub(crate) fn apply_binding_press<K>(
     } else if is_scroll_action(&binding.click) {
         link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
         inject::press_action(inject_id, &binding.click, &profile.pointer);
+    } else if synth_native_if_suppressed
+        && inject::shared_pointer_mode()
+        && remap::action_is_native_for(inject_id, &binding.click)
+    {
+        // Chord/OS trigger with inject_id defaulting to Left: pulse, do not hold synthetic LB down.
+        link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
+        fire_action_pulse_with(inject_id, &binding.click, &profile.pointer, true);
     } else {
         link_event::announce(input, &binding.click, inject_id, LinkPhase::Press);
         held.insert(state_key, binding.click.clone());

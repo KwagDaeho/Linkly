@@ -6,6 +6,7 @@ describe("resolveGeneratedEntryLabel letter keys", () => {
   it("shows hangul/kana only without Latin suffix", () => {
     expect(resolveGeneratedEntryLabel("key_ko_q", "ko")).toBe("ㅂ");
     expect(resolveGeneratedEntryLabel("key_ko_q", "en")).toBe("ㅂ");
+    expect(resolveGeneratedEntryLabel("key_ja_あ", "ko")).toBe("あ · 3");
     expect(resolveGeneratedEntryLabel("key_ja_q", "ko")).toBe("た");
     expect(resolveGeneratedEntryLabel("key_en_q", "ko")).toBe("Q");
   });

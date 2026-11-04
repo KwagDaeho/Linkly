@@ -26,6 +26,13 @@ export const visible = style({
   transition: "none",
 });
 
+/** Always-on track (no fade-out transition). */
+export const persistent = style({
+  opacity: 1,
+  pointerEvents: "auto",
+  transition: "none",
+});
+
 export const thumb = style({
   position: "absolute",
   top: 0,

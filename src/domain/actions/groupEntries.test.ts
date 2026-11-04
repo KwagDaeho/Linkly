@@ -33,12 +33,17 @@ describe("groupCatalogEntries", () => {
     expect(hangul).toEqual(sorted);
   });
 
-  it("sorts Japanese letter keys A–Z (same key order as English)", () => {
+  it("lists full Japanese kana in 五十音 order", () => {
     const ja = groupCatalogEntries()
       .find((g) => g.id === "letters")
       ?.subcategories?.find((s) => s.id === "ja")?.entries;
-    const letters = ja?.map((e) => e.id.replace("key_ja_", "")).join("");
-    expect(letters).toBe("abcdefghijklmnopqrstuvwxyz");
+    expect(ja?.length).toBeGreaterThanOrEqual(70);
+    const kana =
+      ja?.map((e) => e.id.replace("key_ja_", "")) ?? [];
+    expect(kana[0]).toBe("あ");
+    expect(kana).toContain("が");
+    expect(kana).toContain("ぱ");
+    expect(kana.at(-1)).toBe("っ");
   });
 
   it("includes injectable function keys F1–F20 only", () => {

@@ -26,6 +26,8 @@ interface OverlayScrollAreaProps {
   /** Re-sync when scroll content changes (e.g. list length). */
   contentKey?: string;
   style?: CSSProperties;
+  /** Keep overlay thumb visible whenever content overflows (no auto-hide). */
+  persistentScrollbar?: boolean;
 }
 
 export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
@@ -70,7 +72,9 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
       const hasOverflow = scrollHeight > clientHeight + 1;
       setOverflow(hasOverflow);
       if (!hasOverflow) {
-        setRevealed(false);
+        if (!props.persistentScrollbar) {
+          setRevealed(false);
+        }
         clearHideTimer();
         return;
       }
@@ -85,7 +89,9 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
     syncRef.current = sync;
 
     const onScroll = () => {
-      reveal();
+      if (!props.persistentScrollbar) {
+        reveal();
+      }
       sync();
     };
 
@@ -105,15 +111,20 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
       ro.disconnect();
       clearHideTimer();
     };
-  }, []);
+  }, [props.persistentScrollbar]);
 
   useEffect(() => {
-    setRevealed(false);
-    clearHideTimer();
+    if (props.persistentScrollbar) {
+      setRevealed(true);
+      clearHideTimer();
+    } else {
+      setRevealed(false);
+      clearHideTimer();
+    }
     requestAnimationFrame(() => syncRef.current());
     const retry = window.setTimeout(() => syncRef.current(), 0);
     return () => window.clearTimeout(retry);
-  }, [props.contentKey]);
+  }, [props.contentKey, props.persistentScrollbar]);
 
   useEffect(() => {
     const onMove = (event: PointerEvent) => {
@@ -143,7 +154,10 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
     };
   }, [thumb.height]);
 
-  const shown = revealed || hovering;
+  const shown =
+    props.persistentScrollbar === true
+      ? overflow
+      : revealed || hovering;
 
   return (
     <div className={scrollAreaStyles.root}>
@@ -158,14 +172,17 @@ export const OverlayScrollArea = (props: OverlayScrollAreaProps) => {
         <div
           className={cx(
             scrollbarStyles.embedded,
-            shown && scrollbarStyles.visible,
+            props.persistentScrollbar
+              ? overflow && scrollbarStyles.persistent
+              : shown && scrollbarStyles.visible,
           )}
           style={
-            {
-              "--overlay-scrollbar-fade-out": `${SCROLLBAR_FADE_MS}ms`,
-            } as CSSProperties
+            props.persistentScrollbar
+              ? undefined
+              : ({
+                  "--overlay-scrollbar-fade-out": `${SCROLLBAR_FADE_MS}ms`,
+                } as CSSProperties)
           }
-          aria-hidden
           onPointerEnter={() => setHovering(true)}
           onPointerLeave={() => setHovering(false)}
           onPointerDown={(event) => {

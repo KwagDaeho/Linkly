@@ -31,30 +31,22 @@ import type {
 import { OverlayScrollArea } from "@/components/layout/OverlayScrollArea";
 
 import * as styles from "./ActionSelect.css";
+import {
+  firstColumnContentHeightPx,
+  layoutActionSelectMenu,
+  menuColumnCount,
+  MENU_COL_WIDTH_PX,
+  resolveOneDepHeightPx,
+  type MenuLayout,
+} from "./actionSelectMenuLayout";
+
+export { MENU_COL_WIDTH_PX };
 
 interface ActionSelectProps {
   action: Action;
   onPick: (value: string) => void;
   disabled?: boolean;
 }
-
-const MENU_GAP_PX = 4;
-/** Every depth column uses the same width; menu grows right when 3rd column appears. */
-export const MENU_COL_WIDTH_PX = 168;
-/** Dropdown height cap (columns scroll inside). */
-const MENU_HEIGHT_CAP_PX = 280;
-const MENU_MIN_USABLE_PX = 140;
-
-interface MenuLayout {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-  columnCount: 2 | 3;
-}
-
-const menuColumnCount = (hasSubcategories: boolean): 2 | 3 =>
-  hasSubcategories ? 3 : 2;
 
 const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
   if (entry.special === "custom_key") {
@@ -67,37 +59,6 @@ const entryDisplayLabel = (entry: CatalogEntry, lang: "ko" | "en"): string => {
     return entryLabel("open_app_pick", lang);
   }
   return entryLabel(entry.id, lang);
-};
-
-const layoutMenu = (
-  trigger: HTMLButtonElement,
-  columnCount: 2 | 3,
-  anchorLeft: number | null,
-): MenuLayout => {
-  const rect = trigger.getBoundingClientRect();
-  const width = Math.max(rect.width, columnCount * MENU_COL_WIDTH_PX);
-  const viewportPad = 8;
-  const spaceBelow =
-    window.innerHeight - rect.bottom - viewportPad - MENU_GAP_PX;
-  const spaceAbove = rect.top - viewportPad - MENU_GAP_PX;
-  const openBelow =
-    spaceBelow >= MENU_MIN_USABLE_PX || spaceBelow >= spaceAbove;
-  const available = openBelow ? spaceBelow : spaceAbove;
-  const height = Math.min(
-    MENU_HEIGHT_CAP_PX,
-    Math.max(MENU_MIN_USABLE_PX, available),
-  );
-  const top = openBelow
-    ? rect.bottom + MENU_GAP_PX
-    : Math.max(viewportPad, rect.top - height - MENU_GAP_PX);
-  let left = anchorLeft ?? rect.left;
-  if (left + width > window.innerWidth - viewportPad) {
-    left = Math.max(viewportPad, window.innerWidth - width - viewportPad);
-  }
-  if (left < viewportPad) {
-    left = viewportPad;
-  }
-  return { top, left, width, height, columnCount };
 };
 
 export const ActionSelect = (props: ActionSelectProps) => {
@@ -150,12 +111,18 @@ export const ActionSelect = (props: ActionSelectProps) => {
       return;
     }
     const columnCount = menuColumnCount(hasSubcategories);
-    const next = layoutMenu(trigger, columnCount, menuAnchorLeftRef.current);
+    const oneDepHeight = resolveOneDepHeightPx(menuRef.current, groups.length);
+    const next = layoutActionSelectMenu(
+      trigger,
+      columnCount,
+      menuAnchorLeftRef.current,
+      oneDepHeight,
+    );
     if (menuAnchorLeftRef.current === null) {
       menuAnchorLeftRef.current = next.left;
     }
     setMenuLayout(next);
-  }, [hasSubcategories]);
+  }, [groups.length, hasSubcategories]);
 
   useEffect(() => {
     if (!open) {
@@ -253,7 +220,9 @@ export const ActionSelect = (props: ActionSelectProps) => {
               <OverlayScrollArea
                 className={styles.paneViewport}
                 contentKey={`${lang}-${groups.length}-${menuLayout.height}`}
+                persistentScrollbar
               >
+              <div data-action-select-category-list="">
               {groups.map((group) => {
                 const isActive = group.id === activeCategory;
                 return (
@@ -293,6 +262,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                   </button>
                 );
               })}
+              </div>
               </OverlayScrollArea>
             </div>
             {hasSubcategories && activeGroup.subcategories !== undefined ? (
@@ -300,6 +270,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                 <OverlayScrollArea
                   className={styles.paneViewport}
                   contentKey={`${activeCategory}-${lang}-${menuLayout.height}`}
+                  persistentScrollbar
                 >
                 {activeGroup.subcategories.map((sub) => {
                   const isActive = sub.id === activeSubGroup?.id;
@@ -340,6 +311,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
               <OverlayScrollArea
                 className={styles.paneViewport}
                 contentKey={`${activeCategory}-${activeSubGroup?.id ?? ""}-${visibleEntries.length}-${menuLayout.height}`}
+                persistentScrollbar
               >
               {visibleEntries.map((entry) => {
                 const pickValue = catalogEntryPickValue(entry);
@@ -400,10 +372,11 @@ export const ActionSelect = (props: ActionSelectProps) => {
               const columnCount = menuColumnCount(
                 (group?.subcategories?.length ?? 0) > 0,
               );
-              const layout = layoutMenu(
+              const layout = layoutActionSelectMenu(
                 triggerRef.current,
                 columnCount,
                 null,
+                firstColumnContentHeightPx(groups.length),
               );
               menuAnchorLeftRef.current = layout.left;
               setMenuLayout(layout);

@@ -5,6 +5,11 @@ import {
 } from "@/constants/actionCategories";
 import type { ActionLetterSubcategoryId, CatalogEntry } from "@/types";
 
+import {
+  JA_KANA_CATALOG_ROWS,
+  normalizeJaKanaStrokeKey,
+} from "./jaKanaCatalog";
+
 const EN_LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
 
 /** Two-set Korean (Dubeolsik) labels on US QWERTY positions. */
@@ -37,7 +42,7 @@ export const KO_KEY_LABEL: Record<string, string> = {
   m: "ㅡ",
 };
 
-/** Hiragana on typical JIS/US-mapped letter keys (display only). */
+/** Legacy QWERTY-position hints (old `key_ja_<letter>` ids). */
 export const JA_KEY_LABEL: Record<string, string> = {
   q: "た",
   w: "て",
@@ -69,6 +74,27 @@ export const JA_KEY_LABEL: Record<string, string> = {
 
 const QWERTY_PHYSICAL = "qwertyuiopasdfghjklzxcvbnm".split("");
 
+/** Standard 五十音 collator (清音 + 濁音 + 半濁音 + 小書き). */
+const GOJUON_HIRAGANA =
+  "あいうえお" +
+  "かきくけこがぎぐげご" +
+  "さしすせそざじずぜぞ" +
+  "たちつてとだぢづでど" +
+  "なにぬねの" +
+  "はひふへほばびぶべぼぱぴぷぺぽ" +
+  "まみむめも" +
+  "やゆよゃゅょ" +
+  "らりるれろ" +
+  "わをん" +
+  "っ";
+
+const gojuonRank = (char: string): number => {
+  const index = GOJUON_HIRAGANA.indexOf(char);
+  return index === -1 ? GOJUON_HIRAGANA.length + char.codePointAt(0)! : index;
+};
+
+export const gojuonSortIndex = (char: string): number => gojuonRank(char);
+
 const sortedPhysicalForSubcategory = (
   subcategory: ActionLetterSubcategoryId,
 ): string[] => {
@@ -82,7 +108,40 @@ const sortedPhysicalForSubcategory = (
       return ha.localeCompare(hb, "ko");
     });
   }
+  if (subcategory === "ja") {
+    return [];
+  }
   return EN_LETTERS;
+};
+
+const letterEntriesForJa = (): CatalogEntry[] =>
+  [...JA_KANA_CATALOG_ROWS]
+    .sort((a, b) => gojuonRank(a.kana) - gojuonRank(b.kana))
+    .map(({ kana, keys }) => ({
+      id: `key_ja_${kana}`,
+      category: "letters" as const,
+      subcategory: "ja" as const,
+      action: {
+        type: "key_stroke" as const,
+        keys: keys.map(normalizeJaKanaStrokeKey),
+      },
+    }));
+
+const letterEntriesFor = (
+  subcategory: ActionLetterSubcategoryId,
+): CatalogEntry[] => {
+  if (subcategory === "ja") {
+    return letterEntriesForJa();
+  }
+  return sortedPhysicalForSubcategory(subcategory).map((letter) => ({
+    id: `key_${subcategory}_${letter}`,
+    category: "letters" as const,
+    subcategory,
+    action: {
+      type: "key_stroke" as const,
+      keys: [letter.toUpperCase()],
+    },
+  }));
 };
 
 const modifierEntries = (): CatalogEntry[] => {
@@ -212,20 +271,6 @@ const mouseEntries = (): CatalogEntry[] => {
     });
   }
   return [...standard, ...extra];
-};
-
-const letterEntriesFor = (
-  subcategory: ActionLetterSubcategoryId,
-): CatalogEntry[] => {
-  return sortedPhysicalForSubcategory(subcategory).map((letter) => ({
-    id: `key_${subcategory}_${letter}`,
-    category: "letters" as const,
-    subcategory,
-    action: {
-      type: "key_stroke" as const,
-      keys: [letter.toUpperCase()],
-    },
-  }));
 };
 
 export const buildGeneratedCatalogEntries = (): CatalogEntry[] => {

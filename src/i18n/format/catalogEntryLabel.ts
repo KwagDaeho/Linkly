@@ -1,8 +1,10 @@
 import type { Lang } from "@/types";
 import { catalogModifierLabel } from "@/domain/keys/modifierLabel";
+import { letterKeyDisplayHint } from "@/domain/actions/catalog/buildEntries";
 import {
-  letterKeyDisplayHint,
-} from "@/domain/actions/catalog/buildEntries";
+  jaKanaCatalogEntryLabel,
+  jaKanaCatalogRow,
+} from "@/domain/actions/catalog/jaKanaCatalog";
 
 const parseGeneratedEntryId = (
   id: string,
@@ -41,12 +43,16 @@ export const resolveGeneratedEntryLabel = (
     return letter.toUpperCase();
   }
   if (id.startsWith("key_ja_")) {
-    const letter = id.slice("key_ja_".length);
-    const kana = letterKeyDisplayHint("ja", letter);
+    const rest = id.slice("key_ja_".length);
+    const row = jaKanaCatalogRow(rest);
+    if (row !== undefined) {
+      return jaKanaCatalogEntryLabel(row.kana, row.keys, lang);
+    }
+    const kana = letterKeyDisplayHint("ja", rest);
     if (kana !== undefined) {
       return kana;
     }
-    return letter.toUpperCase();
+    return rest.toUpperCase();
   }
   const parsed = parseGeneratedEntryId(id);
   if (parsed?.kind === "key" && id.startsWith("key_")) {

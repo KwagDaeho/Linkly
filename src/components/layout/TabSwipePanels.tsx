@@ -78,6 +78,7 @@ export const TabSwipePanels = (props: TabSwipePanelsProps) => {
                 scrollAuto ? styles.pageScrollAuto : styles.pageScrollVisible,
                 !isActive && styles.pageNonInteractive,
               )}
+              data-tab-scrollport=""
               role="tabpanel"
               aria-hidden={!isActive}
               id={`tabpanel-${id}`}

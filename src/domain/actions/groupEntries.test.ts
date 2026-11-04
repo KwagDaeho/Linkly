@@ -43,7 +43,7 @@ describe("groupCatalogEntries", () => {
     expect(kana[0]).toBe("あ");
     expect(kana).toContain("が");
     expect(kana).toContain("ぱ");
-    expect(kana.at(-1)).toBe("っ");
+    expect(kana[kana.length - 1]).toBe("っ");
   });
 
   it("includes injectable function keys F1–F20 only", () => {

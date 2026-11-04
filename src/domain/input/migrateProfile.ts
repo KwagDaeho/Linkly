@@ -1,4 +1,6 @@
 import { migrateLegacyButtonMappings } from "@/domain/profile/button";
+import { mirrorMappingEntryToCatalogButton } from "@/domain/profile/button/syncCatalogDeviceBinding";
+import { buttonMappingsOf } from "@/domain/profile/button";
 import { comboEffectiveTrigger, comboWithTrigger } from "./activator";
 import type { ComboActivator, Profile } from "@/types";
 
@@ -16,6 +18,9 @@ type StoredProfile = Profile & { gestureMappings?: unknown };
 export const migrateProfileInputs = (profile: Profile): Profile => {
   const { gestureMappings: _removed, ...base } = profile as StoredProfile;
   let next: Profile = migrateLegacyButtonMappings(base);
+  for (const entry of buttonMappingsOf(next)) {
+    next = mirrorMappingEntryToCatalogButton(next, entry);
+  }
   if (next.customMappings === undefined) {
     return next;
   }

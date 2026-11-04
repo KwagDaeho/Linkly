@@ -1,7 +1,8 @@
 //! Pure remap policy: which physical buttons need OS-click suppression.
 
+use crate::domain::button_mapping::catalog_button_binding;
 use crate::domain::device::ButtonId;
-use crate::domain::profile::{Action, ButtonBinding, MouseClickButton, Profile};
+use crate::domain::profile::{Action, MouseClickButton, Profile};
 
 pub(crate) const BIT_LEFT: u8 = 1 << 0;
 pub(crate) const BIT_RIGHT: u8 = 1 << 1;
@@ -64,9 +65,7 @@ pub fn is_remapped(id: ButtonId, action: &Action, long_press: &Action) -> bool {
 
 pub fn remap_flags(profile: &Profile) -> (bool, bool, bool, bool, bool) {
     let flag = |id: ButtonId| {
-        let b = profile.buttons.get(&id).cloned().unwrap_or_else(|| {
-            ButtonBinding::from_click(Action::Default)
-        });
+        let b = catalog_button_binding(profile, id);
         let lp = if b.uses_long_press() {
             &b.long_press
         } else {
@@ -85,4 +84,32 @@ pub fn remap_flags(profile: &Profile) -> (bool, bool, bool, bool, bool) {
         flag(ButtonId::Back),
         flag(ButtonId::Forward),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::button_mapping::sync_from_profile;
+    use crate::domain::profile::{Activator, ButtonBinding, ButtonMappingEntry, Profile};
+
+    #[test]
+    fn remap_flags_use_synced_list_not_stale_profile_buttons() {
+        let mut profile = Profile::default();
+        profile.buttons.insert(
+            ButtonId::Right,
+            ButtonBinding::from_click(Action::Default),
+        );
+        profile.button_mappings = vec![ButtonMappingEntry {
+            id: "rb-left".into(),
+            activator: Some(Activator::Device {
+                button: ButtonId::Right,
+            }),
+            binding: ButtonBinding::from_click(Action::MouseClick {
+                button: MouseClickButton::Left,
+            }),
+        }];
+        sync_from_profile(&profile, None);
+        let (_, rr, _, _, _) = remap_flags(&profile);
+        assert!(rr, "RB remapped to LB in list must suppress OS right click");
+    }
 }

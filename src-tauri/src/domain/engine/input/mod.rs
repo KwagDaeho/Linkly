@@ -311,14 +311,7 @@ fn start_scroll_repeat(repeats: &mut HashMap<ButtonId, ScrollRepeat>, id: Button
 }
 
 pub(crate) fn binding_of(profile: &Profile, id: ButtonId) -> ButtonBinding {
-    if let Some(entry) = crate::domain::button_mapping::find_mapping_for_button(id) {
-        return entry.binding.clone();
-    }
-    profile
-        .buttons
-        .get(&id)
-        .cloned()
-        .unwrap_or_else(|| ButtonBinding::from_click(Action::Default))
+    crate::domain::button_mapping::catalog_button_binding(profile, id)
 }
 
 /// OS-default and catalog "Scroll left/right" on tilt share one path: stream

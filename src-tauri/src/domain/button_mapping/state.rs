@@ -5,8 +5,8 @@ use std::sync::LazyLock;
 use crate::domain::device::ButtonId;
 use crate::domain::device::DeviceIdentityKey;
 use crate::domain::profile::{
-    activator_options_same, effective_button_mappings, Activator, ButtonMappingEntry,
-    MouseClickButton, Profile,
+    activator_options_same, effective_button_mappings, Action, Activator, ButtonBinding,
+    ButtonMappingEntry, MouseClickButton, Profile,
 };
 use crate::domain::remap;
 
@@ -113,6 +113,18 @@ pub fn find_mapping_for_button(id: ButtonId) -> Option<ButtonMappingEntry> {
             )
         })
         .cloned()
+}
+
+/// Same binding the HID engine applies: synced list row, then `profile.buttons`.
+pub fn catalog_button_binding(profile: &Profile, id: ButtonId) -> ButtonBinding {
+    if let Some(entry) = find_mapping_for_button(id) {
+        return entry.binding.clone();
+    }
+    profile
+        .buttons
+        .get(&id)
+        .cloned()
+        .unwrap_or_else(|| ButtonBinding::from_click(Action::Default))
 }
 
 pub fn find_trigger(trigger: &Activator) -> Option<ButtonMappingEntry> {

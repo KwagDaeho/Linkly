@@ -6,6 +6,7 @@ import {
   resolveBindingFlags,
 } from "@/domain/profile";
 import { buttonMappingsOf } from "@/domain/profile/button";
+import { mirrorMappingEntryToCatalogButton } from "@/domain/profile/button/syncCatalogDeviceBinding";
 import type {
   Action,
   ActionSlot,
@@ -53,7 +54,11 @@ export const withButtonMappingActivator = (
     }
     return next;
   });
-  return { ...profile, buttonMappings: nextEntries };
+  const nextProfile = { ...profile, buttonMappings: nextEntries };
+  const updated = nextEntries.find((entry) => entry.id === entryId);
+  return updated !== undefined
+    ? mirrorMappingEntryToCatalogButton(nextProfile, updated)
+    : nextProfile;
 };
 
 export const withButtonMappingFlags = (
@@ -73,7 +78,11 @@ export const withButtonMappingFlags = (
     const flags = resolveBindingFlags(currentBinding, patch);
     return { ...entry, ...currentBinding, ...flags };
   });
-  return { ...profile, buttonMappings: nextEntries };
+  const nextProfile = { ...profile, buttonMappings: nextEntries };
+  const updated = nextEntries.find((entry) => entry.id === entryId);
+  return updated !== undefined
+    ? mirrorMappingEntryToCatalogButton(nextProfile, updated)
+    : nextProfile;
 };
 
 export const withButtonMappingSlot = (
@@ -97,5 +106,9 @@ export const withButtonMappingSlot = (
     }
     return next;
   });
-  return { ...profile, buttonMappings: nextEntries };
+  const nextProfile = { ...profile, buttonMappings: nextEntries };
+  const updated = nextEntries.find((entry) => entry.id === entryId);
+  return updated !== undefined
+    ? mirrorMappingEntryToCatalogButton(nextProfile, updated)
+    : nextProfile;
 };

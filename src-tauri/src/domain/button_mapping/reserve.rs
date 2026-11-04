@@ -6,6 +6,9 @@ use super::state::{self, find_mapping_for_button};
 
 /// Block parallel HID edges when this catalog button is remapped / not OS-passthrough.
 pub fn is_reserved_catalog_button(id: ButtonId) -> bool {
+    if id.is_hidden_from_macos() {
+        return state::is_catalog_button_held(id);
+    }
     state::is_catalog_button_held(id)
         || find_mapping_for_button(id).is_some_and(|e| state::entry_needs_app_handling(&e))
 }

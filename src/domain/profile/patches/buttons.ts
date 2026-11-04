@@ -8,6 +8,7 @@ import type {
 import { asBinding } from "@/domain/profile";
 import { resolveBindingFlags } from "@/domain/profile";
 import { isTiltButton } from "@/domain/profile";
+import { mirrorCatalogDeviceBinding } from "@/domain/profile/button/syncCatalogDeviceBinding";
 export const withButtonSlot = (
   profile: Profile,
   buttonId: ButtonId,
@@ -23,10 +24,7 @@ export const withButtonSlot = (
     slot === "click" && isTiltButton(buttonId)
       ? { ...nextBinding, autoClick: true, longPressEnabled: false }
       : nextBinding;
-  return {
-    ...profile,
-    buttons: { ...profile.buttons, [buttonId]: resolvedBinding },
-  };
+  return mirrorCatalogDeviceBinding(profile, buttonId, resolvedBinding);
 };
 export const withButtonFlags = (
   profile: Profile,
@@ -35,11 +33,8 @@ export const withButtonFlags = (
 ): Profile => {
   const currentBinding = asBinding(profile.buttons[buttonId]);
   const flags = resolveBindingFlags(currentBinding, patch);
-  return {
-    ...profile,
-    buttons: {
-      ...profile.buttons,
-      [buttonId]: { ...currentBinding, ...flags },
-    },
-  };
+  return mirrorCatalogDeviceBinding(profile, buttonId, {
+    ...currentBinding,
+    ...flags,
+  });
 };

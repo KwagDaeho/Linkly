@@ -7,7 +7,19 @@ import {
 import type { InputEventLine } from "@/types";
 
 const MAX_LINES_PER_CHANNEL = 300;
+const MAX_PENDING = 400;
 const FLUSH_MS = 50;
+
+const pushPending = (
+  pending: InputEventLine[],
+  line: InputEventLine,
+): InputEventLine[] => {
+  const next = [...pending, line];
+  if (next.length <= MAX_PENDING) {
+    return next;
+  }
+  return next.slice(next.length - MAX_PENDING);
+};
 
 const appendLine = (
   previous: InputEventLine[],
@@ -28,22 +40,16 @@ export const useInputEventStream = (
     Record<EventViewerChannel, InputEventLine[]>
   >({ keyboard: [], mouse: [] });
   const pendingRef = useRef<InputEventLine[]>([]);
-  const flushTimerRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!active) {
       pendingRef.current = [];
-      if (flushTimerRef.current !== null) {
-        window.clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
       return;
     }
     let unlisten: (() => void) | undefined;
     let cancelled = false;
 
     const flush = () => {
-      flushTimerRef.current = null;
       if (cancelled || pendingRef.current.length === 0) {
         return;
       }
@@ -67,6 +73,8 @@ export const useInputEventStream = (
       });
     };
 
+    const intervalId = window.setInterval(flush, FLUSH_MS);
+
     void import("@tauri-apps/api/event").then(async ({ listen }) => {
       if (cancelled) {
         return;
@@ -75,10 +83,13 @@ export const useInputEventStream = (
         if (cancelled) {
           return;
         }
-        pendingRef.current.push(event.payload);
-        if (flushTimerRef.current === null) {
-          flushTimerRef.current = window.setTimeout(flush, FLUSH_MS);
+        const line = event.payload;
+        if (onlyChannel !== undefined) {
+          if (!eventViewerChannels(line).includes(onlyChannel)) {
+            return;
+          }
         }
+        pendingRef.current = pushPending(pendingRef.current, line);
       });
       if (cancelled) {
         off();
@@ -88,10 +99,7 @@ export const useInputEventStream = (
     });
     return () => {
       cancelled = true;
-      if (flushTimerRef.current !== null) {
-        window.clearTimeout(flushTimerRef.current);
-        flushTimerRef.current = null;
-      }
+      window.clearInterval(intervalId);
       unlisten?.();
     };
   }, [active, onlyChannel]);

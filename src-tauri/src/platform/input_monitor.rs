@@ -17,6 +17,17 @@ static EMIT_TX: LazyLock<std::sync::mpsc::SyncSender<InputEventLine>> = LazyLock
         .name("input-event-emit".into())
         .spawn(move || {
             while let Ok(line) = rx.recv() {
+                let now_ms = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis())
+                    .unwrap_or(0);
+                if !throttle_ms(
+                    &LAST_UI_EMIT_MS,
+                    now_ms,
+                    UI_EMIT_MIN_INTERVAL_MS,
+                ) {
+                    continue;
+                }
                 app_bus::emit("input-event", line);
             }
         })
@@ -29,9 +40,12 @@ static VIEWER_KEYBOARD: AtomicBool = AtomicBool::new(false);
 static VIEWER_MOUSE: AtomicBool = AtomicBool::new(false);
 static LAST_MOTION_EMIT_MS: AtomicU64 = AtomicU64::new(0);
 static LAST_VENDOR_EMIT_MS: AtomicU64 = AtomicU64::new(0);
+static LAST_UI_EMIT_MS: AtomicU64 = AtomicU64::new(0);
 
 const MOTION_MIN_INTERVAL_MS: u64 = 66;
 const VENDOR_MIN_INTERVAL_MS: u64 = 250;
+/// Cap IPC to WebView (paused JS must not grow an unbounded Tauri/Wry queue).
+const UI_EMIT_MIN_INTERVAL_MS: u64 = 12;
 
 fn throttle_ms(last: &AtomicU64, ts_ms: u128, min_interval_ms: u64) -> bool {
     let now = ts_ms as u64;
@@ -191,12 +205,11 @@ pub fn on_hid_report(report: &LastReport) {
     }
 
     let summary = format!("[{buttons}]{motion}{wheel}");
-    let detail = format!("{summary}\n{}", report.hex);
     publish(InputEventLine {
         ts_ms: report.ts_ms,
         source: "hid",
         kind: "hidReport".into(),
-        summary,
-        detail,
+        summary: summary.clone(),
+        detail: summary,
     });
 }

@@ -2,6 +2,13 @@
 
 All notable changes to this project are documented here.
 
+## [1.5.2] — 2026-11-05
+
+### Fixed
+
+- **Event viewer memory** — cap pending `input-event` lines in the UI, flush on an interval, and filter by viewer channel so paused WebViews do not grow unbounded queues.
+- **Event emit** — throttle IPC to the WebView (~12ms) and drop redundant HID hex from viewer payloads.
+
 ## [1.5.1] — 2026-11-04
 
 ### Fixed

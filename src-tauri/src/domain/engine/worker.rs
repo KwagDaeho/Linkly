@@ -23,6 +23,7 @@ use crate::domain::engine::input::{
     tilt_side_sustain, tilt_uses_pan_stream, ActionRepeat, PendingHold, ScrollRepeat,
     TiltHoldGate,
 };
+use crate::domain::engine::input_device_registry_for_ui;
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{effective_long_press_ms, Action, Profile};
 use crate::domain::remap_session::RemapSession;
@@ -32,14 +33,14 @@ use crate::platform::hid::{
     build_input_device_statuses, collect_input_snapshot, find_catalog_hid_device, open_catalog_hid_device,
     patch_wireless_rf_link_status, scan_input_snapshot,
 };
-use crate::platform::{capture, inject, permissions, suppress};
+use crate::platform::{capture, inject, input_monitor, permissions, suppress};
 
 pub(crate) fn run(
     profile: Arc<Mutex<Profile>>,
     profile_dirty: Arc<AtomicBool>,
     session: Arc<RemapSession>,
     running: Arc<AtomicBool>,
-    last_report: Arc<Mutex<Option<LastReport>>>,
+    _last_report: Arc<Mutex<Option<LastReport>>>,
     connected: Arc<Mutex<Option<DeviceInfo>>>,
     known_input_devices: Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
     input_devices: Arc<Mutex<Vec<InputDeviceStatus>>>,
@@ -63,39 +64,41 @@ pub(crate) fn run(
 
     let mut profile_snap = profile.lock().clone();
     let mut last_full_device_scan = Instant::now();
-    const FULL_DEVICE_SCAN_INTERVAL: Duration = Duration::from_secs(3);
+    let mut last_outer_registry = Instant::now();
+    const FULL_DEVICE_SCAN_INTERVAL: Duration = Duration::from_secs(15);
+    const REGISTRY_IDLE_POLL: Duration = Duration::from_millis(3000);
+    const OUTER_REGISTRY_MIN: Duration = Duration::from_secs(3);
 
     while running.load(Ordering::SeqCst) {
-        // Full USB/BT refresh + open probes are expensive — do not run every loop turn.
-        let snapshot = if last_full_device_scan.elapsed() >= FULL_DEVICE_SCAN_INTERVAL {
-            last_full_device_scan = Instant::now();
-            scan_input_snapshot(&mut api)
-        } else {
-            collect_input_snapshot(&api)
-        };
         let device_info = find_catalog_hid_device(&api);
-        *connected.lock() = device_info.clone();
 
-        let profile_enabled = profile_snap.enabled;
-        let profile_target = if profile_enabled {
-            device_info.as_ref()
-        } else {
-            None
-        };
+        if input_device_registry_for_ui()
+            && last_outer_registry.elapsed() >= OUTER_REGISTRY_MIN
         {
-            let mut known = known_input_devices.lock();
-            let (mut statuses, dirty) =
-                build_input_device_statuses(&mut known, &snapshot, profile_target);
-            apply_wireless_rf_link(
+            last_outer_registry = Instant::now();
+            let snapshot = if last_full_device_scan.elapsed() >= FULL_DEVICE_SCAN_INTERVAL {
+                last_full_device_scan = Instant::now();
+                scan_input_snapshot(&mut api)
+            } else {
+                collect_input_snapshot(&api, false)
+            };
+            *connected.lock() = device_info.clone();
+
+            let profile_enabled = profile_snap.enabled;
+            let profile_target = if profile_enabled {
+                device_info.as_ref()
+            } else {
+                None
+            };
+            publish_input_device_registry(
                 &api,
-                &mut statuses,
+                &snapshot,
+                profile_target,
                 profile_enabled,
+                &known_input_devices,
+                &input_devices,
                 &rf_last_hid_input,
             );
-            *input_devices.lock() = statuses;
-            if dirty {
-                let _ = input_device_store::save_known(&known);
-            }
         }
 
         if profile_dirty.swap(false, Ordering::SeqCst) {
@@ -174,7 +177,9 @@ pub(crate) fn run(
 
             match device.read_timeout(&mut buf, 8) {
                 Ok(0) => {
-                    if last_input_scan.elapsed() >= Duration::from_millis(800) {
+                    if input_device_registry_for_ui()
+                        && last_input_scan.elapsed() >= REGISTRY_IDLE_POLL
+                    {
                         let refresh_list =
                             last_registry_full_scan.elapsed() >= FULL_DEVICE_SCAN_INTERVAL;
                         if refresh_list {
@@ -223,6 +228,7 @@ pub(crate) fn run(
                             state,
                             &profile_snap,
                             capture::input_capture_active(),
+                            None,
                         );
                         custom_mapping::maintain_chords(
                             state,
@@ -239,6 +245,7 @@ pub(crate) fn run(
                                 state,
                                 &profile_snap,
                                 capture::input_capture_active(),
+                                None,
                             );
                             neutralize_remapped_catalog_presses(prev, state, &profile_snap);
                             apply_button_edges(
@@ -252,25 +259,15 @@ pub(crate) fn run(
                                 &mut scroll_repeats,
                                 &mut key_repeats,
                             );
-                            arm_remap_release_grace(prev, state, &profile_snap);
+                            arm_remap_click_grace(prev, state, &profile_snap);
                             sync_catalog_suppress_mask(
                                 prev,
                                 state,
                                 &profile_snap,
                                 capture::input_capture_active(),
+                                None,
                             );
                             prev = state;
-                            if let Some(rep) = last_report.lock().as_mut() {
-                                rep.buttons.retain(|b| {
-                                    *b != "wheel_tilt_left" && *b != "wheel_tilt_right"
-                                });
-                                if state.tilt_left {
-                                    rep.buttons.push("wheel_tilt_left");
-                                }
-                                if state.tilt_right {
-                                    rep.buttons.push("wheel_tilt_right");
-                                }
-                            }
                         }
                     });
                     // Pulse (AC off): HID quiet → allow next tilt without pan==0.
@@ -285,33 +282,38 @@ pub(crate) fn run(
                         *rf_last_hid_input.lock() = Some(Instant::now());
                     }
                     let data = &buf[..n];
-                    let hex = data
-                        .iter()
-                        .map(|b| format!("{b:02x}"))
-                        .collect::<Vec<_>>()
-                        .join(" ");
 
                     let Some(parsed) = ParsedReport::from_bytes(data) else {
-                        // Consumer/vendor reports (id 3/4/5…) — never treat as motion/scroll.
-                        let report = LastReport {
-                            hex,
-                            buttons: vec![],
-                            dx: 0,
-                            dy: 0,
-                            wheel: 0,
-                            pan: 0,
-                            ignored: true,
-                            ts_ms: std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_millis())
-                                .unwrap_or(0),
-                        };
-                        crate::platform::input_monitor::on_hid_report(&report);
-                        *last_report.lock() = Some(report);
+                        if input_monitor::enabled() {
+                            let hex = format_report_hex(data);
+                            let report = LastReport {
+                                hex,
+                                buttons: vec![],
+                                dx: 0,
+                                dy: 0,
+                                wheel: 0,
+                                pan: 0,
+                                ignored: true,
+                                ts_ms: std::time::SystemTime::now()
+                                    .duration_since(std::time::UNIX_EPOCH)
+                                    .map(|d| d.as_millis())
+                                    .unwrap_or(0),
+                            };
+                            input_monitor::on_hid_report(&report);
+                        }
                         continue;
                     };
 
                     let raw_buttons = parsed.buttons;
+                    let capture_block = capture::input_capture_active();
+                    arm_remap_click_grace(prev, raw_buttons, &profile_snap);
+                    sync_catalog_suppress_mask(
+                        prev,
+                        prev,
+                        &profile_snap,
+                        capture_block,
+                        Some(raw_buttons),
+                    );
 
                     let now = Instant::now();
                     let mut state = button_debounce.filter(raw_buttons);
@@ -328,39 +330,45 @@ pub(crate) fn run(
                     tilt_gate.apply(&mut state);
                     custom_mapping::sync_button_state(state);
 
-                    // Probe: show gated tilt (pulse), not sticky raw pan bits.
-                    let buttons = ButtonId::ALL
-                        .into_iter()
-                        .filter(|id| match id {
-                            ButtonId::WheelTiltLeft | ButtonId::WheelTiltRight => {
-                                state.is_down(*id)
-                            }
-                            _ => parsed.buttons.is_down(*id),
-                        })
-                        .map(|id| id.id_str())
-                        .collect::<Vec<_>>();
-                    let report = LastReport {
-                        hex,
-                        buttons,
-                        dx: parsed.dx,
-                        dy: parsed.dy,
-                        wheel: parsed.wheel,
-                        pan: parsed.pan,
-                        ignored: false,
-                        ts_ms: std::time::SystemTime::now()
-                            .duration_since(std::time::UNIX_EPOCH)
-                            .map(|d| d.as_millis())
-                            .unwrap_or(0),
-                    };
-                    crate::platform::input_monitor::on_hid_report(&report);
-                    *last_report.lock() = Some(report);
+                    if input_monitor::enabled() {
+                        let hex = format_report_hex(data);
+                        let buttons = ButtonId::ALL
+                            .into_iter()
+                            .filter(|id| match id {
+                                ButtonId::WheelTiltLeft | ButtonId::WheelTiltRight => {
+                                    state.is_down(*id)
+                                }
+                                _ => parsed.buttons.is_down(*id),
+                            })
+                            .map(|id| id.id_str())
+                            .collect::<Vec<_>>();
+                        let report = LastReport {
+                            hex,
+                            buttons,
+                            dx: parsed.dx,
+                            dy: parsed.dy,
+                            wheel: parsed.wheel,
+                            pan: parsed.pan,
+                            ignored: false,
+                            ts_ms: std::time::SystemTime::now()
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .map(|d| d.as_millis())
+                                .unwrap_or(0),
+                        };
+                        input_monitor::on_hid_report(&report);
+                    }
 
                     let shared = inject::shared_pointer_mode();
 
                     // Update suppress mask *before* inject so the tap can
                     // drop the OS click that arrives with this same report.
-                    let capture_block = capture::input_capture_active();
-                    sync_catalog_suppress_mask(prev, state, &profile_snap, capture_block);
+                    sync_catalog_suppress_mask(
+                        prev,
+                        state,
+                        &profile_snap,
+                        capture_block,
+                        Some(raw_buttons),
+                    );
 
                     let button_transition = state != prev;
                     if button_transition {
@@ -377,12 +385,13 @@ pub(crate) fn run(
                                 &mut scroll_repeats,
                                 &mut key_repeats,
                             );
-                            arm_remap_release_grace(prev, state, &profile_snap);
+                            arm_remap_click_grace(prev, state, &profile_snap);
                             sync_catalog_suppress_mask(
                                 prev,
                                 state,
                                 &profile_snap,
                                 capture_block,
+                                Some(raw_buttons),
                             );
                         });
                     }
@@ -558,12 +567,13 @@ pub(crate) fn run(
                                 &mut scroll_repeats,
                                 &mut key_repeats,
                             );
-                            arm_remap_release_grace(prev, state, &profile_snap);
+                            arm_remap_click_grace(prev, state, &profile_snap);
                             sync_catalog_suppress_mask(
                                 prev,
                                 state,
                                 &profile_snap,
                                 capture_block,
+                                Some(raw_buttons),
                             );
                         }
                     });
@@ -650,7 +660,14 @@ fn catalog_remap_bit(id: ButtonId) -> u8 {
     }
 }
 
-fn arm_remap_release_grace(prev: ButtonState, state: ButtonState, profile: &Profile) {
+fn format_report_hex(data: &[u8]) -> String {
+    data.iter()
+        .map(|b| format!("{b:02x}"))
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
+fn arm_remap_click_grace(prev: ButtonState, state: ButtonState, profile: &Profile) {
     let (rl, rr, rm, rb, rf) = remap::remap_flags(profile);
     let rows = [
         (ButtonId::Left, rl),
@@ -661,7 +678,9 @@ fn arm_remap_release_grace(prev: ButtonState, state: ButtonState, profile: &Prof
     ];
     let mut grace = 0u8;
     for (id, legacy) in rows {
-        if !state.released_edges(prev).contains(&id) {
+        let edge = state.pressed_edges(prev).contains(&id)
+            || state.released_edges(prev).contains(&id);
+        if !edge {
             continue;
         }
         if !catalog_button_remap(profile, id, legacy) {
@@ -678,14 +697,18 @@ fn sync_catalog_suppress_mask(
     state: ButtonState,
     profile: &Profile,
     capture_block: bool,
+    raw: Option<ButtonState>,
 ) {
+    let down = |id: ButtonId| {
+        sticky_catalog_button_down(prev, state, id) || raw.is_some_and(|r| r.is_down(id))
+    };
     let (rl, rr, rm, rb, rf) = remap::remap_flags(profile);
     suppress::set_suppress_mask(remap::mask_for(
-        sticky_button_down(prev, state, ButtonId::Left),
-        sticky_button_down(prev, state, ButtonId::Right),
-        sticky_button_down(prev, state, ButtonId::Middle),
-        sticky_button_down(prev, state, ButtonId::Back),
-        sticky_button_down(prev, state, ButtonId::Forward),
+        down(ButtonId::Left),
+        down(ButtonId::Right),
+        down(ButtonId::Middle),
+        down(ButtonId::Back),
+        down(ButtonId::Forward),
         (capture_block && state.left)
             || catalog_button_remap(profile, ButtonId::Left, rl),
         (capture_block && state.right)
@@ -810,7 +833,7 @@ fn sync_input_device_registry(
     let snapshot = if refresh_list {
         scan_input_snapshot(api)
     } else {
-        collect_input_snapshot(api)
+        collect_input_snapshot(api, false)
     };
     let device_info = find_catalog_hid_device(api);
     *connected.lock() = device_info.clone();
@@ -820,15 +843,36 @@ fn sync_input_device_registry(
     } else {
         None
     };
-    let mut known = known_input_devices.lock();
-    let (mut statuses, dirty) = build_input_device_statuses(&mut known, &snapshot, profile_target);
-    apply_wireless_rf_link(
+    publish_input_device_registry(
         api,
-        &mut statuses,
+        &snapshot,
+        profile_target,
         profile_enabled,
+        known_input_devices,
+        input_devices,
         rf_last_hid_input,
     );
-    *input_devices.lock() = statuses;
+}
+
+fn publish_input_device_registry(
+    api: &HidApi,
+    snapshot: &crate::platform::hid::InputScanSnapshot,
+    profile_target: Option<&DeviceInfo>,
+    profile_enabled: bool,
+    known_input_devices: &Arc<Mutex<HashMap<DeviceIdentityKey, DeviceInfo>>>,
+    input_devices: &Arc<Mutex<Vec<InputDeviceStatus>>>,
+    rf_last_hid_input: &Arc<Mutex<Option<Instant>>>,
+) {
+    let mut known = known_input_devices.lock();
+    let (mut statuses, dirty) =
+        build_input_device_statuses(&mut known, snapshot, profile_target);
+    apply_wireless_rf_link(api, &mut statuses, profile_enabled, rf_last_hid_input);
+    {
+        let mut guard = input_devices.lock();
+        if statuses != *guard {
+            *guard = statuses;
+        }
+    }
     if dirty {
         let _ = input_device_store::save_known(&known);
     }

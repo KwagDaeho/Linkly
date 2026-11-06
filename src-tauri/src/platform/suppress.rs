@@ -22,7 +22,7 @@ use crate::domain::remap::{BIT_BACK, BIT_FORWARD, BIT_LEFT, BIT_MIDDLE, BIT_RIGH
 static SUPPRESS_MASK: AtomicU8 = AtomicU8::new(0);
 static GRACE_MASK: AtomicU8 = AtomicU8::new(0);
 static GRACE_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
-const CLICK_SUPPRESS_GRACE_MS: u64 = 72;
+const CLICK_SUPPRESS_GRACE_MS: u64 = 96;
 /// When we synthesize mouse-down, OS still posts *MouseDragged — suppress those
 /// so `inject::move_by` owns the stream. Plain `MouseMoved` (trackpad) stays.
 static SUPPRESS_MOTION: AtomicBool = AtomicBool::new(false);

@@ -5,6 +5,7 @@ import { TabBar } from "./TabBar";
 import { TabSwipePanels } from "./TabSwipePanels";
 import { MouseTab, SystemTab, TriggerTab } from "@/components/tabs";
 import { TriggerScopeProvider } from "@/hooks/trigger/TriggerScopeContext";
+import { InputDevicesProvider } from "@/hooks/useInputDevices";
 import { useProfileCtx } from "@/hooks";
 import type { TabId } from "@/types";
 
@@ -31,13 +32,15 @@ export const AppShell = () => {
 
         <TabBar tab={tab} onTab={setTab} />
 
-        <TabSwipePanels
-          active={tab}
-          activeScrollRef={activeTabScrollRef}
-          trigger={<TriggerTab />}
-          mouse={<MouseTab />}
-          system={<SystemTab />}
-        />
+        <InputDevicesProvider pollEnabled={tab === "trigger"}>
+          <TabSwipePanels
+            active={tab}
+            activeScrollRef={activeTabScrollRef}
+            trigger={<TriggerTab />}
+            mouse={<MouseTab />}
+            system={<SystemTab />}
+          />
+        </InputDevicesProvider>
 
         <EditorHost />
       </main>

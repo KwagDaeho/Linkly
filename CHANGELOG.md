@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+## [1.5.3] — 2026-11-06
+
+### Fixed
+
+- **Memory** — stop app-wide `getLastReport` / `get_connected` polling from `SessionProvider`; Live HID probe polls only when `ProbePanel` is mounted. Device list uses `list_devices` only on the **Trigger** tab while the window is visible (3s interval). HID worker no longer allocates hex/`LastReport` on every packet unless the event viewer is on. Device registry scans cache `open_device` probes (20s TTL), run only while the Trigger tab is polling, and skip redundant status writes when unchanged.
+- **RB / remapped clicks** — sync OS suppress mask from raw HID before debounce; grace window on press and release so native right-click does not leak beside triggers.
+- **Release** — disable WebView devtools in shipped builds.
+
 ## [1.5.2] — 2026-11-05
 
 ### Fixed

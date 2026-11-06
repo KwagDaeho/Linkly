@@ -1,4 +1,3 @@
-import type { DeviceInfo, LastReport } from "../device";
 import type { PermissionStatus } from "../ui";
 
 export type SessionAutostart = {
@@ -7,8 +6,6 @@ export type SessionAutostart = {
 };
 
 export type SessionContextValue = {
-  connected: DeviceInfo | null;
-  report: LastReport | null;
   trusted: boolean;
   permissionGateVisible: boolean;
   permissionRestarting: boolean;

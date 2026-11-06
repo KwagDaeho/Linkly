@@ -1,14 +1,14 @@
 import { Panel } from "@/components/ui/Panel";
 import { SectionHead } from "@/components/ui/SectionHead";
 import { buttonLabel } from "../../i18n";
+import { useDeviceProbe } from "@/hooks/useDeviceProbe";
 import { usePrefs } from "@/hooks/prefs";
-import { useSession } from "@/hooks/session";
 
 import * as styles from "./ProbePanel.css";
 
 export const ProbePanel = () => {
   const { lang, i18n } = usePrefs();
-  const { report } = useSession();
+  const { report } = useDeviceProbe(true);
   return (
     <Panel>
       <SectionHead title={i18n.probe} />

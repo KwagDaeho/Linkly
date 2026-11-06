@@ -2,7 +2,7 @@
   "name": "linkly",
   "description": "Linkly",
   "private": true,
-  "version": "1.5.2",
+  "version": "1.5.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

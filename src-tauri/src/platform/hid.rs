@@ -1,6 +1,11 @@
 //! Catalog HID discovery and open helpers.
 
+use std::collections::HashMap;
+use std::sync::LazyLock;
+use std::time::{Duration, Instant};
+
 use hidapi::HidApi;
+use parking_lot::Mutex;
 
 use crate::domain::device::{
     device_identity_key, is_catalog_device, is_wireless_receiver_pid, merge_device_info,
@@ -10,6 +15,44 @@ use crate::domain::device::{
 
 #[cfg(target_os = "macos")]
 use crate::platform::hid_macos;
+
+/// Avoid `open_device` on every snapshot — macOS hidapi churns native allocations.
+const ATTACH_PROBE_TTL: Duration = Duration::from_secs(20);
+
+struct AttachCacheEntry {
+    attached: bool,
+    probed_at: Instant,
+}
+
+static ATTACH_CACHE: LazyLock<Mutex<HashMap<String, AttachCacheEntry>>> =
+    LazyLock::new(|| Mutex::new(HashMap::new()));
+
+const ATTACH_CACHE_MAX: usize = 96;
+
+pub fn clear_attach_probe_cache() {
+    ATTACH_CACHE.lock().clear();
+}
+
+fn store_attach_cache(key: String, attached: bool) {
+    let mut guard = ATTACH_CACHE.lock();
+    if guard.len() >= ATTACH_CACHE_MAX {
+        guard.retain(|_, entry| entry.probed_at.elapsed() < ATTACH_PROBE_TTL);
+        if guard.len() >= ATTACH_CACHE_MAX {
+            guard.clear();
+        }
+    }
+    guard.insert(
+        key,
+        AttachCacheEntry {
+            attached,
+            probed_at: Instant::now(),
+        },
+    );
+}
+
+fn attach_cache_key(d: &hidapi::DeviceInfo) -> String {
+    d.path().to_string_lossy().into_owned()
+}
 
 fn hid_node_online(d: &hidapi::DeviceInfo) -> bool {
     #[cfg(target_os = "macos")]
@@ -82,11 +125,22 @@ pub fn probe_wireless_rf_ball_link(api: &HidApi, d: &hidapi::DeviceInfo) -> bool
     false
 }
 
-fn hid_entry_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+fn hid_entry_attached(api: &HidApi, d: &hidapi::DeviceInfo, force_probe: bool) -> bool {
     if !hid_node_online(d) {
+        ATTACH_CACHE.lock().remove(&attach_cache_key(d));
         return false;
     }
-    hid_device_responds(api, d)
+    let key = attach_cache_key(d);
+    if !force_probe {
+        if let Some(entry) = ATTACH_CACHE.lock().get(&key) {
+            if entry.probed_at.elapsed() < ATTACH_PROBE_TTL {
+                return entry.attached;
+            }
+        }
+    }
+    let attached = hid_device_responds(api, d);
+    store_attach_cache(key, attached);
+    attached
 }
 
 fn hid_transport_for_path(path: &str) -> HidTransport {
@@ -119,7 +173,7 @@ pub fn open_catalog_hid_device(
 pub fn find_catalog_hid_device(api: &HidApi) -> Option<DeviceInfo> {
     api.device_list()
         .filter(|d| is_catalog_device(d.vendor_id(), d.product_id()))
-        .filter(|d| hid_entry_attached(api, d))
+        .filter(|d| hid_entry_attached(api, d, false))
         .min_by_key(|d| {
             let usage_score = match (d.usage_page(), d.usage()) {
                 (0x01, 0x02) => 0u8, // Generic Desktop / Mouse
@@ -205,7 +259,8 @@ pub struct InputScanSnapshot {
 /// Refresh the OS device list, then return attached input devices and per-key transports.
 pub fn scan_input_snapshot(api: &mut HidApi) -> InputScanSnapshot {
     let _ = api.refresh_devices();
-    collect_input_snapshot(api)
+    clear_attach_probe_cache();
+    collect_input_snapshot(api, true)
 }
 
 /// Refresh the OS device list, then return presently attached input devices.
@@ -213,7 +268,7 @@ pub fn scan_input_devices(api: &mut HidApi) -> Vec<DeviceInfo> {
     scan_input_snapshot(api).devices
 }
 
-pub fn collect_input_snapshot(api: &HidApi) -> InputScanSnapshot {
+pub fn collect_input_snapshot(api: &HidApi, force_probe: bool) -> InputScanSnapshot {
     use std::collections::{HashMap, HashSet};
 
     let mut seen_transports_by_key: HashMap<DeviceIdentityKey, HashSet<HidTransport>> =
@@ -222,7 +277,7 @@ pub fn collect_input_snapshot(api: &HidApi) -> InputScanSnapshot {
         if !is_input_hid(d.usage_page(), d.usage()) {
             continue;
         }
-        if !hid_entry_attached(api, d) {
+        if !hid_entry_attached(api, d, force_probe) {
             continue;
         }
         let transport = hid_transport_for_path(&d.path().to_string_lossy());
@@ -239,7 +294,7 @@ pub fn collect_input_snapshot(api: &HidApi) -> InputScanSnapshot {
         if !is_input_hid(d.usage_page(), d.usage()) {
             continue;
         }
-        if !hid_entry_attached(api, d) {
+        if !hid_entry_attached(api, d, force_probe) {
             continue;
         }
         let info = device_info_from_hid(&d);
@@ -310,7 +365,7 @@ pub fn collect_input_snapshot(api: &HidApi) -> InputScanSnapshot {
 
 /// Input devices from an existing `HidApi` (safe on the HID worker — never `HidApi::new` from UI).
 pub fn collect_input_devices(api: &HidApi) -> Vec<DeviceInfo> {
-    collect_input_snapshot(api).devices
+    collect_input_snapshot(api, false).devices
 }
 
 #[cfg(all(test, target_os = "macos"))]
@@ -331,7 +386,7 @@ fn macos_collects_attached_input_devices() {
         "hidapi listed input HIDs but collect_input_devices returned none"
     );
     let mut known = std::collections::HashMap::new();
-    let snapshot = collect_input_snapshot(&api);
+    let snapshot = collect_input_snapshot(&api, false);
     let (statuses, _) = build_input_device_statuses(&mut known, &snapshot, None);
     for s in &statuses {
         assert!(

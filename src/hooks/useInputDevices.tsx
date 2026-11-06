@@ -5,11 +5,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { invoke } from "@tauri-apps/api/core";
-import type { InputDeviceStatus } from "@/types";
 
-const POLL_MS = 1000;
+import { INPUT_DEVICES_POLL_MS } from "@/constants/polling";
+import type { InputDeviceStatus } from "@/types";
 
 type InputDevicesContextValue = {
   devices: InputDeviceStatus[];
@@ -28,15 +28,38 @@ const deviceListSignature = (list: InputDeviceStatus[]): string =>
     )
     .join("|");
 
-export const InputDevicesProvider = ({ children }: { children: ReactNode }) => {
+type InputDevicesProviderProps = {
+  children: ReactNode;
+  /** Poll only on Trigger tab (device list UI). Off = no list_devices IPC. */
+  pollEnabled: boolean;
+};
+
+export const InputDevicesProvider = ({
+  children,
+  pollEnabled,
+}: InputDevicesProviderProps) => {
   const [devices, setDevices] = useState<InputDeviceStatus[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!pollEnabled) {
+      return;
+    }
+
     let cancelled = false;
+    let intervalId = 0;
+    let windowVisible = true;
 
     const refresh = async () => {
+      if (cancelled || !pollEnabled) {
+        return;
+      }
       try {
+        const visible = await getCurrentWindow().isVisible();
+        windowVisible = visible;
+        if (!visible) {
+          return;
+        }
         const list = await invoke<InputDeviceStatus[]>("list_devices");
         if (cancelled) {
           return;
@@ -55,13 +78,50 @@ export const InputDevicesProvider = ({ children }: { children: ReactNode }) => {
       }
     };
 
+    const armInterval = () => {
+      if (intervalId !== 0) {
+        window.clearInterval(intervalId);
+      }
+      intervalId = window.setInterval(() => {
+        void refresh();
+      }, INPUT_DEVICES_POLL_MS);
+    };
+
     void refresh();
-    const id = window.setInterval(() => void refresh(), POLL_MS);
+    armInterval();
+
+    const onVisibility = () => {
+      if (document.visibilityState === "visible" && windowVisible) {
+        void refresh();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+
+    let unlistenFocus: (() => void) | undefined;
+    void getCurrentWindow()
+      .onFocusChanged(({ payload: focused }) => {
+        windowVisible = focused;
+        if (focused) {
+          void refresh();
+        }
+      })
+      .then((off) => {
+        if (cancelled) {
+          off();
+          return;
+        }
+        unlistenFocus = off;
+      });
+
     return () => {
       cancelled = true;
-      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+      unlistenFocus?.();
+      if (intervalId !== 0) {
+        window.clearInterval(intervalId);
+      }
     };
-  }, []);
+  }, [pollEnabled]);
 
   return (
     <InputDevicesContext.Provider value={{ devices, error }}>

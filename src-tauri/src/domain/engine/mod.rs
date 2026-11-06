@@ -3,7 +3,7 @@ mod worker;
 
 use std::collections::HashMap;
 use std::panic::{catch_unwind, AssertUnwindSafe};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Arc;
 use std::thread::{self, JoinHandle};
 
@@ -13,6 +13,21 @@ use crate::domain::device::{device_identity_key, is_wireless_receiver_pid, Devic
 use crate::domain::profile::Profile;
 use crate::domain::remap_session::{self, RemapSession};
 use crate::persistence::input_device_store;
+
+/// While the Trigger tab polls `list_devices`, the HID worker refreshes the registry.
+static INPUT_DEVICES_UI_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
+const UI_REGISTRY_KEEPALIVE_MS: u64 = 45_000;
+
+fn now_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+pub(crate) fn input_device_registry_for_ui() -> bool {
+    now_ms() <= INPUT_DEVICES_UI_UNTIL_MS.load(Ordering::Relaxed)
+}
 
 pub struct Engine {
     profile: Arc<Mutex<Profile>>,
@@ -56,6 +71,8 @@ impl Engine {
     }
 
     pub fn input_devices(&self) -> Vec<InputDeviceStatus> {
+        let until = now_ms().saturating_add(UI_REGISTRY_KEEPALIVE_MS);
+        INPUT_DEVICES_UI_UNTIL_MS.store(until, Ordering::Relaxed);
         self.input_devices.lock().clone()
     }
 

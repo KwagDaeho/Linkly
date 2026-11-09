@@ -1,0 +1,15 @@
+{
+  "productName": "[DEV] Linkly",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "[DEV] Linkly"
+      }
+    ]
+  },
+  "bundle": {
+    "shortDescription": "[DEV] Linkly",
+    "longDescription": "Linkly (development build)."
+  }
+}

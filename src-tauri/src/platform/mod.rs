@@ -4,6 +4,8 @@ pub mod capture;
 pub mod input_monitor;
 pub mod inject;
 pub mod lifecycle;
+#[cfg(target_os = "macos")]
+pub mod login_item;
 pub mod suppress;
 pub mod hid;
 #[cfg(target_os = "macos")]

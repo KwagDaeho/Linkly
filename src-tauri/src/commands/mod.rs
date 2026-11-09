@@ -1,4 +1,5 @@
 pub mod apps;
+pub mod autostart;
 pub mod capture;
 pub mod device;
 pub mod input_monitor;
@@ -7,6 +8,7 @@ pub mod profile;
 pub mod system;
 
 pub use apps::*;
+pub use autostart::*;
 pub use capture::*;
 pub use device::*;
 pub use input_monitor::*;

@@ -102,16 +102,8 @@ export const resetTccPermissions = async (): Promise<void> => {
   await invoke("reset_tcc_permissions");
 };
 export const autostartIsEnabled = async (): Promise<boolean> => {
-  try {
-    const mod = await import("@tauri-apps/plugin-autostart");
-    return await mod.isEnabled();
-  } catch {
-    return false;
-  }
+  return invoke<boolean>("autostart_is_enabled");
 };
 export const autostartSet = async (on: boolean): Promise<boolean> => {
-  const mod = await import("@tauri-apps/plugin-autostart");
-  if (on) await mod.enable();
-  else await mod.disable();
-  return await mod.isEnabled();
+  return invoke<boolean>("set_autostart_enabled", { enabled: on });
 };

@@ -142,6 +142,7 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let start_minimized = app.state::<AppState>().engine.profile().start_minimized;
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.set_icon(icon);
+        let _ = window.set_title(crate::constants::PRODUCT_NAME);
         if start_minimized {
             let _ = window.hide();
         } else {

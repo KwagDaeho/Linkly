@@ -8,6 +8,7 @@ use crate::domain::engine::Engine;
 use crate::platform::lifecycle;
 use crate::persistence::{instance_lock, profile_store};
 use crate::platform::capture;
+use tauri_plugin_autostart::MacosLauncher;
 use std::io::Write;
 use std::sync::Arc;
 use tauri::{Manager, WindowEvent};
@@ -62,10 +63,12 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
-        .plugin(tauri_plugin_autostart::init(
-            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
-            Some(vec![]),
-        ))
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .app_name(crate::constants::PRODUCT_NAME)
+                .macos_launcher(MacosLauncher::LaunchAgent)
+                .build(),
+        )
         .manage(AppState {
             engine: Arc::clone(&engine),
             _instance_lock: instance_lock,
@@ -95,6 +98,8 @@ pub fn run() {
             commands::get_app_icon,
             commands::set_input_event_monitor_enabled,
             commands::set_event_viewer_channel,
+            commands::autostart_is_enabled,
+            commands::set_autostart_enabled,
         ])
         .setup(|app| setup::setup_app(app))
         .on_window_event(|window, event| {

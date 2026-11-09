@@ -2,7 +2,7 @@
   "name": "linkly",
   "description": "Linkly",
   "private": true,
-  "version": "1.5.3",
+  "version": "1.5.4",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,7 @@
     "test": "vitest run",
     "preview": "vite preview",
     "tauri": "tauri",
-    "tauri:dev": "tauri dev",
+    "tauri:dev": "tauri dev --config src-tauri/tauri.dev.conf.json",
     "tauri:build": "tauri build",
     "version:sync": "node scripts/sync-app-version.mjs",
     "release:dmg": "bash scripts/create-release-dmg.sh",

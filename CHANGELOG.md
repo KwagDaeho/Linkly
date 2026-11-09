@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [1.5.4] — 2026-11-09
+
+### Fixed
+
+- **Autostart** — turning off “launch at login” also removes stale macOS Login Items (e.g. `/Applications/Linkly.app`) alongside the LaunchAgent entry.
+- **Dev builds** — menu/tray/window and bundle show `[DEV] Linkly` (`tauri dev --config tauri.dev.conf.json`).
+
 ## [1.5.3] — 2026-11-06
 
 ### Fixed

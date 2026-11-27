@@ -1,17 +1,17 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
 import {
-  mappingTableColumns,
   mappingTableGap,
+  reorderTableColumns,
 } from "../mappingTableGrid.css";
 
 export const row = style({
   display: "grid",
-  gridTemplateColumns: mappingTableColumns,
+  gridTemplateColumns: reorderTableColumns,
   alignItems: "center",
   gap: mappingTableGap,
   minHeight: "2rem",
-  padding: "0.1875rem 0.5rem 0.1875rem 0.625rem",
+  padding: "0.1875rem 0.5rem 0.1875rem 0.3rem",
   border: "1px solid var(--line)",
   borderRadius: "0.5rem",
   background: "var(--accent-soft)",

@@ -4,6 +4,7 @@ pub mod apps;
 pub mod autorelease;
 pub mod capture;
 pub mod input_monitor;
+pub mod input_sources;
 pub mod inject;
 pub mod keyboards;
 pub mod launch_agent;

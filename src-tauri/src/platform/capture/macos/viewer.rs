@@ -1,7 +1,9 @@
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::time::Instant;
 
 use crate::domain::modifier;
 use crate::platform::input_monitor::{self, InputEventLine};
+use crate::platform::input_sources::SourceKind;
 
 use super::keycodes::{
     key_activator, key_activator_name, modifier_down, CGEventGetIntegerValueField, CGEventRef,
@@ -11,6 +13,8 @@ use super::keycodes::{
 
 static LAST_CURSOR_EMIT_MS: AtomicU64 = AtomicU64::new(0);
 const CURSOR_MIN_INTERVAL_MS: u64 = 50;
+/// `kCGEventSourceUnixProcessID`.
+const EVENT_SOURCE_UNIX_PROCESS_ID: u32 = 41;
 
 #[repr(C)]
 struct CGPoint {
@@ -153,12 +157,30 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
         }
     };
 
+    // Linkly's own injected events carry its pid; hardware events carry none.
+    let pid = unsafe { CGEventGetIntegerValueField(event, EVENT_SOURCE_UNIX_PROCESS_ID) };
+    let own = pid == i64::from(std::process::id());
+    let source_kind = match etype {
+        KEY_DOWN | KEY_UP | FLAGS_CHANGED => Some(SourceKind::Key),
+        LEFT_DOWN | LEFT_UP | RIGHT_DOWN | RIGHT_UP | OTHER_DOWN | OTHER_UP => {
+            Some(SourceKind::Button)
+        }
+        MOUSE_MOVED | LEFT_MOUSE_DRAGGED | RIGHT_MOUSE_DRAGGED | OTHER_MOUSE_DRAGGED
+        | SCROLL_WHEEL => Some(SourceKind::Pointer),
+        _ => None,
+    };
     let line = InputEventLine {
         ts_ms,
         source: "os",
         kind,
         summary: summary.clone(),
         detail: summary,
+        device: own.then(|| "Linkly".to_string()),
+        device_hint: if own {
+            None
+        } else {
+            source_kind.map(|k| (k, Instant::now()))
+        },
     };
     input_monitor::publish(line);
 }

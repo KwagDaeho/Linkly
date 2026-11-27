@@ -21,6 +21,8 @@ import { SegmentTabs } from "@/components/layout/SegmentTabs";
 import { SlidePages } from "@/components/layout/SlidePages";
 import type { DeviceInfoSummary } from "@/components/mapping/button/DeviceInfoModal";
 import { accordionStateId } from "@/services/accordionState";
+import { readDeviceTabOrder, writeDeviceTabOrder } from "@/services/deviceTabOrder";
+import { applySavedOrder } from "@/domain/list/dragReorder";
 import { hexPid } from "@/utils/format";
 import type { Profile } from "@/types";
 
@@ -45,6 +47,7 @@ export const TriggerTab = ({ active }: { active: boolean }) => {
   const { profile } = useProfileCtx();
   const keyboards = useKeyboards(active);
   const [selectedKey, setSelectedKey] = useState<string>("common");
+  const [tabOrder, setTabOrder] = useState<string[]>(() => readDeviceTabOrder());
 
   if (profile === null) {
     return null;
@@ -89,6 +92,9 @@ export const TriggerTab = ({ active }: { active: boolean }) => {
   }
   const tabKey = (scope: TriggerScope) =>
     scope.kind === "common" ? "common" : scope.deviceKey;
+  // "Common" stays first; device tabs follow the saved order.
+  const ordered = applySavedOrder(tabs.map((t) => tabKey(t.scope)), ["common", ...tabOrder]);
+  tabs.sort((a, b) => ordered.indexOf(tabKey(a.scope)) - ordered.indexOf(tabKey(b.scope)));
   const current = tabs.find((t) => tabKey(t.scope) === selectedKey) ?? tabs[0];
 
   const totalSingle = tabs.reduce(
@@ -116,6 +122,17 @@ export const TriggerTab = ({ active }: { active: boolean }) => {
               ariaLabel={i18n.buttonMapping}
               active={tabKey(current.scope)}
               onSelect={setSelectedKey}
+              reorder={{
+                lockedIds: ["common"],
+                onCommit: (ids) => {
+                  const devices = ids.filter((id) => id !== "common");
+                  setTabOrder(devices);
+                  writeDeviceTabOrder(devices);
+                },
+                startLabel: i18n.tabReorderStart,
+                confirmLabel: i18n.tabReorderConfirm,
+                cancelLabel: i18n.cancel,
+              }}
               items={tabs.map((tab) => {
                 const count = singleTriggerCount(profile, tab.scope);
                 return {

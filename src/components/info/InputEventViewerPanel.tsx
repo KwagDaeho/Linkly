@@ -34,7 +34,9 @@ const EventChannel = ({
   lang: import("@/types").Lang;
 }) => {
   const logRef = useRef<HTMLDivElement>(null);
-  const latestText = latest ? formatEventRowText(latest, lang) : "";
+  const latestText = latest
+    ? `${formatEventRowText(latest, lang)}${latest.device ? `  ·  ${latest.device}` : ""}`
+    : "";
 
   useEffect(() => {
     const node = logRef.current;
@@ -65,6 +67,9 @@ const EventChannel = ({
               <span className={styles.time}>{formatTime(line.tsMs)}</span>
               <span className={styles.summary}>
                 {formatEventRowText(line, lang)}
+              </span>
+              <span className={styles.device} title={line.device}>
+                {line.device ?? ""}
               </span>
             </div>
           ))

@@ -1,3 +1,5 @@
+import type { ReorderRowProps } from "@/components/ui/ReorderableList";
+import { cx } from "@/utils/cx";
 import { BindingRow } from "../button/BindingRow";
 import { asBinding, catalogButtonFromComboTrigger } from "@/domain/profile";
 import { comboActivatorToSnapshot } from "@/domain/capture";
@@ -12,6 +14,8 @@ import * as styles from "./CustomMappingRow.css";
 
 interface CustomMappingRowProps {
   entry: CustomMappingEntry;
+  /** Drag handle + row state from `ReorderableList`. */
+  reorder?: ReorderRowProps;
 }
 
 export const CustomMappingRow = (props: CustomMappingRowProps) => {
@@ -24,7 +28,8 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
     ? comboActivatorToSnapshot(entry.activator)
     : null;
   return (
-    <div className={styles.row}>
+    <div className={cx(styles.row, props.reorder?.className)} style={props.reorder?.style}>
+      {props.reorder?.handle ?? <span aria-hidden />}
       <div className={styles.comboTrigger}>
         <MappingTriggerButton
           lang={lang}

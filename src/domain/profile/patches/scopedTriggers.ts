@@ -1,3 +1,4 @@
+import { moveItem } from "@/domain/list/dragReorder";
 import type {
   Action,
   ActionSlot,
@@ -116,6 +117,18 @@ export const withScopedButtonMappingAdded = (
   ]);
 };
 
+export const withScopedButtonMappingMoved = (
+  profile: Profile,
+  scope: TriggerScope,
+  from: number,
+  to: number,
+): Profile =>
+  withScopedButtonMappings(
+    profile,
+    scope,
+    moveItem(scopedButtonMappingsOf(profile, scope), from, to),
+  );
+
 export const withScopedButtonMappingRemoved = (
   profile: Profile,
   scope: TriggerScope,
@@ -172,6 +185,18 @@ export const withScopedCustomMappingAdded = (
     ...scopedCustomMappingsOf(profile, scope),
     entry,
   ]);
+
+export const withScopedCustomMappingMoved = (
+  profile: Profile,
+  scope: TriggerScope,
+  from: number,
+  to: number,
+): Profile =>
+  withScopedCustomMappings(
+    profile,
+    scope,
+    moveItem(scopedCustomMappingsOf(profile, scope), from, to),
+  );
 
 export const withScopedCustomMappingRemoved = (
   profile: Profile,

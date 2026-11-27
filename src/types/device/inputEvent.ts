@@ -4,4 +4,6 @@ export type InputEventLine = {
   kind: string;
   summary: string;
   detail: string;
+  /** Physical device the input came from ("Linkly" = injected by Linkly), if known. */
+  device?: string;
 };

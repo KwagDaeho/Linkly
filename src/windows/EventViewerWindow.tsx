@@ -28,6 +28,9 @@ const EventRow = memo(({ line, lang }: { line: ViewerLine; lang: Lang }) => (
   <div className={styles.row}>
     <span className={styles.time}>{formatTime(line.tsMs)}</span>
     <span className={styles.summary}>{formatEventRowText(line, lang)}</span>
+    <span className={styles.device} title={line.device}>
+      {line.device ?? ""}
+    </span>
   </div>
 ));
 

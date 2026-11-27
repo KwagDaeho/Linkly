@@ -156,7 +156,8 @@ globalStyle("button, input, select", {
 });
 
 globalStyle("button", {
-  border: 0,
+  // Transparent 1px border: filled and outlined (ghost) buttons share one height.
+  border: "1px solid transparent",
   borderRadius: 7,
   padding: "0.38rem 0.85rem",
   background: "var(--accent)",
@@ -171,11 +172,11 @@ globalStyle("button:disabled", {
   cursor: "not-allowed",
 });
 
-globalStyle("button:active:not(:disabled):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
+globalStyle("button:active:not(:disabled):not([data-drag-handle]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
   transform: "translateY(1px)",
 });
 
-globalStyle("button:hover:not(:disabled):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
+globalStyle("button:hover:not(:disabled):not([data-drag-handle]):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
   background: "var(--interaction-hover-button)",
 });
 

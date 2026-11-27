@@ -1,3 +1,4 @@
+import { moveItem } from "@/domain/list/dragReorder";
 import type { Action, ActionSlot, Profile } from "@/types";
 import type {
   GestureEntry,
@@ -29,6 +30,9 @@ export const withGestureAdded = (profile: Profile, entry: GestureEntry): Profile
 
 export const withGestureRemoved = (profile: Profile, id: string): Profile =>
   withEntries(profile, (entries) => entries.filter((entry) => entry.id !== id));
+
+export const withGestureMoved = (profile: Profile, from: number, to: number): Profile =>
+  withEntries(profile, (entries) => moveItem(entries, from, to));
 
 export const withGestureTemplate = (
   profile: Profile,

@@ -13,7 +13,7 @@ export const list = style({
 
 export const row = style({
   display: "grid",
-  gridTemplateColumns: "auto minmax(0, 1fr) auto",
+  gridTemplateColumns: "1.1rem auto minmax(0, 1fr) auto",
   alignItems: "center",
   gap: 10,
   minHeight: "2rem",
@@ -70,6 +70,7 @@ export const canvas = style({
 
 export const description = style({
   margin: "0 0 14px",
+  whiteSpace: "pre-line",
   fontSize: "0.84rem",
   lineHeight: 1.5,
 });

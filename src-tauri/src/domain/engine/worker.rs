@@ -190,6 +190,11 @@ pub(crate) fn run(
 
         let _ = device.set_blocking_mode(true);
         inject::sync_cursor_from_system();
+        input_monitor::set_catalog_device(Some(crate::platform::input_sources::label_for(
+            info.vendor_id,
+            info.product_id,
+            &info.product_name,
+        )));
         log::info!(
             "catalog shared {:04x}:{:04x} {}",
             info.vendor_id,

@@ -489,13 +489,18 @@ mod imp {
         if !(0x04..=0xE7).contains(&usage) {
             return;
         }
-        let Some(device_key) = KEYBOARDS
-            .lock()
-            .get(&(device as usize))
-            .map(|k| k.device_key.clone())
-        else {
+        let Some(info) = KEYBOARDS.lock().get(&(device as usize)).cloned() else {
             return;
         };
+        let device_key = info.device_key;
+        crate::platform::input_sources::note(
+            crate::platform::input_sources::SourceKind::Key,
+            crate::platform::input_sources::label_for(
+                info.vendor_id,
+                info.product_id,
+                &info.product_name,
+            ),
+        );
         note_modifier(device, &device_key, usage, down);
         if !down || !CAPTURE_ARMED.load(Ordering::SeqCst) {
             return;

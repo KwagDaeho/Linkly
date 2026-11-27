@@ -2,8 +2,8 @@ import { globalStyle, style } from "@vanilla-extract/css";
 
 import { buttonHead } from "../button/ButtonMappingPanel.css";
 import {
-  mappingTableColumns,
   mappingTableGap,
+  reorderTableColumns,
 } from "../mappingTableGrid.css";
 
 export const toolbar = style({
@@ -26,9 +26,6 @@ const addButtonBox = {
 
 export const addButton = style(addButtonBox);
 
-/** Bordered (ghost) twin of `addButton`: same outer size. */
-export const addButtonOutlined = style(addButtonBox);
-
 export const empty = style({
   margin: "8px 0 0",
 });
@@ -36,12 +33,13 @@ export const empty = style({
 export const customMappingHead = style([
   buttonHead,
   {
-    gridTemplateColumns: mappingTableColumns,
+    gridTemplateColumns: reorderTableColumns,
     gap: mappingTableGap,
+    paddingLeft: "0.3rem",
   },
 ]);
 
-globalStyle(`${customMappingHead} > span:nth-child(4), ${customMappingHead} > span:nth-child(5)`, {
+globalStyle(`${customMappingHead} > span:nth-child(5), ${customMappingHead} > span:nth-child(6)`, {
   textAlign: "left",
   paddingLeft: 1,
 });

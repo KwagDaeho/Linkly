@@ -4,6 +4,26 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.3] — 2026-11-27
+
+### Added
+
+- **Input event viewer** — each key, mouse button, scroll and move shows the device it came from (your device names where set); input Linkly injects itself is marked "Linkly".
+- **Reorder triggers** — drag the ⋮⋮ handle to reorder single, combo and gesture triggers (like macro steps).
+- **Reorder device tabs** — ⇄ at the end of the single-trigger tabs: drag tabs left/right, then ✓ save / ✕ cancel ("Common" stays first).
+
+### Changed
+
+- Hovering or dragging a reorder handle outlines the whole row (macro steps too); the highlight lands on the moved row right after a drop.
+- Action menu: hovered, open and current rows fill with the accent and use its contrast text.
+- All buttons share one height (outlined and filled line up); icon buttons keep contrast on hover.
+- Single-trigger tabs: tighter padding, count aligned with the label, no clipped glyphs.
+- Gesture trigger description rewritten (KO: "제스쳐").
+
+### Fixed
+
+- Tabs jumping on the first reorder after launch (stale slide positions).
+
 ## [2.0.2] — 2026-11-27
 
 ### Changed

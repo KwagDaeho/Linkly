@@ -1,3 +1,5 @@
+import type { ReorderRowProps } from "@/components/ui/ReorderableList";
+import { cx } from "@/utils/cx";
 import { ActionSelect } from "@/components/mapping/button/ActionSelect";
 import { Button } from "@/components/ui";
 import { usePrefs } from "@/hooks";
@@ -11,12 +13,15 @@ interface GestureRowProps {
   onRedraw: () => void;
   onPick: (value: string) => void;
   onRemove: () => void;
+  /** Drag handle + row state from `ReorderableList`. */
+  reorder?: ReorderRowProps;
 }
 
-export const GestureRow = ({ entry, onRedraw, onPick, onRemove }: GestureRowProps) => {
+export const GestureRow = ({ entry, onRedraw, onPick, onRemove, reorder }: GestureRowProps) => {
   const { i18n } = usePrefs();
   return (
-    <div className={styles.row}>
+    <div className={cx(styles.row, reorder?.className)} style={reorder?.style}>
+      {reorder?.handle ?? <span aria-hidden />}
       <button
         type="button"
         className={styles.thumbButton}

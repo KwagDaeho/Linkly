@@ -174,44 +174,41 @@ export const menuRowLabel = style({
   pointerEvents: "none",
 });
 
+/** Hover / open / current rows: filled with the accent, text in its contrast ink. */
+const rowHover = {
+  background: "var(--interaction-hover-button)",
+  color: "var(--accent-ink)",
+} as const;
+
 export const categoryRow = style([
   menuRow,
   {
     selectors: {
-      "&:hover:not(:disabled)": {
-        background: "var(--accent-soft)",
-      },
+      "&:hover:not(:disabled)": rowHover,
     },
   },
 ]);
 
 export const categoryRowActive = style({
-  background: "var(--accent-soft)",
-  color: "var(--accent)",
+  background: "var(--accent)",
+  color: "var(--accent-ink)",
 });
 
 export const entryRow = style([
   menuRow,
   {
     selectors: {
-      "&:hover:not(:disabled)": {
-        background: "var(--accent-soft)",
-        color: "var(--accent)",
-      },
+      "&:hover:not(:disabled)": rowHover,
     },
   },
 ]);
 
-/** Current mapping — distinct from hover (`--accent-soft`). */
+/** Current mapping. */
 export const entryRowSelected = style({
-  background: "color-mix(in srgb, var(--accent) 9%, var(--panel-solid))",
-  color: "var(--accent)",
-  boxShadow: "inset 3px 0 0 var(--accent)",
+  background: "var(--accent)",
+  color: "var(--accent-ink)",
   selectors: {
-    "&:hover:not(:disabled)": {
-      background: "var(--accent-soft)",
-      color: "var(--accent)",
-    },
+    "&:hover:not(:disabled)": rowHover,
   },
 });
 
@@ -237,9 +234,10 @@ export const selectionMark = style({
   pointerEvents: "none",
 });
 
+/** Sits on the filled current row: drawn in the row's text color. */
 export const selectionMarkOn = style({
-  borderColor: "var(--accent)",
-  boxShadow: "inset 0 0 0 3px var(--accent)",
+  borderColor: "currentColor",
+  boxShadow: "inset 0 0 0 3px currentColor",
 });
 
 /** @deprecated use selectionMark — kept for theme selectors if any */

@@ -93,6 +93,7 @@ impl RemapSession {
         ball_scroll::sync_from_profile(profile_snap);
         crate::domain::gesture::sync_from_profile(profile_snap);
         crate::platform::keyboards::set_profile(profile_snap);
+        crate::platform::input_sources::set_profile_names(profile_snap);
         custom_mapping::sync_from_profile(profile_snap, trigger_device);
         let changed = button_mapping::sync_from_profile(profile_snap, trigger_device);
         if changed {

@@ -67,7 +67,7 @@ export const logEmpty = style({
 
 export const row = style({
   display: "grid",
-  gridTemplateColumns: "5.5rem 1fr",
+  gridTemplateColumns: "5.5rem minmax(0, 1fr) auto",
   gap: 8,
   padding: "3px 10px",
   alignItems: "baseline",
@@ -86,6 +86,17 @@ export const time = style({
 export const summary = style({
   color: "var(--probe-fg)",
   wordBreak: "break-word",
+});
+
+export const device = style({
+  maxWidth: "14rem",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  color: "var(--accent)",
+  fontSize: "0.85em",
+  fontWeight: 600,
+  textAlign: "right",
 });
 
 export const windowRoot = style({

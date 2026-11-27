@@ -6,10 +6,12 @@ import {
   withScopedButtonMappingActivator,
   withScopedButtonMappingAdded,
   withScopedButtonMappingFlags,
+  withScopedButtonMappingMoved,
   withScopedButtonMappingRemoved,
   withScopedCustomMappingActivator,
   withScopedCustomMappingAdded,
   withScopedCustomMappingFlags,
+  withScopedCustomMappingMoved,
   withScopedCustomMappingRemoved,
   withScopedLongPressMs,
 } from "@/domain/profile/patches/scopedTriggers";
@@ -61,6 +63,11 @@ export const useTriggerScopeMutations = (scope: TriggerScope) => {
             withScopedButtonMappingRemoved(loaded, scope, entryId),
           );
         },
+        move: (from: number, to: number) => {
+          mutateProfile((loaded) =>
+            withScopedButtonMappingMoved(loaded, scope, from, to),
+          );
+        },
         updateFlags: (
           entryId: string,
           patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
@@ -91,6 +98,11 @@ export const useTriggerScopeMutations = (scope: TriggerScope) => {
         remove: (entryId: string) => {
           mutateProfile((loaded) =>
             withScopedCustomMappingRemoved(loaded, scope, entryId),
+          );
+        },
+        move: (from: number, to: number) => {
+          mutateProfile((loaded) =>
+            withScopedCustomMappingMoved(loaded, scope, from, to),
           );
         },
         updateFlags: (

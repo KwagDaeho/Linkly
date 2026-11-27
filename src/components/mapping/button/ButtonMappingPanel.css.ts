@@ -12,6 +12,12 @@ export const buttonGrid = style({
   gap: "0.375rem",
 });
 
+/** Trigger rows under the table head. */
+export const reorderRows = style({
+  display: "grid",
+  gap: "0.375rem",
+});
+
 export const buttonHead = style({
   display: "grid",
   gridTemplateColumns: mappingTableColumnsNoRemove,

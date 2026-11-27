@@ -4,19 +4,21 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, TrySendError};
 use std::sync::LazyLock;
 use std::thread;
+use std::time::{Duration, Instant};
 
 use serde::Serialize;
 
 use crate::domain::engine::LastReport;
 use crate::domain::profile::{Activator, MouseClickButton};
 use crate::platform::app_bus;
+use crate::platform::input_sources::{self, SourceKind};
 
 static EMIT_TX: LazyLock<std::sync::mpsc::SyncSender<InputEventLine>> = LazyLock::new(|| {
     let (tx, rx) = sync_channel(512);
     thread::Builder::new()
         .name("input-event-emit".into())
         .spawn(move || {
-            while let Ok(line) = rx.recv() {
+            while let Ok(mut line) = rx.recv() {
                 let now_ms = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)
                     .map(|d| d.as_millis())
@@ -28,6 +30,7 @@ static EMIT_TX: LazyLock<std::sync::mpsc::SyncSender<InputEventLine>> = LazyLock
                 ) {
                     continue;
                 }
+                resolve_device(&mut line);
                 app_bus::emit("input-event", line);
             }
         })
@@ -65,6 +68,41 @@ pub struct InputEventLine {
     pub kind: String,
     pub summary: String,
     pub detail: String,
+    /// Physical device (or "Linkly" for its own injected input), when known.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub device: Option<String>,
+    /// Resolved into `device` off the event tap thread.
+    #[serde(skip)]
+    pub device_hint: Option<(SourceKind, Instant)>,
+}
+
+/// The HID callback may land just after the CGEvent: give it a moment.
+fn resolve_device(line: &mut InputEventLine) {
+    let Some((kind, at)) = line.device_hint.take() else {
+        return;
+    };
+    if line.device.is_some() {
+        return;
+    }
+    // Pointer motion is frequent: no waiting (keys and buttons are worth a short wait).
+    let attempts = if kind == SourceKind::Pointer { 1 } else { 4 };
+    for attempt in 0..attempts {
+        if let Some(label) = input_sources::near(kind, at) {
+            line.device = Some(label);
+            return;
+        }
+        if attempt + 1 < attempts {
+            thread::sleep(Duration::from_millis(10));
+        }
+    }
+}
+
+static CATALOG_LABEL: LazyLock<parking_lot::Mutex<Option<String>>> =
+    LazyLock::new(|| parking_lot::Mutex::new(None));
+
+/// The trackball the HID worker reads (labels its raw report lines).
+pub fn set_catalog_device(label: Option<String>) {
+    *CATALOG_LABEL.lock() = label;
 }
 
 fn sync_enabled_from_viewers() {
@@ -72,6 +110,7 @@ fn sync_enabled_from_viewers() {
     ENABLED.store(on, Ordering::SeqCst);
     if on {
         crate::platform::capture::ensure_watch_tap();
+        input_sources::ensure_started();
     }
 }
 
@@ -131,6 +170,8 @@ pub fn publish_link_line(summary: String) {
         kind: "linkRemap".into(),
         summary: summary.clone(),
         detail: summary,
+        device: None,
+        device_hint: None,
     });
 }
 
@@ -148,6 +189,8 @@ pub fn publish_long_press(activator: &Activator) {
         kind: "longPress".into(),
         summary: summary.clone(),
         detail: summary,
+        device: None,
+        device_hint: None,
     });
 }
 
@@ -177,6 +220,8 @@ pub fn on_hid_report(report: &LastReport) {
             kind: "hidVendor".into(),
             summary: summary.clone(),
             detail: summary,
+            device: CATALOG_LABEL.lock().clone(),
+            device_hint: None,
         });
         return;
     }
@@ -211,5 +256,7 @@ pub fn on_hid_report(report: &LastReport) {
         kind: "hidReport".into(),
         summary: summary.clone(),
         detail: summary,
+        device: CATALOG_LABEL.lock().clone(),
+        device_hint: None,
     });
 }

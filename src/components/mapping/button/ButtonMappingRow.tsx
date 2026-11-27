@@ -1,3 +1,5 @@
+import type { ReorderRowProps } from "@/components/ui/ReorderableList";
+import { cx } from "@/utils/cx";
 import { BindingRow } from "./BindingRow";
 import { buttonMappingActivatorEditorFromEntry } from "@/domain/editors";
 import { asBinding } from "@/domain/profile";
@@ -14,6 +16,8 @@ interface ButtonMappingRowProps {
   entry: ButtonMappingEntry;
   /** Device scope: re-capture the trigger on that keyboard instead of the global editor. */
   onCaptureTrigger?: () => void;
+  /** Drag handle + row state from `ReorderableList`. */
+  reorder?: ReorderRowProps;
 }
 
 const catalogButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
@@ -38,7 +42,8 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
       : null;
   const resolvedButtonId = catalogButtonId(entry);
   return (
-    <div className={styles.row}>
+    <div className={cx(styles.row, props.reorder?.className)} style={props.reorder?.style}>
+      {props.reorder?.handle ?? <span aria-hidden />}
       <div className={styles.inputCell}>
         <MappingTriggerButton
           lang={lang}

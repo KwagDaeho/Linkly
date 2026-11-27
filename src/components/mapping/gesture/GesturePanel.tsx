@@ -2,9 +2,11 @@ import { useState } from "react";
 
 import { ActivatorSlotRow } from "@/components/mapping/ballScroll";
 import { Button, Muted, Panel } from "@/components/ui";
+import { ReorderableList } from "@/components/ui/ReorderableList";
 import {
   gestureSettingsOf,
   withGestureAdded,
+  withGestureMoved,
   withGesturePatch,
   withGestureRemoved,
   withGestureTemplate,
@@ -92,11 +94,16 @@ export const GesturePanel = () => {
       {gestures.entries.length === 0 ? (
         <Muted className={panelStyles.empty}>{i18n.gestureEmpty}</Muted>
       ) : (
-        <div className={styles.list}>
-          {gestures.entries.map((entry) => (
+        <ReorderableList
+          items={gestures.entries}
+          getKey={(entry) => entry.id}
+          onReorder={(from, to) => mutateProfile((loaded) => withGestureMoved(loaded, from, to))}
+          hint={i18n.reorderHint}
+          className={styles.list}
+          renderRow={(entry, _index, reorder) => (
             <GestureRow
-              key={entry.id}
               entry={entry}
+              reorder={reorder}
               onRedraw={() => setDrawing({ id: entry.id, initial: entry.template })}
               onPick={(value) =>
                 applyCatalogSelection(
@@ -110,8 +117,8 @@ export const GesturePanel = () => {
               }
               onRemove={() => mutateProfile((loaded) => withGestureRemoved(loaded, entry.id))}
             />
-          ))}
-        </div>
+          )}
+        />
       )}
       {drawing !== null ? (
         <GestureDrawModal

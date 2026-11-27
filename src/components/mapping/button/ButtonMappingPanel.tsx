@@ -17,7 +17,8 @@ import type { Activator } from "@/types";
 import { ButtonMappingRow } from "./ButtonMappingRow";
 import { DeviceInfoModal, type DeviceInfoSummary } from "./DeviceInfoModal";
 import { DeviceTriggerCapture } from "./DeviceTriggerCapture";
-import { buttonGrid } from "./ButtonMappingPanel.css";
+import { ReorderableList } from "@/components/ui/ReorderableList";
+import { buttonGrid, reorderRows } from "./ButtonMappingPanel.css";
 import * as styles from "../custom/CustomButtonMappingPanel.css";
 
 interface ButtonMappingPanelProps {
@@ -68,7 +69,7 @@ export const ButtonMappingPanel = (props: ButtonMappingPanelProps) => {
         <div className={styles.toolbar}>
           <Button
             variant="ghost"
-            className={styles.addButtonOutlined}
+            className={styles.addButton}
             onClick={() => setInfoOpen(true)}
           >
             {i18n.deviceInfoButton}
@@ -96,6 +97,7 @@ export const ButtonMappingPanel = (props: ButtonMappingPanelProps) => {
       ) : (
         <div className={buttonGrid}>
           <div className={styles.customMappingHead}>
+            <span aria-hidden />
             <span>{i18n.buttonMappingInput}</span>
             <span>{i18n.mappingAction}</span>
             <span aria-hidden />
@@ -104,21 +106,28 @@ export const ButtonMappingPanel = (props: ButtonMappingPanelProps) => {
             <span>{i18n.mappingActionLong}</span>
             <span aria-hidden />
           </div>
-          {entries.map((entry) => (
-            <ButtonMappingRow
-              key={entry.id}
-              entry={entry}
-              onCaptureTrigger={
-                isDevice
-                  ? () => {
-                      if (props.deviceDisconnected !== true) {
-                        setCapture({ entryId: entry.id });
+          <ReorderableList
+            items={entries}
+            getKey={(entry) => entry.id}
+            onReorder={buttonMappings.move}
+            hint={i18n.reorderHint}
+            className={reorderRows}
+            renderRow={(entry, _index, reorder) => (
+              <ButtonMappingRow
+                entry={entry}
+                reorder={reorder}
+                onCaptureTrigger={
+                  isDevice
+                    ? () => {
+                        if (props.deviceDisconnected !== true) {
+                          setCapture({ entryId: entry.id });
+                        }
                       }
-                    }
-                  : undefined
-              }
-            />
-          ))}
+                    : undefined
+                }
+              />
+            )}
+          />
         </div>
       )}
       {infoOpen && props.device !== undefined ? (

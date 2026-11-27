@@ -1,5 +1,3 @@
-import type { CSSProperties } from "react";
-
 import { formatMacroStepLabel } from "@/i18n";
 import { cx } from "@/utils/cx";
 import { Button } from "@/components/ui";
@@ -9,8 +7,11 @@ import {
 } from "@/components/layout/OverlayScrollArea";
 import type { Lang, MacroStep } from "@/types";
 
-import { isEditableStep, itemShiftY } from "./macroStepDrag";
-import { useMacroStepDrag } from "./useMacroStepDrag";
+import { moveItem } from "@/domain/list/dragReorder";
+import { useDragReorder } from "@/hooks/useDragReorder";
+import * as reorder from "@/components/ui/reorder.css";
+
+import { isEditableStep } from "./macroStepDrag";
 import * as styles from "./MacroStepList.css";
 
 interface MacroStepListProps {
@@ -24,9 +25,9 @@ interface MacroStepListProps {
 }
 
 export const MacroStepList = (props: MacroStepListProps) => {
-  const { listRef, viewportRef, drag, startDrag } = useMacroStepDrag({
-    steps: props.steps,
-    onStepsChange: props.onStepsChange,
+  const { listRef, viewportRef, dragging, handleProps, rowState } = useDragReorder({
+    count: props.steps.length,
+    onReorder: (from, to) => props.onStepsChange(moveItem(props.steps, from, to)),
   });
 
   return (
@@ -41,36 +42,30 @@ export const MacroStepList = (props: MacroStepListProps) => {
             node?.closest(`.${overlayScrollAreaStyles.viewport}`) ?? null;
         }}
         aria-label={props.reorderHint}
-        className={cx(styles.list, drag && styles.listDragging)}
+        className={cx(styles.list, dragging && reorder.listDragging)}
       >
         {props.steps.map((step, stepIndex) => {
-          const dragging = drag?.fromIndex === stepIndex;
-          const shiftY = drag ? itemShiftY(stepIndex, drag) : 0;
+          const row = rowState(stepIndex);
           const editable = isEditableStep(step) && props.onEditStep;
-          const style: CSSProperties | undefined = drag
-            ? {
-                transform: dragging
-                  ? `translateY(${drag.offsetY}px)`
-                  : shiftY
-                    ? `translateY(${shiftY}px)`
-                    : undefined,
-              }
-            : undefined;
 
           return (
             <li
               key={stepIndex}
-              className={cx(styles.stepItem, dragging && styles.stepDragging)}
-              style={style}
+              className={cx(
+                styles.stepItem,
+                row.highlighted && reorder.rowHighlighted,
+                row.dragging && reorder.rowDragging,
+              )}
+              style={row.style}
             >
               <button
                 type="button"
-                className={styles.dragZone}
+                className={cx(reorder.dragHandle, styles.dragZone)}
                 aria-label={props.reorderHint}
                 title={props.reorderHint}
-                onPointerDown={(event) => startDrag(stepIndex, event)}
+                {...handleProps(stepIndex)}
               >
-                <span className={styles.handle} aria-hidden>
+                <span className={reorder.dragDots} aria-hidden>
                   ⋮⋮
                 </span>
                 <span className={styles.order}>{stepIndex + 1}</span>

@@ -1,9 +1,9 @@
 import { asBinding, catalogButtonFromActivator } from "@/domain/profile";
-import { buttonMappingsOf } from "@/domain/profile/button";
+import { CATALOG_BUTTON_IDS, buttonMappingsOf } from "@/domain/profile/button/mapping";
+import { DEFAULT_BINDING } from "@/domain/profile/binding";
 import type {
   ButtonBinding,
   ButtonId,
-  ButtonMappingEntry,
   Profile,
 } from "@/types";
 
@@ -29,13 +29,18 @@ export const mirrorCatalogDeviceBinding = (
   };
 };
 
-export const mirrorMappingEntryToCatalogButton = (
-  profile: Profile,
-  entry: ButtonMappingEntry,
-): Profile => {
-  const buttonId = catalogButtonFromActivator(entry.activator);
-  if (buttonId === undefined) {
-    return profile;
+/**
+ * Re-derive `profile.buttons` from the common list rows (the source of truth). The
+ * backend falls back to `profile.buttons` for a catalog button without a row, so a
+ * deleted or re-targeted row must reset its old button to default — otherwise the
+ * removed mapping keeps firing.
+ */
+export const withCatalogButtonsFromRows = (profile: Profile): Profile => {
+  const rows = buttonMappingsOf(profile);
+  const buttons = { ...profile.buttons };
+  for (const id of CATALOG_BUTTON_IDS) {
+    const row = rows.find((entry) => catalogButtonFromActivator(entry.activator) === id);
+    buttons[id] = row !== undefined ? asBinding(row) : { ...DEFAULT_BINDING };
   }
-  return mirrorCatalogDeviceBinding(profile, buttonId, asBinding(entry));
+  return { ...profile, buttons };
 };

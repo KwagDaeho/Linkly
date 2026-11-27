@@ -3,6 +3,7 @@ export {
   bindingSlot,
   bindingWithSlot,
   DEFAULT_BINDING,
+  isDefaultBinding,
   longPressMs,
 } from "./binding";
 export {

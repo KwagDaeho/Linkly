@@ -4,6 +4,14 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.5] — 2026-11-27
+
+### Fixed
+
+- **Deleted or re-targeted trackball-button triggers kept firing** — the backup copy of catalog button bindings (`profile.buttons`) was not updated on delete / trigger change, and the engine falls back to it when no row exists. It is now re-derived from the common trigger rows on every change and on launch.
+- **Deleted rows coming back** — the legacy migration no longer recreates rows from default copies.
+- **Tilt rules** — changing a common trigger to a wheel tilt, or toggling its flags, keeps auto-click on and long press off again.
+
 ## [2.0.4] — 2026-11-27
 
 ### Fixed

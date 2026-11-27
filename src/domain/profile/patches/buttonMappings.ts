@@ -6,7 +6,7 @@ import {
   isTiltButton,
 } from "@/domain/profile";
 import { buttonMappingsOf } from "@/domain/profile/button";
-import { mirrorMappingEntryToCatalogButton } from "@/domain/profile/button/syncCatalogDeviceBinding";
+import { withCatalogButtonsFromRows } from "@/domain/profile/button/syncCatalogDeviceBinding";
 import type { Action, ActionSlot, Profile } from "@/types";
 
 export const withButtonMappingSlot = (
@@ -26,9 +26,5 @@ export const withButtonMappingSlot = (
     }
     return next;
   });
-  const nextProfile = { ...profile, buttonMappings: nextEntries };
-  const updated = nextEntries.find((entry) => entry.id === entryId);
-  return updated !== undefined
-    ? mirrorMappingEntryToCatalogButton(nextProfile, updated)
-    : nextProfile;
+  return withCatalogButtonsFromRows({ ...profile, buttonMappings: nextEntries });
 };

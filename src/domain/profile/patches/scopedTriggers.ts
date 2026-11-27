@@ -1,3 +1,4 @@
+import { withCatalogButtonsFromRows } from "@/domain/profile/button/syncCatalogDeviceBinding";
 import { moveItem } from "@/domain/list/dragReorder";
 import type {
   ButtonBinding,
@@ -7,7 +8,13 @@ import type {
   Profile,
 } from "@/types";
 
-import { asBinding, resolveBindingFlags } from "@/domain/profile";
+import {
+  asBinding,
+  catalogButtonFromActivator,
+  enforceTiltBindingFlags,
+  isTiltButton,
+  resolveBindingFlags,
+} from "@/domain/profile";
 
 import type { TriggerScope } from "../triggerScope";
 import { scopedButtonMappingsOf } from "../triggerScope";
@@ -62,13 +69,21 @@ export const withScopedLongPressMs = (
   return writeDeviceOverride(profile, scope.deviceKey, { longPressMs: ms });
 };
 
+/** Tilt buttons always auto-click and never long-press. */
+const withTiltFlagsIfTilt = (entry: ButtonMappingEntry): ButtonMappingEntry => {
+  const id = catalogButtonFromActivator(entry.activator);
+  return id !== undefined && isTiltButton(id)
+    ? { ...entry, ...enforceTiltBindingFlags(asBinding(entry)) }
+    : entry;
+};
+
 export const withScopedButtonMappings = (
   profile: Profile,
   scope: TriggerScope,
   entries: ButtonMappingEntry[],
 ): Profile => {
   if (scope.kind === "common") {
-    return { ...profile, buttonMappings: entries };
+    return withCatalogButtonsFromRows({ ...profile, buttonMappings: entries });
   }
   return writeDeviceOverride(profile, scope.deviceKey, {
     buttonMappings: entries,
@@ -128,7 +143,7 @@ export const withScopedButtonMappingActivator = (
     });
   }
   const nextEntries = scopedButtonMappingsOf(profile, scope).map((entry) =>
-    entry.id === entryId ? { ...entry, activator } : entry,
+    entry.id === entryId ? withTiltFlagsIfTilt({ ...entry, activator }) : entry,
   );
   return withScopedButtonMappings(profile, scope, nextEntries);
 };
@@ -145,7 +160,7 @@ export const withScopedButtonMappingFlags = (
     }
     const currentBinding = asBinding(entry);
     const flags = resolveBindingFlags(currentBinding, patch);
-    return { ...entry, ...currentBinding, ...flags };
+    return withTiltFlagsIfTilt({ ...entry, ...currentBinding, ...flags });
   });
   return withScopedButtonMappings(profile, scope, nextEntries);
 };

@@ -1,4 +1,4 @@
-import { DEFAULT_BINDING } from "../binding";
+import { DEFAULT_BINDING, isDefaultBinding } from "../binding";
 import type {
   ButtonBinding,
   ButtonId,
@@ -6,7 +6,7 @@ import type {
   Profile,
 } from "@/types";
 
-const CATALOG_BUTTON_IDS: ButtonId[] = [
+export const CATALOG_BUTTON_IDS: readonly ButtonId[] = [
   "left",
   "right",
   "middle",
@@ -50,6 +50,10 @@ export const migrateLegacyButtonMappings = (profile: Profile): Profile => {
       typeof raw === "object" && raw !== null && "click" in raw
         ? (raw as ButtonBinding)
         : { ...DEFAULT_BINDING, click: raw };
+    // Default copies are not real mappings (they'd resurrect deleted rows).
+    if (isDefaultBinding(binding)) {
+      continue;
+    }
     entries.push({
       id: crypto.randomUUID(),
       activator: { type: "device", button: id },

@@ -1,6 +1,5 @@
 import { migrateLegacyButtonMappings } from "@/domain/profile/button";
-import { mirrorMappingEntryToCatalogButton } from "@/domain/profile/button/syncCatalogDeviceBinding";
-import { buttonMappingsOf } from "@/domain/profile/button";
+import { withCatalogButtonsFromRows } from "@/domain/profile/button/syncCatalogDeviceBinding";
 import { comboEffectiveTrigger, comboWithTrigger } from "./activator";
 import type { ComboActivator, Profile } from "@/types";
 
@@ -17,10 +16,7 @@ type StoredProfile = Profile & { gestureMappings?: unknown };
 /** Normalize legacy combo rows and drop removed product features. */
 export const migrateProfileInputs = (profile: Profile): Profile => {
   const { gestureMappings: _removed, ...base } = profile as StoredProfile;
-  let next: Profile = migrateLegacyButtonMappings(base);
-  for (const entry of buttonMappingsOf(next)) {
-    next = mirrorMappingEntryToCatalogButton(next, entry);
-  }
+  const next: Profile = withCatalogButtonsFromRows(migrateLegacyButtonMappings(base));
   if (next.customMappings === undefined) {
     return next;
   }

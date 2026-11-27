@@ -54,3 +54,10 @@ export const asBinding = (
   };
 };
 export { longPressMs } from "../pointer/speeds";
+
+/** No remap: default click, no long press / auto-click. */
+export const isDefaultBinding = (binding: ButtonBinding): boolean =>
+  binding.click.type === "default" &&
+  binding.longPress.type === "disabled" &&
+  !binding.longPressEnabled &&
+  !binding.autoClick;

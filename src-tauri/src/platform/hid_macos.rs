@@ -2,7 +2,9 @@
 
 use crate::domain::device::HidTransport;
 
+#[allow(non_camel_case_types)]
 type io_object_t = u32;
+#[allow(non_camel_case_types)]
 type mach_port_t = u32;
 type CFTypeRef = *const std::ffi::c_void;
 type CFStringRef = *const std::ffi::c_void;

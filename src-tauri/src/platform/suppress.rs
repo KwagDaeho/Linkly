@@ -10,7 +10,6 @@
 
 use std::sync::atomic::{AtomicBool, AtomicPtr, AtomicU64, AtomicU8, Ordering};
 use std::thread::{self, JoinHandle};
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use core_foundation::mach_port::CFMachPort;
 use core_foundation::runloop::{kCFRunLoopCommonModes, CFRunLoop};
@@ -52,10 +51,7 @@ const EVENT_OTHER_DRAGGED: u32 = 27;
 const FIELD_SCROLL_MOMENTUM_PHASE: u32 = 123;
 
 fn now_ms() -> u64 {
-    SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0)
+    crate::clock::unix_ms() as u64
 }
 
 pub fn set_suppress_mask(mask: u8) {
@@ -235,7 +231,6 @@ extern "C" {
     ) -> *mut std::ffi::c_void;
     fn CGEventTapEnable(tap: *mut std::ffi::c_void, enable: bool);
     fn CGEventGetIntegerValueField(event: *mut std::ffi::c_void, field: u32) -> i64;
-    fn CGEventGetDoubleValueField(event: *mut std::ffi::c_void, field: u32) -> f64;
     fn CGEventSetIntegerValueField(event: *mut std::ffi::c_void, field: u32, value: i64);
     fn CGEventSetDoubleValueField(event: *mut std::ffi::c_void, field: u32, value: f64);
     fn CGEventSetLocation(event: *mut std::ffi::c_void, point: core_graphics::geometry::CGPoint);
@@ -264,7 +259,7 @@ unsafe extern "C" fn tap_callback(
             crate::platform::inject::maintain_restored_cursor();
             return std::ptr::null_mut();
         }
-        if let Some((x, y)) = cursor_lock_point() {
+        if cursor_lock_point().is_some() {
             crate::platform::inject::keep_pinned_cursor();
             return std::ptr::null_mut();
         }
@@ -380,6 +375,8 @@ pub fn ensure_started() {
                         TAP_RUNNING.store(false, Ordering::SeqCst);
                     }
                 }
+                // Null the port before `mach` releases it (no CGEventTapEnable on a freed port).
+                TAP_PORT.store(std::ptr::null_mut(), Ordering::SeqCst);
             }
             TAP_RUNLOOP.store(std::ptr::null_mut(), Ordering::SeqCst);
             TAP_PORT.store(std::ptr::null_mut(), Ordering::SeqCst);
@@ -417,8 +414,4 @@ pub fn stop_tap_thread() {
     if let Some(handle) = TAP_THREAD.lock().take() {
         let _ = handle.join();
     }
-}
-
-pub fn stop() {
-    clear_suppress();
 }

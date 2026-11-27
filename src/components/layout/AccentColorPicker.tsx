@@ -10,7 +10,9 @@ import {
   type Hsv,
   type Rgb,
 } from "@/domain/color/color";
+import { IconButton } from "@/components/ui";
 import { usePrefs } from "@/hooks";
+import { useDismiss } from "@/hooks/useDismiss";
 
 import * as styles from "./AccentColorPicker.css";
 
@@ -74,27 +76,7 @@ export const AccentColorPicker = () => {
     }
   }, [open, hsv.v, fontScale]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const onPointerDown = (event: globalThis.PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        setOpen(false);
-      }
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open]);
+  useDismiss([rootRef], () => setOpen(false), open);
 
   const commitHsv = (next: Hsv) => {
     setHsv(next);
@@ -129,25 +111,23 @@ export const AccentColorPicker = () => {
 
   return (
     <div ref={rootRef} className={styles.root}>
-      <button
-        type="button"
+      <IconButton
+        data-own-hover="press"
         className={styles.trigger}
-        style={{ background: "var(--panel)" }}
-        aria-label={i18n.accentColor}
-        title={i18n.accentColor}
+        label={i18n.accentColor}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
         <span className={styles.triggerIcon} />
-      </button>
+      </IconButton>
       {open && (
         <div className={styles.popover} role="dialog" aria-label={i18n.accentColor}>
           <div className={styles.head}>
             <span>{i18n.accentColor}</span>
             <button
               type="button"
+              data-own-hover="press"
               className={styles.reset}
-              style={{ background: "transparent" }}
               disabled={accentColor === ACCENT_DEFAULT}
               onClick={() => setAccentColor(ACCENT_DEFAULT)}
             >

@@ -56,13 +56,6 @@ pub fn action_is_native_for(id: ButtonId, action: &Action) -> bool {
     }
 }
 
-pub fn is_remapped(id: ButtonId, action: &Action, long_press: &Action) -> bool {
-    let click_remap = !action_is_native_for(id, action);
-    let lp_remap = !matches!(long_press, Action::Disabled | Action::Default)
-        && !action_is_native_for(id, long_press);
-    click_remap || lp_remap
-}
-
 pub fn remap_flags(profile: &Profile) -> (bool, bool, bool, bool, bool) {
     let flag = |id: ButtonId| {
         let b = catalog_button_binding(profile, id);

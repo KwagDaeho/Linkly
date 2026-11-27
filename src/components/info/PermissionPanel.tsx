@@ -4,7 +4,7 @@ import { Row } from "@/components/ui/Row";
 import { usePrefs } from "@/hooks/prefs";
 import { useSession } from "@/hooks/session";
 import * as tauri from "@/services/tauri";
-import type { PermissionKind } from "@/services/tauri";
+import type { PermissionKind } from "@/types";
 import { cx } from "@/utils/cx";
 
 import * as styles from "./PermissionPanel.css";

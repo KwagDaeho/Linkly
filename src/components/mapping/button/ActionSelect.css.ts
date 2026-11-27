@@ -240,10 +240,6 @@ export const selectionMarkOn = style({
   boxShadow: "inset 0 0 0 3px currentColor",
 });
 
-/** @deprecated use selectionMark — kept for theme selectors if any */
-export const radio = selectionMark;
-
-export const radioOn = selectionMarkOn;
 
 globalStyle(`${root}[data-disabled="true"] ${trigger}`, {
   opacity: 0.45,

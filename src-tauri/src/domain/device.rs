@@ -54,22 +54,6 @@ impl ButtonId {
         }
     }
 
-    pub fn label(self) -> &'static str {
-        // Default (Korean) — UI localizes via id_str when possible.
-        match self {
-            ButtonId::Left => "LB",
-            ButtonId::Right => "RB",
-            ButtonId::Middle => "휠 버튼",
-            ButtonId::Back => "◀(뒤로 가기)",
-            ButtonId::Forward => "▶(앞으로 가기)",
-            ButtonId::Fn1 => "Fn1",
-            ButtonId::Fn2 => "Fn2",
-            ButtonId::Fn3 => "Fn3",
-            ButtonId::WheelTiltLeft => "스크롤 기울이기(왼쪽)",
-            ButtonId::WheelTiltRight => "스크롤 기울이기(오른쪽)",
-        }
-    }
-
     pub fn is_hidden_from_macos(self) -> bool {
         matches!(self, ButtonId::Fn1 | ButtonId::Fn2 | ButtonId::Fn3)
     }

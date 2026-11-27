@@ -9,8 +9,7 @@ import {
 } from "@/domain/profile";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { formatSpeedPair } from "@/utils/format";
-import { Panel, SettingsList, SettingsRow, Toggle } from "@/components/ui";
-import { SpeedRangeControl } from "./SpeedRangeControl";
+import { Panel, RangeField, SettingsList, SettingsRow, Toggle } from "@/components/ui";
 
 export const PointerScrollPanel = () => {
   const { i18n } = usePrefs();
@@ -23,7 +22,7 @@ export const PointerScrollPanel = () => {
     <Panel variant="plain">
       <SettingsList>
         <SettingsRow>
-          <SpeedRangeControl
+          <RangeField
             label={i18n.speedX}
             display={formatSpeedPair(pointerSpeedX(profilePointer), POINTER_REF_DPI)}
             min={1}
@@ -34,7 +33,7 @@ export const PointerScrollPanel = () => {
           />
         </SettingsRow>
         <SettingsRow>
-          <SpeedRangeControl
+          <RangeField
             label={i18n.speedY}
             display={formatSpeedPair(pointerSpeedY(profilePointer), POINTER_REF_DPI)}
             min={1}
@@ -45,7 +44,7 @@ export const PointerScrollPanel = () => {
           />
         </SettingsRow>
         <SettingsRow>
-          <SpeedRangeControl
+          <RangeField
             label={i18n.scrollSpeedVertical}
             display={formatSpeedPair(
               scrollSpeedVertical(profilePointer),
@@ -59,7 +58,7 @@ export const PointerScrollPanel = () => {
           />
         </SettingsRow>
         <SettingsRow>
-          <SpeedRangeControl
+          <RangeField
             label={i18n.scrollSpeedHorizontal}
             display={formatSpeedPair(
               scrollSpeedHorizontal(profilePointer),

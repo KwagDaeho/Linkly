@@ -1,4 +1,5 @@
 import { MoonIcon, SunIcon } from "@/components/icons";
+import { IconButton } from "@/components/ui";
 import {
   FONT_SCALE_MAX,
   FONT_SCALE_MIN,
@@ -32,42 +33,38 @@ export const AppHeader = () => {
             role="group"
             aria-label={i18n.fontSizeScale}
           >
-            <button
-              type="button"
-              data-font-scale-btn=""
+            <IconButton
+              data-own-hover=""
               className={cx(
                 styles.fontScaleButton,
                 fontScale <= FONT_SCALE_MIN && styles.fontScaleButtonDisabled,
               )}
-              aria-label={i18n.fontSizeDecrease}
-              title={i18n.fontSizeDecrease}
+              label={i18n.fontSizeDecrease}
               disabled={fontScale <= FONT_SCALE_MIN}
               onClick={decreaseFontScale}
             >
               −
-            </button>
+            </IconButton>
             <span className={styles.fontScaleValue} aria-live="polite">
               {fontScale}%
             </span>
-            <button
-              type="button"
-              data-font-scale-btn=""
+            <IconButton
+              data-own-hover=""
               className={cx(
                 styles.fontScaleButton,
                 fontScale >= FONT_SCALE_MAX && styles.fontScaleButtonDisabled,
               )}
-              aria-label={i18n.fontSizeIncrease}
-              title={i18n.fontSizeIncrease}
+              label={i18n.fontSizeIncrease}
               disabled={fontScale >= FONT_SCALE_MAX}
               onClick={increaseFontScale}
             >
               +
-            </button>
+            </IconButton>
           </div>
           <div className={styles.toolbarRow}>
             <AccentColorPicker />
             <HeaderSegmentToggle
-              groupLabel="Theme"
+              groupLabel={i18n.themeGroup}
               value={theme}
               onChange={(id) => setTheme(id as "light" | "dark")}
               segments={[
@@ -86,7 +83,7 @@ export const AppHeader = () => {
               ]}
             />
             <HeaderSegmentToggle
-              groupLabel="Language"
+              groupLabel={i18n.languageGroup}
               value={lang}
               onChange={(id) => setLang(id as "ko" | "en")}
               segments={[

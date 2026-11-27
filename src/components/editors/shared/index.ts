@@ -1,2 +1,1 @@
-export { ActivatorCaptureModal } from "./ActivatorCaptureModal";
-export { KeyChordModal } from "./KeyChordModal";
+export { CapturePromptModal } from "./CapturePromptModal";

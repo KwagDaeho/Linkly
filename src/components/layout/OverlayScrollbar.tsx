@@ -7,6 +7,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 
+import { SCROLLBAR_FADE_START_MS, SCROLLBAR_FADE_MS } from "@/constants/scrollbar";
 import { cx } from "@/utils/cx";
 
 import { shell } from "./AppShell.css";
@@ -16,11 +17,6 @@ type Thumb = {
   top: number;
   height: number;
 };
-/** Fully hidden this long after the last scroll (unchanged). */
-const SCROLLBAR_GONE_MS = 1120;
-/** Start opacity fade sooner than before (was 900ms). */
-const SCROLLBAR_FADE_START_MS = 480;
-const SCROLLBAR_FADE_MS = SCROLLBAR_GONE_MS - SCROLLBAR_FADE_START_MS;
 interface OverlayScrollbarProps {
   /** Re-sync thumb when main content changes (e.g. tab switch); does not reset scroll. */
   contentKey?: string;

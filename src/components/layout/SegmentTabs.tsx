@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 
+import { IconButton } from "@/components/ui";
 import { useFlipListAnimation } from "@/hooks/useFlipListAnimation";
 import { cx } from "@/utils/cx";
 
@@ -9,7 +10,7 @@ import { tabButtonFromPoint } from "./tabBarPointer";
 import { useTabReorder } from "./useTabReorder";
 import { useTabsPill } from "./useTabsPill";
 
-export type SegmentTabItem = {
+type SegmentTabItem = {
   id: string;
   label: string;
   suffix?: ReactNode;
@@ -94,6 +95,7 @@ export const SegmentTabs = ({ items, active, onSelect, ariaLabel, reorder }: Seg
           type="button"
           role="tab"
           data-tab-item=""
+          data-own-hover="press"
           data-tab-id={item.id}
           data-flip-id={tabOrder.draggingId === item.id ? undefined : item.id}
           aria-selected={item.id === active}
@@ -125,36 +127,30 @@ export const SegmentTabs = ({ items, active, onSelect, ariaLabel, reorder }: Seg
         <div className={styles.reorderControls}>
           {tabOrder.editing ? (
             <>
-              <button
-                type="button"
+              <IconButton
                 className={cx(styles.iconButton, styles.iconConfirm)}
-                aria-label={reorder.confirmLabel}
-                title={reorder.confirmLabel}
+                label={reorder.confirmLabel}
                 onClick={tabOrder.confirm}
               >
                 ✓
-              </button>
-              <button
-                type="button"
+              </IconButton>
+              <IconButton
                 className={styles.iconButton}
-                aria-label={reorder.cancelLabel}
-                title={reorder.cancelLabel}
+                label={reorder.cancelLabel}
                 onClick={tabOrder.cancel}
               >
                 ✕
-              </button>
+              </IconButton>
             </>
           ) : (
-            <button
-              type="button"
+            <IconButton
               className={styles.iconButton}
-              aria-label={reorder.startLabel}
-              title={reorder.startLabel}
+              label={reorder.startLabel}
               disabled={items.length - reorder.lockedIds.length < 2}
               onClick={tabOrder.start}
             >
               ⇄
-            </button>
+            </IconButton>
           )}
         </div>
       ) : null}

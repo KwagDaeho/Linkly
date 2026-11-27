@@ -110,10 +110,6 @@ pub(crate) fn activator_capture() -> bool {
     ACTIVATOR_CAPTURE.load(Ordering::SeqCst)
 }
 
-pub(crate) fn combo_activator_capture() -> bool {
-    COMBO_ACTIVATOR_CAPTURE.load(Ordering::SeqCst)
-}
-
 pub(crate) fn combo_trigger_capture() -> bool {
     COMBO_TRIGGER_CAPTURE.load(Ordering::SeqCst)
 }

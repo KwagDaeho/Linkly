@@ -9,18 +9,13 @@ mod viewer;
 
 #[cfg(target_os = "macos")]
 pub(crate) use combo::{emit_combo_preview, note_capture_token};
-pub use combo::{clear_combo_held, combo_held_parts};
+pub use combo::clear_combo_held;
 
 /// Trigger name the event tap reports for `code` (`Activator::Key`).
 pub fn activator_name_for_keycode(code: u16) -> String {
     crate::domain::modifier::side_name_from_keycode(code)
         .map(str::to_string)
         .unwrap_or_else(|| keycodes::key_activator_name(code))
-}
-
-#[cfg(target_os = "macos")]
-pub(crate) fn refresh_combo_preview() {
-    combo::emit_combo_preview();
 }
 
 /// Re-enable after macOS disabled the tap — only while still trusted. Re-enabling a tap
@@ -41,7 +36,6 @@ pub fn disable_key_capture_tap_now() {
 #[cfg(target_os = "macos")]
 fn set_key_capture_tap_enabled(enabled: bool) {
     use core_foundation::mach_port::CFMachPortRef;
-    use std::ffi::c_void;
     use std::sync::atomic::Ordering;
 
     use super::session::KEY_CAPTURE_TAP_PORT;
@@ -59,9 +53,8 @@ fn set_key_capture_tap_enabled(enabled: bool) {
 
 #[cfg(target_os = "macos")]
 mod tap_thread {
-    use core_foundation::runloop::CFRunLoop;
     use parking_lot::Mutex;
-    use std::sync::atomic::{AtomicPtr, Ordering};
+    use std::sync::atomic::AtomicPtr;
     use std::thread::JoinHandle;
 
     pub(super) static TAP_RUNLOOP: AtomicPtr<std::ffi::c_void> =
@@ -165,6 +158,8 @@ pub fn ensure_tap_thread() {
                     unsafe { CGEventTapEnable(port, true) };
                     log::info!("key-capture event tap ready");
                     CFRunLoop::run_current();
+                    // Null the port before `mach` releases it (no CGEventTapEnable on a freed port).
+                    KEY_CAPTURE_TAP_PORT.store(std::ptr::null_mut(), Ordering::SeqCst);
                     let _keep = (mach, source);
                 }
                 Err(()) => {

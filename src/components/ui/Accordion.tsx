@@ -1,10 +1,6 @@
-import { useId, useState, type ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 
-import {
-  readAccordionOpen,
-  writeAccordionOpen,
-} from "@/services/accordionState";
-import { cx } from "@/utils/cx";
+import { usePersistedOpen } from "@/hooks/usePersistedOpen";
 
 import * as styles from "./Accordion.css";
 
@@ -12,55 +8,30 @@ interface AccordionProps {
   label: ReactNode;
   status?: ReactNode;
   statusOn?: boolean;
-  /** 2 = Info 입력 디바이스 등. 3 = Link 매핑 아코디언 (default). */
-  headingLevel?: 2 | 3;
   defaultOpen?: boolean;
-  stateKey?: string;
-  onOpenChange?: (open: boolean) => void;
+  stateKey: string;
   children: ReactNode;
-  className?: string;
 }
 
 export const Accordion = ({
   label,
   status,
   statusOn = false,
-  headingLevel = 3,
   defaultOpen = true,
   stateKey,
-  onOpenChange,
   children,
-  className,
 }: AccordionProps) => {
-  const [open, setOpen] = useState(() =>
-    stateKey !== undefined
-      ? readAccordionOpen(stateKey, defaultOpen)
-      : defaultOpen,
-  );
-  const setOpenState = (next: boolean) => {
-    setOpen(next);
-    if (stateKey !== undefined) {
-      writeAccordionOpen(stateKey, next);
-    }
-    onOpenChange?.(next);
-  };
+  const [open, setOpenState] = usePersistedOpen(stateKey, defaultOpen);
   const panelId = useId();
   const headingId = useId();
-  const HeadingTag = headingLevel === 2 ? "h2" : "h3";
-  const headingTextClass =
-    headingLevel === 2 ? styles.headingTextH2 : styles.headingTextH3;
 
   return (
-    <section
-      className={cx(styles.root, className)}
-      data-heading-level={headingLevel}
-      data-open={open ? "" : undefined}
-    >
-      <HeadingTag id={headingId} className={styles.heading}>
+    <section className={styles.root} data-open={open ? "" : undefined}>
+      <h3 id={headingId} className={styles.heading}>
         <button
           type="button"
           className={styles.headingToggle}
-          data-accordion-heading=""
+          data-own-hover="press"
           aria-expanded={open}
           aria-controls={panelId}
           onClick={() => setOpenState(!open)}
@@ -72,14 +43,14 @@ export const Accordion = ({
           >
             ›
           </span>
-          <span className={headingTextClass}>{label}</span>
+          <span className={styles.headingTextH3}>{label}</span>
           {status !== undefined && status !== null && status !== "" ? (
             <span className={styles.status} data-on={statusOn ? "" : undefined}>
               {status}
             </span>
           ) : null}
         </button>
-      </HeadingTag>
+      </h3>
       <div
         id={panelId}
         role="region"

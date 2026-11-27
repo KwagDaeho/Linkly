@@ -14,7 +14,7 @@
 
 import type { Lang } from "@/types";
 
-export type JaKanaCatalogRow = {
+type JaKanaCatalogRow = {
   kana: string;
   keys: string[];
 };

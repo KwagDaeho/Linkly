@@ -1,5 +1,6 @@
 import type { BallScrollSettings, Profile } from "@/types";
-import { activatorsEqual, ballScrollOf } from "@/domain/profile";
+import { activatorsEqual } from "@/domain/input/activator";
+import { ballScrollOf } from "@/domain/profile";
 export const withPointerPatch = <K extends keyof Profile["pointer"]>(
   profile: Profile,
   key: K,
@@ -34,10 +35,4 @@ export const withBallScrollPatch = (
     }
   }
   return { ...profile, ballScroll: next };
-};
-export const withLongPressMs = (
-  profile: Profile,
-  longPressMs: number,
-): Profile => {
-  return { ...profile, longPressMs };
 };

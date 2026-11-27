@@ -15,7 +15,7 @@ describe("modifierLabel", () => {
   });
 
   it("uses command(L/R) in viewer words", () => {
-    expect(formatSidedModifierWord("RightMeta", "en")).toBe("command(R)");
-    expect(formatSidedModifierWord("LeftShift", "ko")).toBe("shift(L)");
+    expect(formatSidedModifierWord("RightMeta")).toBe("command(R)");
+    expect(formatSidedModifierWord("LeftShift")).toBe("shift(L)");
   });
 });

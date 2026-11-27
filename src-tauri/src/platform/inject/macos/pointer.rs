@@ -6,7 +6,7 @@ use core_graphics::event::{
 use core_graphics::geometry::CGPoint;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use super::{buttons_down, cursor_pos, cursor_state, hid_source};
+use super::{cursor_pos, cursor_state, hid_source};
 use parking_lot::Mutex;
 use std::time::{Duration, Instant};
 
@@ -96,7 +96,6 @@ fn clamp_to_displays(mut p: CGPoint) -> CGPoint {
         let bottom = top + b.size.height;
         if p.x >= left && p.x <= right && p.y >= top && p.y <= bottom {
             best = Some((left, top, right, bottom));
-            best_dist = 0.0;
             break;
         }
         let cx = p.x.clamp(left, right);
@@ -207,21 +206,6 @@ pub fn expire_restored_cursor_if_due() {
     }
 }
 
-pub fn post_unpin_active() -> Option<CGPoint> {
-    None
-}
-
-pub fn maintain_post_unpin_cursor() {}
-
-pub fn expire_post_unpin_if_due() {}
-
-/// App exit: drop pin, badge, and cursor association immediately.
-pub fn release_ball_scroll_pin() {
-    end_ball_scroll_gesture();
-    super::cursor_badge::shutdown();
-    release_pin_state();
-}
-
 /// ⌘Q from the event tap — no main-thread AppKit scheduling.
 pub fn release_ball_scroll_pin_for_quit() {
     end_ball_scroll_gesture();
@@ -238,14 +222,6 @@ fn release_pin_state() {
     }
     crate::platform::suppress::set_suppress_motion(false);
 }
-
-pub fn restore_sync_pin() -> Option<CGPoint> {
-    None
-}
-
-pub fn finish_restore_sync() {}
-
-pub fn expire_restore_sync_if_due() {}
 
 pub fn move_by(dx: f64, dy: f64) {
     if dx == 0.0 && dy == 0.0 {
@@ -288,15 +264,6 @@ pub fn move_by(dx: f64, dy: f64) {
     }
 }
 
-pub fn scroll(dx_lines: i32, dy_lines: i32) {
-    scroll_with_unit(dx_lines, dy_lines, ScrollEventUnit::LINE);
-}
-
-/// Continuous-feeling wheel scroll (closer to native macOS mouse feel).
-pub fn scroll_pixels(dx: i32, dy: i32) {
-    scroll_with_unit(dx, dy, ScrollEventUnit::PIXEL);
-}
-
 /// One wheel/tilt notch at user multiplier 1.0.
 /// Exclusive HID skips WindowServer scroll acceleration, so we bake a baseline;
 /// the UI multiplier stacks on top (`base × speed`).
@@ -304,15 +271,6 @@ pub const SCROLL_BASE_VERTICAL_PX: f64 = 36.0;
 pub const SCROLL_BASE_HORIZONTAL_PX: f64 = 36.0;
 /// HID units → pixels at ball-scroll 1.0×. Higher = slower default than wheel notches.
 const BALL_SCROLL_DIV: f64 = 16.0;
-
-/// Hardware wheel/pan notch → pixels, applying axis speed + invert.
-pub fn scroll_notches(
-    dx_notches: f64,
-    dy_notches: f64,
-    pointer: &crate::domain::profile::PointerSettings,
-) {
-    scroll_notches_ex(dx_notches, dy_notches, pointer, false);
-}
 
 /// `continuous`: match trackpad-style gestures so a held horizontal scroll
 /// is not dropped when another device is mid vertical scroll.
@@ -417,15 +375,6 @@ fn round_scroll_px(v: f64) -> i32 {
     }
 }
 
-/// Catalog scroll units (±3 ≈ one notch). Applies axis speed + invert toggles.
-pub fn scroll_by_units(
-    dx_units: i32,
-    dy_units: i32,
-    pointer: &crate::domain::profile::PointerSettings,
-) {
-    scroll_by_units_ex(dx_units, dy_units, pointer, false);
-}
-
 pub fn scroll_by_units_ex(
     dx_units: i32,
     dy_units: i32,
@@ -515,23 +464,4 @@ fn post_scroll_gesture(dx_px: i32, dy_px: i32, continuous: bool, phase: Option<i
         e.set_integer_value_field(SCROLL_PHASE_FIELD, p);
     }
     e.post(CGEventTapLocation::Session);
-}
-
-fn scroll_with_unit(dx: i32, dy: i32, unit: u32) {
-    if dx == 0 && dy == 0 {
-        return;
-    }
-    let Some(src) = hid_source() else {
-        return;
-    };
-    if let Ok(e) = CGEvent::new_scroll_event(
-        src,
-        unit,
-        if dx != 0 { 2 } else { 1 },
-        dy,
-        dx,
-        0,
-    ) {
-        e.post(CGEventTapLocation::Session);
-    }
 }

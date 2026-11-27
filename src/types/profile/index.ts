@@ -19,9 +19,10 @@ export type {
   ProfileMutateFn,
   ProfileMutations,
   ProfileMappingMutations,
-  ProfileCustomMappingMutations,
-  ProfileButtonMappingMutations,
   ProfilePointerMutations,
   ProfileBallScrollMutations,
+  ProfileGestureMutations,
+  ProfileSettingsMutations,
+  ProfileDeviceMutations,
   ProfileCatalogMutations,
 } from "./state";

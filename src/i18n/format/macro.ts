@@ -1,4 +1,5 @@
-import { formatKeyChord, mouseClickLabel } from "@/i18n";
+import { mouseClickLabel } from "./activators";
+import { formatKeyChord } from "./keys";
 import type { Lang, MacroStep } from "@/types";
 export const formatMacroStepLabel = (step: MacroStep, lang: Lang): string => {
   if (step.type === "key_stroke") {

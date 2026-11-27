@@ -7,8 +7,6 @@
 
 use serde::Serialize;
 
-use crate::domain::profile::{ButtonMappingEntry, Profile};
-
 pub const KEY_CAPTURE_EVENT: &str = "key-remap-capture";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -35,6 +33,7 @@ pub use imp::*;
 #[cfg(not(target_os = "macos"))]
 mod stub {
     use super::*;
+    use crate::domain::profile::{ButtonMappingEntry, Profile};
     pub fn start() {}
     pub fn set_profile(_profile: &Profile) {}
     pub fn proxy_rows() -> Vec<ButtonMappingEntry> {
@@ -72,11 +71,6 @@ mod imp {
     use std::thread;
     use std::time::Duration;
 
-    use core_foundation::base::{CFType, TCFType};
-    use core_foundation::dictionary::CFDictionary;
-    use core_foundation::number::CFNumber;
-    use core_foundation::runloop::{kCFRunLoopDefaultMode, CFRunLoop};
-    use core_foundation::string::CFString;
     use parking_lot::Mutex;
 
     use super::{KeyCapture, KeyboardInfo, KEY_CAPTURE_EVENT};
@@ -84,47 +78,7 @@ mod imp {
     use crate::domain::profile::key_remap::{self, DeviceKeyPlan, KeyResolver};
     use crate::domain::profile::{ButtonMappingEntry, Profile};
     use crate::platform::app_bus;
-
-    type IOHIDManagerRef = *mut c_void;
-    type IOHIDDeviceRef = *mut c_void;
-    type IOHIDValueRef = *mut c_void;
-    type IOHIDElementRef = *mut c_void;
-    type IOReturn = i32;
-    type DeviceCallback = extern "C" fn(*mut c_void, IOReturn, *mut c_void, IOHIDDeviceRef);
-    type ValueCallback = extern "C" fn(*mut c_void, IOReturn, *mut c_void, IOHIDValueRef);
-
-    #[link(name = "IOKit", kind = "framework")]
-    extern "C" {
-        fn IOHIDManagerCreate(allocator: *const c_void, options: u32) -> IOHIDManagerRef;
-        fn IOHIDManagerSetDeviceMatching(manager: IOHIDManagerRef, matching: *const c_void);
-        fn IOHIDManagerRegisterDeviceMatchingCallback(
-            manager: IOHIDManagerRef,
-            callback: DeviceCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerRegisterDeviceRemovalCallback(
-            manager: IOHIDManagerRef,
-            callback: DeviceCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerRegisterInputValueCallback(
-            manager: IOHIDManagerRef,
-            callback: ValueCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerScheduleWithRunLoop(
-            manager: IOHIDManagerRef,
-            run_loop: *const c_void,
-            mode: *const c_void,
-        );
-        fn IOHIDManagerOpen(manager: IOHIDManagerRef, options: u32) -> IOReturn;
-        fn IOHIDDeviceGetProperty(device: IOHIDDeviceRef, key: *const c_void) -> *const c_void;
-        fn IOHIDValueGetElement(value: IOHIDValueRef) -> IOHIDElementRef;
-        fn IOHIDValueGetIntegerValue(value: IOHIDValueRef) -> isize;
-        fn IOHIDElementGetUsagePage(element: IOHIDElementRef) -> u32;
-        fn IOHIDElementGetUsage(element: IOHIDElementRef) -> u32;
-        fn IOHIDElementGetDevice(element: IOHIDElementRef) -> IOHIDDeviceRef;
-    }
+    use crate::platform::iohid::{self, IOHIDDeviceRef, IOHIDValueRef, IOReturn};
 
     const KEYBOARD_PAGE: u32 = 0x07;
     /// Debounce bursts (multi-interface attach, rapid profile edits) into one pass.
@@ -305,65 +259,16 @@ mod imp {
     }
 
     fn run_hid_manager() {
-        unsafe {
-            let manager = IOHIDManagerCreate(std::ptr::null(), 0);
-            if manager.is_null() {
-                log::error!("keyboards: IOHIDManagerCreate failed");
-                return;
-            }
-            let matching = CFDictionary::from_CFType_pairs(&[
-                (
-                    CFString::new("DeviceUsagePage").as_CFType(),
-                    CFNumber::from(1i32).as_CFType(),
-                ),
-                (
-                    CFString::new("DeviceUsage").as_CFType(),
-                    CFNumber::from(6i32).as_CFType(),
-                ),
-            ]);
-            IOHIDManagerSetDeviceMatching(manager, matching.as_concrete_TypeRef() as *const c_void);
-            IOHIDManagerRegisterDeviceMatchingCallback(manager, on_match, std::ptr::null_mut());
-            IOHIDManagerRegisterDeviceRemovalCallback(manager, on_remove, std::ptr::null_mut());
-            IOHIDManagerRegisterInputValueCallback(manager, on_value, std::ptr::null_mut());
-            let run_loop = CFRunLoop::get_current();
-            IOHIDManagerScheduleWithRunLoop(
-                manager,
-                run_loop.as_concrete_TypeRef() as *const c_void,
-                kCFRunLoopDefaultMode as *const c_void,
-            );
-            let rc = IOHIDManagerOpen(manager, 0);
-            if rc != 0 {
-                // Without Input Monitoring the registry still fills; capture stays silent.
-                log::warn!("keyboards: IOHIDManagerOpen returned {rc:#x}");
-            }
-            CFRunLoop::run_current();
+        let matchings = [iohid::usage_matching(1, 6)];
+        if !iohid::run_manager("keyboards", &matchings, on_match, on_remove, on_value) {
+            log::error!("keyboards: IOHIDManagerCreate failed");
         }
-    }
-
-    fn int_property(device: IOHIDDeviceRef, key: &str) -> Option<i64> {
-        let key = CFString::new(key);
-        let value = unsafe { IOHIDDeviceGetProperty(device, key.as_concrete_TypeRef() as _) };
-        if value.is_null() {
-            return None;
-        }
-        let value = unsafe { CFType::wrap_under_get_rule(value as _) };
-        value.downcast::<CFNumber>()?.to_i64()
-    }
-
-    fn string_property(device: IOHIDDeviceRef, key: &str) -> Option<String> {
-        let key = CFString::new(key);
-        let value = unsafe { IOHIDDeviceGetProperty(device, key.as_concrete_TypeRef() as _) };
-        if value.is_null() {
-            return None;
-        }
-        let value = unsafe { CFType::wrap_under_get_rule(value as _) };
-        value.downcast::<CFString>().map(|s| s.to_string())
     }
 
     fn keyboard_info(device: IOHIDDeviceRef) -> Option<KeyboardInfo> {
-        let vendor_id = u16::try_from(int_property(device, "VendorID")?).ok()?;
-        let product_id = u16::try_from(int_property(device, "ProductID")?).ok()?;
-        let product_name = string_property(device, "Product")
+        let vendor_id = u16::try_from(iohid::device_int(device, "VendorID")?).ok()?;
+        let product_id = u16::try_from(iohid::device_int(device, "ProductID")?).ok()?;
+        let product_name = iohid::device_string(device, "Product")
             .map(|name| name.trim().to_string())
             .filter(|name| !name.is_empty())
             .unwrap_or_else(|| "Keyboard".into());
@@ -474,17 +379,13 @@ mod imp {
     }
 
     extern "C" fn on_value(_: *mut c_void, _: IOReturn, _: *mut c_void, value: IOHIDValueRef) {
-        let (usage, device, down) = unsafe {
-            let element = IOHIDValueGetElement(value);
-            if element.is_null() || IOHIDElementGetUsagePage(element) != KEYBOARD_PAGE {
-                return;
-            }
-            (
-                IOHIDElementGetUsage(element),
-                IOHIDElementGetDevice(element),
-                IOHIDValueGetIntegerValue(value) != 0,
-            )
+        let Some(value) = iohid::read_value(value) else {
+            return;
         };
+        if value.page != KEYBOARD_PAGE {
+            return;
+        }
+        let (usage, device, down) = (value.usage, value.device, value.value != 0);
         // 0x01–0x03 are rollover/error codes; usages past 0xE7 are not real keys.
         if !(0x04..=0xE7).contains(&usage) {
             return;

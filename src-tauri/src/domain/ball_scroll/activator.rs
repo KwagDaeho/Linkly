@@ -2,6 +2,7 @@ use std::sync::atomic::Ordering;
 use std::time::Instant;
 
 use crate::domain::device::ButtonState;
+use crate::domain::modifier::is_modifier_name;
 use crate::domain::profile::{Activator, MouseClickButton};
 use crate::platform::{app_bus, inject, suppress};
 
@@ -10,12 +11,6 @@ use super::state::{
     HOLD_DOWN, LAST_TOGGLE_AT, QUIT_ARMED, SHUTTING_DOWN, TOGGLE_DEBOUNCE, TOGGLE_LATCH,
     WAS_ACTIVE, IGNORE_BALL_MOTION_UNTIL,
 };
-
-const MODIFIER_KEYS: [&str; 12] = [
-    "Control", "Option", "Shift", "Meta",
-    "LeftControl", "RightControl", "LeftOption", "RightOption",
-    "LeftShift", "RightShift", "LeftMeta", "RightMeta",
-];
 
 pub fn note_catalog_button_edges(prev: ButtonState, state: ButtonState) {
     for id in state.pressed_edges(prev) {
@@ -87,7 +82,7 @@ fn matches_toggle(activator: &Activator) -> bool {
 }
 
 fn is_modifier_key(activator: &Activator) -> bool {
-    matches!(activator, Activator::Key { name } if MODIFIER_KEYS.contains(&name.as_str()))
+    matches!(activator, Activator::Key { name } if is_modifier_name(name))
 }
 
 /// ⌘Q — tear down ball-scroll synchronously, then quit (do not wait for HID worker).

@@ -1,5 +1,12 @@
 import type { EditorMode, CaptureMode, CaptureSession } from "@/types";
-import { CAPTURE_SESSION_OFF } from "@/services/tauri";
+
+export const CAPTURE_SESSION_OFF: CaptureSession = {
+  keyCapture: false,
+  comboTrigger: false,
+  activatorCapture: false,
+  uiModal: false,
+};
+
 export const captureModeOf = (editor: EditorMode | null): CaptureMode => {
   if (!editor) return "off";
   if (editor.kind === "custom_key" && editor.listening) return "chord_hold";
@@ -14,31 +21,12 @@ export const captureModeOf = (editor: EditorMode | null): CaptureMode => {
   return "off";
 };
 
-export const captureSessionForEditor = (
-  editor: EditorMode | null,
-): CaptureSession => captureSessionFor(captureModeOf(editor));
-
 export const captureSessionFor = (mode: CaptureMode): CaptureSession => {
   switch (mode) {
     case "chord_hold":
       return {
         keyCapture: false,
         comboTrigger: true,
-        activatorCapture: true,
-        allowLeftActivator: true,
-        uiModal: true,
-      };
-    case "combo_capture":
-      return {
-        keyCapture: false,
-        comboTrigger: true,
-        activatorCapture: false,
-        uiModal: true,
-      };
-    case "combo_trigger":
-      return {
-        keyCapture: false,
-        comboTrigger: false,
         activatorCapture: true,
         allowLeftActivator: true,
         uiModal: true,

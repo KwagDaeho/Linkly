@@ -80,7 +80,7 @@ fn plain_mouse_button(action: &Action) -> Option<MouseClickButton> {
     match action {
         Action::MouseClick { button } => Some(button.clone()),
         Action::KeyStroke { keys } if keys.len() == 1 => {
-            crate::platform::inject::mouse_button_from_token(&keys[0])
+            MouseClickButton::from_token(&keys[0])
         }
         _ => None,
     }

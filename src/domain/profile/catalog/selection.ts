@@ -4,7 +4,7 @@ import {
   OPEN_APP_SENTINEL,
 } from "@/constants/sentinels";
 import { beginHoldCaptureListening } from "@/domain/capture/holdCapture";
-import { asBinding } from "@/domain/profile";
+import { asBinding, bindingSlot } from "@/domain/profile";
 import { buttonMappingsOf, customMappingsOf } from "@/domain/profile";
 import type {
   Action,
@@ -54,9 +54,7 @@ export const resolveCatalogSelection = (
     };
   }
   if (value === MACRO_SENTINEL) {
-    const existingBinding = bindingForTarget(profile, target);
-    const currentAction =
-      slot === "click" ? existingBinding.click : existingBinding.longPress;
+    const currentAction = bindingSlot(bindingForTarget(profile, target), slot);
     const steps = currentAction.type === "macro" ? currentAction.steps : [];
     return {
       kind: "editor",
@@ -64,9 +62,7 @@ export const resolveCatalogSelection = (
     };
   }
   if (value === OPEN_APP_SENTINEL) {
-    const existingBinding = bindingForTarget(profile, target);
-    const currentAction =
-      slot === "click" ? existingBinding.click : existingBinding.longPress;
+    const currentAction = bindingSlot(bindingForTarget(profile, target), slot);
     const selected =
       currentAction.type === "open_app" && currentAction.bundle_id
         ? {

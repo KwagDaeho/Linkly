@@ -5,9 +5,7 @@ import type {
   Lang,
 } from "@/types";
 import { groupCatalogEntries } from "@/domain/actions";
-import { categoryLabel, subcategoryLabel as subLabel } from "../translate";
-
-export const subcategoryLabel = subLabel;
+import { categoryLabel, subcategoryLabel } from "../translate";
 
 export const groupCatalog = (
   lang: Lang,
@@ -27,7 +25,7 @@ export const groupCatalog = (
     entries,
     subcategories: subcategories?.map((sub) => ({
       id: sub.id,
-      label: subLabel(sub.id, lang),
+      label: subcategoryLabel(sub.id, lang),
       entries: sub.entries,
     })),
   }));

@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { FONT_SCALE_STEP } from "@/constants/fontScale";
-import { ACCENT_COLOR_KEY, FONT_SCALE_KEY, LANG_KEY, THEME_KEY } from "@/constants/storage";
 import { hexToRgb, normalizeHex, rgbToInt } from "@/domain/color/color";
 import { syncNativeAccent } from "@/services/tauri";
 import { t } from "@/i18n";
@@ -13,6 +12,10 @@ import {
   loadAccent,
   loadLang,
   loadTheme,
+  saveAccent,
+  saveFontScale,
+  saveLang,
+  saveTheme,
 } from "@/utils/theme";
 import type { Lang, PrefsContextValue, Theme } from "@/types";
 export const PrefsContext = createContext<PrefsContextValue | null>(null);
@@ -40,11 +43,11 @@ export const usePrefsState = (): PrefsContextValue => {
   }, [accentColor]);
   const setLang = (next: Lang) => {
     setLangState(next);
-    localStorage.setItem(LANG_KEY, next);
+    saveLang(next);
   };
   const setTheme = (next: Theme) => {
     setThemeState(next);
-    localStorage.setItem(THEME_KEY, next);
+    saveTheme(next);
     applyTheme(next);
   };
   const setAccentColor = (next: string) => {
@@ -53,12 +56,12 @@ export const usePrefsState = (): PrefsContextValue => {
       return;
     }
     setAccentColorState(hex);
-    localStorage.setItem(ACCENT_COLOR_KEY, hex);
+    saveAccent(hex);
   };
   const setFontScale = (next: number) => {
     const clamped = clampFontScale(next);
     setFontScaleState(clamped);
-    localStorage.setItem(FONT_SCALE_KEY, String(clamped));
+    saveFontScale(clamped);
     applyFontScale(clamped);
   };
   const decreaseFontScale = () => {

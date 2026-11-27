@@ -56,10 +56,7 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
     const RIGHT_MOUSE_DRAGGED: u32 = 7;
     const OTHER_MOUSE_DRAGGED: u32 = 27;
 
-    let ts_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis())
-        .unwrap_or(0);
+    let ts_ms = crate::clock::unix_ms();
 
     let (kind, summary) = match etype {
         KEY_DOWN | KEY_UP => {
@@ -143,7 +140,7 @@ pub(crate) fn emit_viewer_event(etype: u32, event: CGEventRef) {
             ("scrollWheel".into(), summary)
         }
         _ => {
-            if let Some(activator) = (unsafe { key_activator(event) }) {
+            if let Some(activator) = key_activator(event) {
                 if let crate::domain::profile::Activator::Key { name } = activator {
                     let summary = format!("event {etype} · {name}");
                     (format!("cgEvent{etype}"), summary)

@@ -3,7 +3,7 @@ import { usePrefs } from "@/hooks/prefs";
 import { useEditor } from "@/hooks/editor";
 import type { ActivatorEditorState } from "@/types";
 
-import { ActivatorCaptureModal } from "../shared";
+import { CapturePromptModal } from "../shared";
 
 interface BallScrollActivatorEditorProps {
   editor: ActivatorEditorState;
@@ -28,7 +28,7 @@ export const BallScrollActivatorEditor = (props: BallScrollActivatorEditorProps)
     rejectedMessage !== null ? rejectedMessage : i18n.activatorWaiting;
 
   return (
-    <ActivatorCaptureModal
+    <CapturePromptModal
       title={
         <>
           {editor.target === "gesture" ? i18n.gesture : i18n.activatorTitle} ·{" "}
@@ -36,9 +36,10 @@ export const BallScrollActivatorEditor = (props: BallScrollActivatorEditorProps)
         </>
       }
       hint={hint}
-      statusMessage={statusMessage}
+      status={statusMessage}
       cancelLabel={i18n.cancel}
       onCancel={() => setEditor(null)}
+      closeOnEscape
     />
   );
 };

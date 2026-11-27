@@ -10,6 +10,8 @@ export type EditorCatalogSelection = {
     value: string,
   ) => void;
   selectCustom: (entryId: string, slot: ActionSlot, value: string) => void;
+  /** Gestures fire once: always the click slot. */
+  selectGesture: (entryId: string, value: string) => void;
 };
 
 export type EditorContextValue = {

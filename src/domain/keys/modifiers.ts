@@ -1,6 +1,6 @@
-export const LEGACY_CHORD_MODIFIERS = ["Control", "Option", "Shift", "Meta"] as const;
+const LEGACY_CHORD_MODIFIERS = ["Control", "Option", "Shift", "Meta"] as const;
 
-export const SIDE_CHORD_MODIFIERS = [
+const SIDE_CHORD_MODIFIERS = [
   "LeftControl",
   "RightControl",
   "LeftOption",
@@ -11,18 +11,12 @@ export const SIDE_CHORD_MODIFIERS = [
   "RightMeta",
 ] as const;
 
-export const CHORD_MODIFIER_TOKENS = new Set<string>([
-  ...LEGACY_CHORD_MODIFIERS,
-  ...SIDE_CHORD_MODIFIERS,
-]);
-
 export const CHORD_MODIFIER_ORDER = [
   ...LEGACY_CHORD_MODIFIERS,
   ...SIDE_CHORD_MODIFIERS,
 ] as const;
 
-export const isChordModifierToken = (token: string): boolean =>
-  CHORD_MODIFIER_TOKENS.has(token);
+export const CHORD_MODIFIER_TOKENS = new Set<string>(CHORD_MODIFIER_ORDER);
 
 const LEGACY_SIDE_PAIRS: Record<
   (typeof LEGACY_CHORD_MODIFIERS)[number],

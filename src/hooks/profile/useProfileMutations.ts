@@ -1,21 +1,20 @@
 import type { Dispatch, SetStateAction } from "react";
 import {
-  isTiltButton,
   withBallScrollPatch,
-  withButtonFlags,
-  withButtonSlot,
-  withButtonMappingActivator,
-  withButtonMappingAdded,
-  withButtonMappingFlags,
-  withButtonMappingRemoved,
-  withCustomMappingActivator,
-  withCustomMappingAdded,
-  withCustomMappingFlags,
-  withCustomMappingRemoved,
   withMappingSlot,
   withPointerPatch,
 } from "@/domain/profile";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
+import {
+  newGestureEntry,
+  withGestureAdded,
+  withGestureMoved,
+  withGesturePatch,
+  withGestureRemoved,
+  withGestureTemplate,
+} from "@/domain/profile/patches/gestures";
+import { withInputDeviceSettings } from "@/domain/profile/patches/scopedTriggers";
+import { normalizeDisplayName } from "@/domain/profile/triggerScope";
 import { applyCatalogSelection } from "@/services/catalogSelection";
 import type {
   Action,
@@ -23,11 +22,7 @@ import type {
   Activator,
   BallScrollSettings,
   BallScrollSlot,
-  ButtonBinding,
   ButtonId,
-  ButtonMappingEntry,
-  ComboActivator,
-  CustomMappingEntry,
   EditorMode,
   MappingTarget,
   Profile,
@@ -48,28 +43,6 @@ export const useProfileMutations = (
   ) => {
     mutateProfile((loadedProfile) =>
       withMappingSlot(loadedProfile, target, slot, action),
-    );
-  };
-
-  const updateButtonSlot = (
-    buttonId: ButtonId,
-    slot: ActionSlot,
-    action: Action,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withButtonSlot(loadedProfile, buttonId, slot, action),
-    );
-  };
-
-  const updateButtonFlags = (
-    buttonId: ButtonId,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => {
-    if (isTiltButton(buttonId)) {
-      return;
-    }
-    mutateProfile((loadedProfile) =>
-      withButtonFlags(loadedProfile, buttonId, patch),
     );
   };
 
@@ -104,71 +77,52 @@ export const useProfileMutations = (
     }
   };
 
-  const updateCustomMappingFlags = (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withCustomMappingFlags(loadedProfile, entryId, patch),
-    );
+  const gestures: ProfileMutations["gestures"] = {
+    setActivator: (slot, activator) => {
+      mutateProfile((loaded) =>
+        withGesturePatch(
+          loaded,
+          slot === "toggle"
+            ? { toggleActivator: activator }
+            : { holdActivator: activator },
+        ),
+      );
+    },
+    add: (template) => {
+      mutateProfile((loaded) => withGestureAdded(loaded, newGestureEntry(template)));
+    },
+    redraw: (id, template) => {
+      mutateProfile((loaded) => withGestureTemplate(loaded, id, template));
+    },
+    move: (from, to) => {
+      mutateProfile((loaded) => withGestureMoved(loaded, from, to));
+    },
+    remove: (id) => {
+      mutateProfile((loaded) => withGestureRemoved(loaded, id));
+    },
   };
 
-  const addButtonMapping = (entry: ButtonMappingEntry) => {
-    mutateProfile((loadedProfile) =>
-      withButtonMappingAdded(loadedProfile, entry),
-    );
+  const settings: ProfileMutations["settings"] = {
+    setEnabled: async (enabled) => {
+      if (profile !== null) {
+        await persist({ ...profile, enabled });
+      }
+    },
+    setStartMinimized: async (startMinimized) => {
+      if (profile !== null) {
+        await persist({ ...profile, startMinimized });
+      }
+    },
   };
 
-  const removeButtonMapping = (entryId: string) => {
-    mutateProfile((loadedProfile) =>
-      withButtonMappingRemoved(loadedProfile, entryId),
-    );
-  };
-
-  const updateButtonMappingFlags = (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withButtonMappingFlags(loadedProfile, entryId, patch),
-    );
-  };
-
-  const updateButtonMappingActivator = async (
-    entryId: string,
-    activator: Activator,
-  ) => {
-    if (profile === null) {
-      return;
-    }
-    const next = normalizeActivator(activator);
-    const saved = await persist(
-      withButtonMappingActivator(profile, entryId, next),
-    );
-    if (!saved) {
-      throw new Error("save_profile failed");
-    }
-  };
-
-  const addCustomMapping = (entry: CustomMappingEntry) => {
-    mutateProfile((loadedProfile) =>
-      withCustomMappingAdded(loadedProfile, entry),
-    );
-  };
-
-  const removeCustomMapping = (entryId: string) => {
-    mutateProfile((loadedProfile) =>
-      withCustomMappingRemoved(loadedProfile, entryId),
-    );
-  };
-
-  const updateCustomMappingActivator = (
-    entryId: string,
-    activator: ComboActivator,
-  ) => {
-    mutateProfile((loadedProfile) =>
-      withCustomMappingActivator(loadedProfile, entryId, activator),
-    );
+  const devices: ProfileMutations["devices"] = {
+    setDisplayName: (deviceKey, name, productName) => {
+      mutateProfile((loaded) =>
+        withInputDeviceSettings(loaded, deviceKey, {
+          displayName: normalizeDisplayName(name, productName),
+        }),
+      );
+    },
   };
 
   const selectCatalogValue = (
@@ -187,55 +141,9 @@ export const useProfileMutations = (
     );
   };
 
-  const selectCustomCatalogValue = (
-    entryId: string,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => {
-    applyCatalogSelection(
-      { kind: "custom", id: entryId },
-      slot,
-      value,
-      profile,
-      setEditor,
-      updateMappingSlot,
-    );
-  };
-
-  const selectButtonMappingCatalogValue = (
-    entryId: string,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => {
-    applyCatalogSelection(
-      { kind: "button_mapping", id: entryId },
-      slot,
-      value,
-      profile,
-      setEditor,
-      updateMappingSlot,
-    );
-  };
-
   return {
     mappings: {
       updateSlot: updateMappingSlot,
-      updateButtonSlot,
-      updateButtonFlags,
-    },
-    buttonMappings: {
-      add: addButtonMapping,
-      remove: removeButtonMapping,
-      updateFlags: updateButtonMappingFlags,
-      updateActivator: updateButtonMappingActivator,
-    },
-    customMappings: {
-      add: addCustomMapping,
-      remove: removeCustomMapping,
-      updateFlags: updateCustomMappingFlags,
-      updateActivator: updateCustomMappingActivator,
     },
     pointer: {
       update: updatePointer,
@@ -244,10 +152,11 @@ export const useProfileMutations = (
       update: updateBallScroll,
       assignActivator: assignBallScrollActivator,
     },
+    gestures,
+    settings,
+    devices,
     catalogSelection: {
       selectButton: selectCatalogValue,
-      selectCustom: selectCustomCatalogValue,
-      selectButtonMapping: selectButtonMappingCatalogValue,
     },
   };
 };

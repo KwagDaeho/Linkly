@@ -100,6 +100,6 @@ pub fn process_os_trigger_queue(profile: &Profile, maps: &mut CustomMaps) {
     }
 }
 
-pub fn clear_os_active(maps: &mut CustomMaps) {
+pub fn clear_os_active() {
     ACTIVE_OS_ENTRIES.lock().clear();
 }

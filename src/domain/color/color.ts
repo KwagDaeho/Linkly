@@ -52,7 +52,7 @@ const linear = (c: number) => {
 };
 
 /** WCAG relative luminance. */
-export const luminance = ({ r, g, b }: Rgb): number =>
+const luminance = ({ r, g, b }: Rgb): number =>
   0.2126 * linear(r) + 0.7152 * linear(g) + 0.0722 * linear(b);
 
 /** OKLCH hue (degrees) and chroma. */
@@ -69,10 +69,18 @@ export const oklchHueChroma = ({ r, g, b }: Rgb): { hue: number; chroma: number 
   };
 };
 
-const contrast = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
-
-/** Text on the accent: dark on bright accents, white on deep ones (whichever reads better). */
-export const accentInk = (rgb: Rgb): "light" | "dark" => {
-  const lum = luminance(rgb);
-  return contrast(lum, 1) > contrast(lum, 0.008) ? "light" : "dark";
+/** CIE L* (0–100): perceived lightness. */
+export const lightness = (rgb: Rgb): number => {
+  const y = luminance(rgb);
+  return y > 216 / 24389 ? 116 * Math.cbrt(y) - 16 : (24389 / 27) * y;
 };
+
+/**
+ * Accents darker than this get white text. Above the plain contrast crossover
+ * (≈ L* 50) on purpose: mid-tones read better with white.
+ */
+export const LIGHT_INK_BELOW_LIGHTNESS = 58;
+
+/** Text on the accent: white on deep accents, dark on bright ones. */
+export const accentInk = (rgb: Rgb): "light" | "dark" =>
+  lightness(rgb) < LIGHT_INK_BELOW_LIGHTNESS ? "light" : "dark";

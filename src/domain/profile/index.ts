@@ -1,26 +1,24 @@
-export { asBinding, longPressMs } from "./binding";
 export {
+  asBinding,
+  bindingSlot,
+  bindingWithSlot,
+  DEFAULT_BINDING,
+  longPressMs,
   resolveBindingFlags,
   bindingLongPressEnabled,
   bindingAutoClickEnabled,
 } from "./binding";
 export {
-  activatorsEqual,
   ballScrollActivatorForSlot,
   ballScrollOf,
-  comboFromDraft,
-  DEFAULT_BALL_SCROLL,
 } from "./activator";
-export { CHORD_MODIFIERS, chordIsValid, splitChord } from "./chord";
 export {
   comboIsValid,
   customMappingsOf,
   newCustomMappingEntry,
 } from "./custom";
 export {
-  buttonMappingActivatorValid,
   buttonMappingsOf,
-  findButtonMapping,
   newButtonMappingEntry,
 } from "./button";
 export {

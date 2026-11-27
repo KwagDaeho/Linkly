@@ -20,6 +20,8 @@ globalStyle(":root", {
     "--tint": "1",
     "--ink-on-accent-dark": "oklch(0.197 0.023 var(--hue-n))",
     "--accent-ink-auto": "var(--ink-on-accent-dark)",
+    "--toast-shadow": "rgba(0, 0, 0, 0.22)",
+    "--row-stripe": "rgba(127, 127, 127, 0.06)",
   },
 });
 
@@ -46,6 +48,7 @@ globalStyle(":root, [data-theme='light']", {
       "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#2f8a55",
     "--ok-glow": "rgba(47, 138, 85, 0.18)",
+    "--danger": "#c0392b",
     "--warn-bg": n(0.95, 0.035),
     "--warn-ink": n(0.402, 0.076),
     "--probe-bg": n(0.215, 0.019),
@@ -80,6 +83,7 @@ globalStyle("[data-theme='dark']", {
       "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#5dcb87",
     "--ok-glow": "rgba(93, 203, 135, 0.2)",
+    "--danger": "#c0392b",
     "--warn-bg": n(0.314, 0.047),
     "--warn-ink": n(0.911, 0.047),
     "--probe-bg": n(0.156, 0.013),
@@ -172,11 +176,15 @@ globalStyle("button:disabled", {
   cursor: "not-allowed",
 });
 
-globalStyle("button:active:not(:disabled):not([data-drag-handle]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
+/**
+ * Buttons that style their own hover set `data-own-hover`:
+ * `""` also skips the global press nudge; `"press"` keeps it.
+ */
+globalStyle('button:active:not(:disabled):not([data-own-hover=""])', {
   transform: "translateY(1px)",
 });
 
-globalStyle("button:hover:not(:disabled):not([data-drag-handle]):not([data-accordion-heading]):not([data-tab-item]):not([data-mapping-trigger]):not([data-header-segment]):not([data-font-scale-btn]):not([data-action-select-trigger]):not([data-action-select-item])", {
+globalStyle("button:hover:not(:disabled):not([data-own-hover])", {
   background: "var(--interaction-hover-button)",
 });
 

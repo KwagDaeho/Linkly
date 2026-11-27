@@ -12,7 +12,6 @@ export {
   catalogButtonFromActivator,
   catalogButtonFromComboTrigger,
   isTiltButton,
-  isTiltPanStreamAction,
   normalizeTiltPanStreamFlags,
   tiltForcesAutoClick,
 } from "./tilt";

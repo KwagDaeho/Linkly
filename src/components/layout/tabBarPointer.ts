@@ -17,7 +17,7 @@ export const tabButtonFromPoint = (
   return button;
 };
 
-export const tabIdFromButton = (
+const tabIdFromButton = (
   nav: HTMLElement,
   button: HTMLButtonElement,
 ): TabId | null => {

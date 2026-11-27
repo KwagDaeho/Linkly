@@ -1,8 +1,7 @@
-import { createPortal } from "react-dom";
-
-import { ChordPreview, Button, Modal, ModalFooter, Muted } from "@/components/ui";
+import { CapturePromptModal } from "@/components/editors/shared";
 import { usePrefs } from "@/hooks";
 import { useKeyRemapCapture } from "@/hooks/useKeyRemapCapture";
+import { fillTemplate } from "@/i18n";
 
 interface DeviceTriggerCaptureProps {
   deviceKey: string;
@@ -19,18 +18,18 @@ export const DeviceTriggerCapture = (props: DeviceTriggerCaptureProps) => {
   );
   // Portal: the trigger pages slide with a CSS transform + overflow clip, which would
   // trap a fixed-position modal inside them (only the backdrop blur showed).
-  return createPortal(
-    // No onEscape: Esc may be the key being captured.
-    <Modal onBackdropClick={props.onCancel}>
-      <h2>{i18n.deviceTriggerCaptureTitle.replace("{device}", props.deviceLabel)}</h2>
-      <Muted variant="modal">{i18n.deviceTriggerCaptureHint}</Muted>
-      <ChordPreview variant="field">{i18n.deviceTriggerCaptureWaiting}</ChordPreview>
-      <ModalFooter>
-        <Button variant="ghost" onClick={props.onCancel}>
-          {i18n.cancel}
-        </Button>
-      </ModalFooter>
-    </Modal>,
-    document.body,
+  // No Esc close: Esc may be the key being captured.
+  return (
+    <CapturePromptModal
+      title={fillTemplate(i18n.deviceTriggerCaptureTitle, {
+        device: props.deviceLabel,
+      })}
+      hint={i18n.deviceTriggerCaptureHint}
+      status={i18n.deviceTriggerCaptureWaiting}
+      cancelLabel={i18n.cancel}
+      onCancel={props.onCancel}
+      closeOnBackdrop
+      portal
+    />
   );
 };

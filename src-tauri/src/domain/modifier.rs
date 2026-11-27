@@ -42,6 +42,15 @@ pub fn flag_bit_for_side(side: &str) -> Option<u64> {
     })
 }
 
+/// Legacy (side-agnostic) modifier names set in CGEvent `flags`, in `LEGACY_MODIFIER_ORDER`.
+pub fn legacy_names_from_flags(flags: u64) -> impl Iterator<Item = &'static str> {
+    [FLAG_CONTROL, FLAG_OPTION, FLAG_SHIFT, FLAG_COMMAND]
+        .into_iter()
+        .zip(LEGACY_MODIFIER_ORDER)
+        .filter(move |(bit, _)| flags & bit != 0)
+        .map(|(_, name)| name)
+}
+
 pub fn is_modifier_name(name: &str) -> bool {
     LEGACY_MODIFIER_ORDER.contains(&name) || SIDE_MODIFIER_ORDER.contains(&name)
 }

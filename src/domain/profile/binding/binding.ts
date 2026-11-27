@@ -1,15 +1,30 @@
-import type { Action, ButtonBinding } from "@/types";
+import type { Action, ActionSlot, ButtonBinding } from "@/types";
 import { resolveBindingFlags } from "./fields";
+
+export const DEFAULT_BINDING: ButtonBinding = {
+  click: { type: "default" },
+  longPress: { type: "disabled" },
+  longPressEnabled: false,
+  autoClick: false,
+};
+
+export const bindingSlot = (binding: ButtonBinding, slot: ActionSlot): Action =>
+  slot === "click" ? binding.click : binding.longPress;
+
+export const bindingWithSlot = (
+  binding: ButtonBinding,
+  slot: ActionSlot,
+  action: Action,
+): ButtonBinding =>
+  slot === "click"
+    ? { ...binding, click: action }
+    : { ...binding, longPress: action };
+
 export const asBinding = (
   value: Action | ButtonBinding | undefined,
 ): ButtonBinding => {
   if (value === undefined) {
-    return {
-      click: { type: "default" },
-      longPress: { type: "disabled" },
-      longPressEnabled: false,
-      autoClick: false,
-    };
+    return { ...DEFAULT_BINDING };
   }
   if ("click" in value) {
     const flags = resolveBindingFlags(

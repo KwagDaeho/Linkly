@@ -1,10 +1,10 @@
-import { publishToast } from "@/components/ui/toast/toastBus";
+import { publishToast } from "@/services/toastBus";
 import { usePrefs } from "@/hooks/prefs";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PERMISSION_POLL_IDLE_MS, PERMISSION_POLL_MS } from "../constants/polling";
 import { pinPermissionPanelInDev, skipPermissionRelaunchInDev } from "../constants/devUi";
 import * as tauri from "../services/tauri";
-import type { PermissionStatus } from "../types";
+import type { PermissionKind, PermissionStatus } from "../types";
 
 const RESTART_TOAST_DELAY_MS = 400;
 
@@ -91,7 +91,7 @@ export const usePermissions = () => {
     };
   }, [refresh, permissionGateVisible]);
 
-  const requestPermission = useCallback(async (kind: tauri.PermissionKind) => {
+  const requestPermission = useCallback(async (kind: PermissionKind) => {
     userActedOnGate.current = true;
     // macOS's own prompt offers "Open System Settings"; opening Settings here as well
     // stacks two windows. Each row's "Open Settings" covers a prompt macOS won't repeat.
@@ -99,7 +99,7 @@ export const usePermissions = () => {
     setPermissionStatus(await tauri.getPermissionStatus());
   }, []);
 
-  const openPermissionSettings = useCallback((kind: tauri.PermissionKind) => {
+  const openPermissionSettings = useCallback((kind: PermissionKind) => {
     userActedOnGate.current = true;
     return kind === "accessibility"
       ? tauri.openAccessibilitySettings()

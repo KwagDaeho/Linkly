@@ -19,10 +19,7 @@ static EMIT_TX: LazyLock<std::sync::mpsc::SyncSender<InputEventLine>> = LazyLock
         .name("input-event-emit".into())
         .spawn(move || {
             while let Ok(mut line) = rx.recv() {
-                let now_ms = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_millis())
-                    .unwrap_or(0);
+                let now_ms = crate::clock::unix_ms();
                 if !throttle_ms(
                     &LAST_UI_EMIT_MS,
                     now_ms,
@@ -160,33 +157,11 @@ fn activator_summary(activator: &Activator) -> String {
 
 /// Mapping applied (summary already formatted, e.g. `link · fn1 → …`).
 pub fn publish_link_line(summary: String) {
-    let ts_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis())
-        .unwrap_or(0);
+    let ts_ms = crate::clock::unix_ms();
     publish(InputEventLine {
         ts_ms,
         source: "link",
         kind: "linkRemap".into(),
-        summary: summary.clone(),
-        detail: summary,
-        device: None,
-        device_hint: None,
-    });
-}
-
-/// Fired when a configured long-press threshold elapses (Link tab duration).
-pub fn publish_long_press(activator: &Activator) {
-    let input = activator_summary(activator);
-    let summary = format!("long press · {input}");
-    let ts_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis())
-        .unwrap_or(0);
-    publish(InputEventLine {
-        ts_ms,
-        source: "link",
-        kind: "longPress".into(),
         summary: summary.clone(),
         detail: summary,
         device: None,

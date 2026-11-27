@@ -9,7 +9,7 @@ use std::thread::{self, JoinHandle};
 
 use parking_lot::Mutex;
 
-use crate::domain::device::{device_identity_key, is_wireless_receiver_pid, DeviceIdentityKey, DeviceInfo, InputDeviceStatus};
+use crate::domain::device::{DeviceIdentityKey, DeviceInfo, InputDeviceStatus};
 use crate::domain::profile::Profile;
 use crate::domain::remap_session::{self, RemapSession};
 use crate::persistence::input_device_store;
@@ -19,10 +19,7 @@ static INPUT_DEVICES_UI_UNTIL_MS: AtomicU64 = AtomicU64::new(0);
 const UI_REGISTRY_KEEPALIVE_MS: u64 = 45_000;
 
 fn now_ms() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_millis() as u64)
-        .unwrap_or(0)
+    crate::clock::unix_ms() as u64
 }
 
 pub(crate) fn input_device_registry_for_ui() -> bool {
@@ -133,11 +130,6 @@ impl Engine {
             .expect("spawn HID worker");
 
         *self.worker.lock() = Some(handle);
-    }
-
-    pub fn stop(&self) {
-        self.request_stop();
-        self.join_worker();
     }
 
     pub fn request_stop(&self) {

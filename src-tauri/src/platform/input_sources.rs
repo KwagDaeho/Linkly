@@ -92,56 +92,10 @@ mod mouse {
     use std::sync::{LazyLock, Once};
     use std::thread;
 
-    use core_foundation::array::CFArray;
-    use core_foundation::base::{CFType, TCFType};
-    use core_foundation::dictionary::CFDictionary;
-    use core_foundation::number::CFNumber;
-    use core_foundation::runloop::{kCFRunLoopDefaultMode, CFRunLoop};
-    use core_foundation::string::CFString;
     use parking_lot::Mutex;
 
     use super::{label_for, note, SourceKind};
-
-    type IOHIDManagerRef = *mut c_void;
-    type IOHIDDeviceRef = *mut c_void;
-    type IOHIDValueRef = *mut c_void;
-    type IOHIDElementRef = *mut c_void;
-    type IOReturn = i32;
-    type DeviceCallback = extern "C" fn(*mut c_void, IOReturn, *mut c_void, IOHIDDeviceRef);
-    type ValueCallback = extern "C" fn(*mut c_void, IOReturn, *mut c_void, IOHIDValueRef);
-
-    #[link(name = "IOKit", kind = "framework")]
-    extern "C" {
-        fn IOHIDManagerCreate(allocator: *const c_void, options: u32) -> IOHIDManagerRef;
-        fn IOHIDManagerSetDeviceMatchingMultiple(manager: IOHIDManagerRef, multiple: *const c_void);
-        fn IOHIDManagerRegisterDeviceMatchingCallback(
-            manager: IOHIDManagerRef,
-            callback: DeviceCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerRegisterDeviceRemovalCallback(
-            manager: IOHIDManagerRef,
-            callback: DeviceCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerRegisterInputValueCallback(
-            manager: IOHIDManagerRef,
-            callback: ValueCallback,
-            context: *mut c_void,
-        );
-        fn IOHIDManagerScheduleWithRunLoop(
-            manager: IOHIDManagerRef,
-            run_loop: *const c_void,
-            mode: *const c_void,
-        );
-        fn IOHIDManagerOpen(manager: IOHIDManagerRef, options: u32) -> IOReturn;
-        fn IOHIDDeviceGetProperty(device: IOHIDDeviceRef, key: *const c_void) -> *const c_void;
-        fn IOHIDValueGetElement(value: IOHIDValueRef) -> IOHIDElementRef;
-        fn IOHIDValueGetIntegerValue(value: IOHIDValueRef) -> isize;
-        fn IOHIDElementGetUsagePage(element: IOHIDElementRef) -> u32;
-        fn IOHIDElementGetUsage(element: IOHIDElementRef) -> u32;
-        fn IOHIDElementGetDevice(element: IOHIDElementRef) -> IOHIDDeviceRef;
-    }
+    use crate::platform::iohid::{self, IOHIDDeviceRef, IOHIDValueRef, IOReturn};
 
     const GENERIC_DESKTOP: u32 = 0x01;
     const BUTTON_PAGE: u32 = 0x09;
@@ -162,61 +116,21 @@ mod mouse {
         });
     }
 
-    fn matching(usage: i32) -> CFDictionary<CFType, CFType> {
-        CFDictionary::from_CFType_pairs(&[
-            (
-                CFString::new("DeviceUsagePage").as_CFType(),
-                CFNumber::from(1i32).as_CFType(),
-            ),
-            (
-                CFString::new("DeviceUsage").as_CFType(),
-                CFNumber::from(usage).as_CFType(),
-            ),
-        ])
-    }
-
     fn run() {
-        unsafe {
-            let manager = IOHIDManagerCreate(std::ptr::null(), 0);
-            if manager.is_null() {
-                log::warn!("input sources: IOHIDManagerCreate failed");
-                return;
-            }
-            // Mouse and Pointer: trackballs, mice, the built-in trackpad.
-            let list = CFArray::from_CFTypes(&[matching(2), matching(1)]);
-            IOHIDManagerSetDeviceMatchingMultiple(manager, list.as_concrete_TypeRef() as *const c_void);
-            IOHIDManagerRegisterDeviceMatchingCallback(manager, on_match, std::ptr::null_mut());
-            IOHIDManagerRegisterDeviceRemovalCallback(manager, on_remove, std::ptr::null_mut());
-            IOHIDManagerRegisterInputValueCallback(manager, on_value, std::ptr::null_mut());
-            let run_loop = CFRunLoop::get_current();
-            IOHIDManagerScheduleWithRunLoop(
-                manager,
-                run_loop.as_concrete_TypeRef() as *const c_void,
-                kCFRunLoopDefaultMode as *const c_void,
-            );
-            let rc = IOHIDManagerOpen(manager, 0);
-            if rc != 0 {
-                log::warn!("input sources: IOHIDManagerOpen returned {rc:#x}");
-            }
-            CFRunLoop::run_current();
+        // Mouse and Pointer: trackballs, mice, the built-in trackpad.
+        let matchings = [iohid::usage_matching(1, 2), iohid::usage_matching(1, 1)];
+        if !iohid::run_manager("input sources", &matchings, on_match, on_remove, on_value) {
+            log::warn!("input sources: IOHIDManagerCreate failed");
         }
-    }
-
-    fn property(device: IOHIDDeviceRef, key: &str) -> Option<CFType> {
-        let key = CFString::new(key);
-        let value = unsafe { IOHIDDeviceGetProperty(device, key.as_concrete_TypeRef() as _) };
-        (!value.is_null()).then(|| unsafe { CFType::wrap_under_get_rule(value as _) })
     }
 
     extern "C" fn on_match(_: *mut c_void, _: IOReturn, _: *mut c_void, device: IOHIDDeviceRef) {
         let id = |key: &str| {
-            property(device, key)
-                .and_then(|v| v.downcast::<CFNumber>()?.to_i64())
+            iohid::device_int(device, key)
                 .and_then(|n| u16::try_from(n).ok())
                 .unwrap_or(0)
         };
-        let product = property(device, "Product")
-            .and_then(|v| v.downcast::<CFString>().map(|s| s.to_string()))
+        let product = iohid::device_string(device, "Product")
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .unwrap_or_else(|| "Mouse".into());
@@ -230,17 +144,14 @@ mod mouse {
     }
 
     extern "C" fn on_value(_: *mut c_void, _: IOReturn, _: *mut c_void, value: IOHIDValueRef) {
-        let (page, usage, device, amount) = unsafe {
-            let element = IOHIDValueGetElement(value);
-            if element.is_null() {
-                return;
-            }
-            (
-                IOHIDElementGetUsagePage(element),
-                IOHIDElementGetUsage(element),
-                IOHIDElementGetDevice(element),
-                IOHIDValueGetIntegerValue(value),
-            )
+        let Some(iohid::HidValue {
+            page,
+            usage,
+            device,
+            value: amount,
+        }) = iohid::read_value(value)
+        else {
+            return;
         };
         let kind = match (page, usage) {
             (BUTTON_PAGE, _) => SourceKind::Button,

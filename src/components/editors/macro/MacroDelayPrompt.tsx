@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-import { clampMacroDelayMs } from "@/domain/editors";
-import { Button, Modal, ModalFooter } from "@/components/ui";
+import { parseMacroDelayMs } from "@/domain/editors";
+import { Modal, ModalActions } from "@/components/ui";
 
 import * as styles from "./MacroDelayPrompt.css";
 
@@ -25,13 +25,14 @@ export const MacroDelayPrompt = (props: MacroDelayPromptProps) => {
   }, []);
 
   const submit = () => {
-    props.onConfirm(clampMacroDelayMs(Number(ms) || 0));
+    props.onConfirm(parseMacroDelayMs(ms));
   };
 
   return (
     <Modal
       nested
       compact
+      title={props.title}
       onBackdropClick={props.onCancel}
       onEscape={props.onCancel}
       onKeyDown={(event) => {
@@ -41,7 +42,6 @@ export const MacroDelayPrompt = (props: MacroDelayPromptProps) => {
         }
       }}
     >
-      <h2 id="macro-delay-prompt-title">{props.title}</h2>
       <label className={styles.delayField}>
         {props.delayLabel}
         <input
@@ -54,12 +54,12 @@ export const MacroDelayPrompt = (props: MacroDelayPromptProps) => {
           onChange={(event) => setMs(event.target.value)}
         />
       </label>
-      <ModalFooter>
-        <Button variant="ghost" onClick={props.onCancel}>
-          {props.cancelLabel}
-        </Button>
-        <Button onClick={submit}>{props.confirmLabel}</Button>
-      </ModalFooter>
+      <ModalActions
+        cancelLabel={props.cancelLabel}
+        onCancel={props.onCancel}
+        confirmLabel={props.confirmLabel}
+        onConfirm={submit}
+      />
     </Modal>
   );
 };

@@ -8,7 +8,7 @@ use cocoa::appkit::{
     NSBackingStoreBuffered, NSColor, NSWindow, NSWindowCollectionBehavior, NSWindowStyleMask,
 };
 use cocoa::base::{id, nil, NO, YES};
-use cocoa::foundation::{NSPoint, NSRect, NSSize};
+use cocoa::foundation::NSRect;
 use objc::declare::ClassDecl;
 use objc::runtime::{Class, Object, Sel};
 use objc::{class, msg_send, sel, sel_impl};
@@ -99,10 +99,6 @@ pub fn overlay_collection_behavior() -> NSWindowCollectionBehavior {
         | NSWindowCollectionBehavior::NSWindowCollectionBehaviorIgnoresCycle
         | NSWindowCollectionBehavior::NSWindowCollectionBehaviorFullScreenAuxiliary
         | NSWindowCollectionBehavior::from_bits_truncate(1 << 18)
-}
-
-pub unsafe fn configure_overlay_panel(win: id) {
-    configure_overlay_panel_at(win, overlay_stroke_level());
 }
 
 pub unsafe fn configure_overlay_panel_at(win: id, level: i32) {
@@ -230,30 +226,6 @@ pub unsafe fn screen_frames() -> Vec<NSRect> {
     }
 }
 
-pub unsafe fn unified_desktop_frame() -> NSRect {
-    let frames = screen_frames();
-    let mut min_x = f64::MAX;
-    let mut min_y = f64::MAX;
-    let mut max_x = f64::MIN;
-    let mut max_y = f64::MIN;
-    for frame in frames {
-        min_x = min_x.min(frame.origin.x);
-        min_y = min_y.min(frame.origin.y);
-        max_x = max_x.max(frame.origin.x + frame.size.width);
-        max_y = max_y.max(frame.origin.y + frame.size.height);
-    }
-    if min_x == f64::MAX {
-        return main_screen_frame().unwrap_or(NSRect::new(
-            NSPoint::new(0.0, 0.0),
-            NSSize::new(0.0, 0.0),
-        ));
-    }
-    NSRect::new(
-        NSPoint::new(min_x, min_y),
-        NSSize::new(max_x - min_x, max_y - min_y),
-    )
-}
-
 unsafe fn main_screen_frame() -> Option<NSRect> {
     let screen: id = msg_send![class!(NSScreen), mainScreen];
     if screen.is_null() {
@@ -266,10 +238,6 @@ unsafe fn main_screen_frame() -> Option<NSRect> {
 pub unsafe fn window_id(win: id) -> Option<u32> {
     let wid: i64 = msg_send![win, windowNumber];
     (wid > 0).then_some(wid as u32)
-}
-
-pub unsafe fn raise_window_server(win: id) {
-    raise_window_server_at(win, overlay_stroke_level());
 }
 
 pub unsafe fn raise_window_server_at(win: id, level: i32) {
@@ -325,29 +293,8 @@ pub unsafe fn apply_window_shape(win: id, rects: &[NSRect]) -> bool {
     err == 0
 }
 
-pub fn filled_circle_scanlines(diameter: f64) -> Vec<NSRect> {
-    let cx = diameter / 2.0;
-    let cy = diameter / 2.0;
-    let r = diameter / 2.0;
-    let mut rects = Vec::new();
-    let mut y = 0.0;
-    while y < diameter {
-        let dy = (y + 0.5) - cy;
-        let dy2 = dy * dy;
-        let r2 = r * r;
-        if dy2 < r2 {
-            let half = (r2 - dy2).sqrt();
-            rects.push(NSRect::new(
-                NSPoint::new(cx - half, y),
-                NSSize::new(half * 2.0, 1.0),
-            ));
-        }
-        y += 1.0;
-    }
-    rects
-}
-
 unsafe fn dlsym_named<T>(handle: *mut c_void, name: &[u8]) -> Option<T> {
+    debug_assert_eq!(std::mem::size_of::<T>(), std::mem::size_of::<*mut c_void>());
     let ptr = libc::dlsym(handle, name.as_ptr() as *const i8);
     if ptr.is_null() {
         None

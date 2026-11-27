@@ -7,7 +7,7 @@ import {
   type RefObject,
 } from "react";
 
-import { listReorderTransition } from "@/components/ui/panelLayout";
+import { listReorderTransition } from "@/constants/motion";
 import { moveItem } from "@/domain/list/dragReorder";
 
 interface UseTabReorderOptions {

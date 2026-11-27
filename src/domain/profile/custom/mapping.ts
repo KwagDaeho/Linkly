@@ -1,4 +1,5 @@
 import { comboEffectiveTrigger } from "@/domain/input";
+import { DEFAULT_BINDING } from "../binding";
 import type { ComboActivator, CustomMappingEntry, Profile } from "@/types";
 
 export const customMappingsOf = (profile: Profile): CustomMappingEntry[] => {
@@ -8,21 +9,12 @@ export const customMappingsOf = (profile: Profile): CustomMappingEntry[] => {
   return profile.customMappings;
 };
 
-export const findCustomMapping = (
-  profile: Profile,
-  entryId: string,
-): CustomMappingEntry | undefined => {
-  return customMappingsOf(profile).find((entry) => entry.id === entryId);
-};
 
 export const newCustomMappingEntry = (): CustomMappingEntry => {
   return {
     id: crypto.randomUUID(),
     activator: { modifiers: [], keys: [] },
-    click: { type: "default" },
-    longPress: { type: "disabled" },
-    longPressEnabled: false,
-    autoClick: false,
+    ...DEFAULT_BINDING,
   };
 };
 

@@ -15,10 +15,6 @@ export const isTiltButton = (id: ButtonId): boolean => {
   return id === "wheel_tilt_left" || id === "wheel_tilt_right";
 };
 
-export const isTiltPanStreamAction = (action: Action): boolean => {
-  if (action.type === "default") return true;
-  return action.type === "scroll" && action.dy === 0 && action.dx !== 0;
-};
 
 export const tiltForcesAutoClick = (id: ButtonId, _click: Action): boolean => {
   return isTiltButton(id);

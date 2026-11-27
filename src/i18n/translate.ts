@@ -1,9 +1,9 @@
 import type { ActionCategoryId, ActionLetterSubcategoryId, Dict, Lang } from "@/types";
 
+import { catalogModifierLabel } from "@/domain/keys/modifierLabel";
 import {
   arrowEntryLabel,
   editingKeyEntryLabel,
-  modifierEntryLabel,
   resolveGeneratedEntryLabel,
 } from "./format/catalogEntryLabel";
 import { en } from "./locales/en";
@@ -28,9 +28,9 @@ export const buttonLabel = (id: string, lang: Lang): string => {
 
 export const entryLabel = (id: string, lang: Lang): string => {
   const generated =
-    modifierEntryLabel(id, lang) ??
-    editingKeyEntryLabel(id, lang) ??
-    arrowEntryLabel(id, lang) ??
+    catalogModifierLabel(id) ??
+    editingKeyEntryLabel(id) ??
+    arrowEntryLabel(id) ??
     resolveGeneratedEntryLabel(id, lang);
   if (generated !== null) {
     return generated;

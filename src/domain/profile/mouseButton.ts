@@ -67,26 +67,16 @@ export const mouseButtonEventNumber = (
   return normalized.number;
 };
 
-export const mouseButtonsEqual = (
-  left: MouseClickButton | unknown,
-  right: MouseClickButton | unknown,
-): boolean => {
-  const leftNum = mouseButtonEventNumber(left);
-  const rightNum = mouseButtonEventNumber(right);
-  return leftNum !== null && leftNum === rightNum;
-};
 
-export const isStandardMouseButton = (
-  button: MouseClickButton,
-): button is StandardMouseClickButton => {
-  return typeof button === "string";
-};
+
+/** "Button N" with a 1-based (Karabiner-style) number. */
+export const mouseButtonNumberLabel = (
+  karabiner: number | string,
+  lang: "ko" | "en",
+): string => (lang === "ko" ? `버튼 ${karabiner}` : `Button ${karabiner}`);
 
 /** Karabiner-style label: CG button number N → "Button N+1". */
 export const extraMouseButtonLabel = (
   cgNumber: number,
   lang: "ko" | "en",
-): string => {
-  const karabiner = cgNumber + 1;
-  return lang === "ko" ? `버튼 ${karabiner}` : `Button ${karabiner}`;
-};
+): string => mouseButtonNumberLabel(cgNumber + 1, lang);

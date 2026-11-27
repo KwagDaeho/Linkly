@@ -57,7 +57,7 @@ export const buttonMappingDraftEditor = (): Extract<
   };
 };
 
-export const buttonMappingActivatorEditor = (
+const buttonMappingActivatorEditor = (
   entryId: string,
 ): Extract<EditorMode, { kind: "button_mapping_activator" }> => ({
   kind: "button_mapping_activator",

@@ -1,20 +1,11 @@
-export { withButtonFlags, withButtonSlot } from "./buttons";
-export {
-  withButtonMappingAdded,
-  withButtonMappingActivator,
-  withButtonMappingFlags,
-  withButtonMappingRemoved,
-  withButtonMappingSlot,
-} from "./buttonMappings";
+export { withButtonSlot } from "./buttons";
+export { withButtonMappingSlot } from "./buttonMappings";
 export {
   withMappingSlot,
-  withCustomMappingFlags,
-  withCustomMappingAdded,
-  withCustomMappingRemoved,
   withCustomMappingActivator,
+  withCustomMappingAdded,
+  withCustomMappingFlags,
+  withCustomMappingMoved,
+  withCustomMappingRemoved,
 } from "./mappings";
-export {
-  withPointerPatch,
-  withBallScrollPatch,
-  withLongPressMs,
-} from "./settings";
+export { withPointerPatch, withBallScrollPatch } from "./settings";

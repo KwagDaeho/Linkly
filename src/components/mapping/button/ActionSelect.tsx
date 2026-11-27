@@ -21,6 +21,7 @@ import {
   subcategoryLabel,
 } from "@/i18n";
 import { usePrefs } from "@/hooks";
+import { useDismiss } from "@/hooks/useDismiss";
 import type {
   Action,
   ActionCategoryId,
@@ -44,7 +45,6 @@ import {
   type MenuLayout,
 } from "./actionSelectMenuLayout";
 
-export { MENU_COL_WIDTH_PX };
 
 interface ActionSelectProps {
   action: Action;
@@ -184,43 +184,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
     };
   }, [open, syncMenuLayout]);
 
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const isInsideThisSelect = (target: Node): boolean => {
-      if (rootRef.current?.contains(target)) {
-        return true;
-      }
-      if (menuRef.current?.contains(target)) {
-        return true;
-      }
-      return false;
-    };
-    const dismissIfOutside = (event: Event) => {
-      const target = event.target;
-      if (!(target instanceof Node)) {
-        return;
-      }
-      if (isInsideThisSelect(target)) {
-        return;
-      }
-      closeMenu();
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        closeMenu();
-      }
-    };
-    window.addEventListener("pointerdown", dismissIfOutside, true);
-    window.addEventListener("mousedown", dismissIfOutside, true);
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("pointerdown", dismissIfOutside, true);
-      window.removeEventListener("mousedown", dismissIfOutside, true);
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [open, closeMenu]);
+  useDismiss([rootRef, menuRef], closeMenu, open, { capture: true });
 
   const pick = (next: string) => {
     if (disabled) {
@@ -278,7 +242,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     key={group.id}
                     type="button"
                     role="option"
-                    data-action-select-item=""
+                    data-own-hover=""
                     aria-selected={isActive}
                     className={`${styles.categoryRow} ${isActive ? styles.categoryRowActive : ""}`}
                     onMouseEnter={() => focusCategory(group)}
@@ -309,7 +273,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                       key={sub.id}
                       type="button"
                       role="option"
-                      data-action-select-item=""
+                      data-own-hover=""
                       aria-selected={isActive}
                       className={`${styles.categoryRow} ${isActive ? styles.categoryRowActive : ""}`}
                       onMouseEnter={() => setActiveSubcategory(sub.id)}
@@ -349,7 +313,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
                     key={entry.id}
                     type="button"
                     role="option"
-                    data-action-select-item=""
+                    data-own-hover=""
                     aria-selected={selected}
                     className={`${styles.entryRow} ${selected ? styles.entryRowSelected : ""}`}
                     onClick={() => pick(pickValue)}
@@ -384,7 +348,7 @@ export const ActionSelect = (props: ActionSelectProps) => {
         ref={triggerRef}
         type="button"
         className={styles.trigger}
-        data-action-select-trigger=""
+        data-own-hover=""
         disabled={disabled}
         aria-expanded={open}
         aria-haspopup="listbox"

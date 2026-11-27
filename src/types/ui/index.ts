@@ -1,4 +1,5 @@
 export type {
+  PermissionKind,
   PermissionStatus,
   ActionSlot,
   HoldCapturePhase,
@@ -8,4 +9,3 @@ export type {
   Theme,
 } from "./core";
 export type { ButtonVariant, ButtonSize, ToggleVariant } from "./controls";
-export type { ModalCopy, ModalActionHandlers } from "./modal";

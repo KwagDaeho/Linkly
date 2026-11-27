@@ -8,11 +8,6 @@ pub(crate) fn emit_chord(payload: CaptureChord) {
     app_bus::emit("key-capture", payload);
 }
 
-pub fn refresh_combo_key_capture() {
-    #[cfg(target_os = "macos")]
-    super::macos::refresh_combo_preview();
-}
-
 pub(crate) fn emit_activator(payload: ActivatorCapture) {
     app_bus::emit("activator-capture", payload);
 }
@@ -75,18 +70,5 @@ pub fn emit_combo_trigger_catalog_button(button: ButtonId) {
         let token = super::token::button_id_capture_token(button);
         super::macos::note_capture_token(token, true);
         super::macos::emit_combo_preview();
-    }
-}
-
-pub fn emit_combo_trigger_activator(activator: Activator) {
-    if !session::combo_trigger_capture_active() {
-        return;
-    }
-    #[cfg(target_os = "macos")]
-    {
-        if let Some(token) = super::token::activator_capture_token(&activator) {
-            super::macos::note_capture_token(&token, true);
-            super::macos::emit_combo_preview();
-        }
     }
 }

@@ -4,7 +4,33 @@ import {
   formatGenericModifierIcon,
   formatSidedModifierIcon,
 } from "@/domain/keys/modifierLabel";
-import { formatMouseKeyToken } from "@/domain/keys/mouseKeyToken";
+import { mouseButtonNumberLabel } from "@/domain/profile/mouseButton";
+import { buttonLabel } from "../translate";
+
+/** Capture / pill labels — same SSOT as button mapping `buttons.*`. */
+const CAPTURE_MOUSE_TO_BUTTON_ID: Record<string, string> = {
+  MouseLeft: "left",
+  MouseRight: "right",
+  MouseMiddle: "middle",
+  MouseBack: "back",
+  MouseForward: "forward",
+  Fn1: "fn1",
+  Fn2: "fn2",
+  Fn3: "fn3",
+  WheelTiltLeft: "wheel_tilt_left",
+  WheelTiltRight: "wheel_tilt_right",
+};
+
+const formatMouseKeyToken = (token: string, lang: Lang): string | null => {
+  const buttonId = CAPTURE_MOUSE_TO_BUTTON_ID[token];
+  if (buttonId !== undefined) {
+    return buttonLabel(buttonId, lang);
+  }
+  if (token.startsWith("Button")) {
+    return mouseButtonNumberLabel(token.slice("Button".length), lang);
+  }
+  return null;
+};
 
 export const formatKeyTokenLabel = (token: string, lang: Lang): string => {
   const mouseLabel = formatMouseKeyToken(token, lang);

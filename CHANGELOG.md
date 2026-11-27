@@ -4,6 +4,18 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.4] — 2026-11-27
+
+### Fixed
+
+- **Neighbouring mouse buttons no longer trigger each other** — button matching allowed a ±1 number difference, so e.g. a Button 26 key also fired a Button 27 trigger (ball-scroll and gesture hold keys collided). Matching is now exact.
+
+### Changed
+
+- **Gesture triggers** — table matches the other trigger tables (column labels, shape shown in a trigger pill, same hover); toggle/hold key rows use the Mouse tab layout.
+- **Accent text** — white text on accents darker than lightness 58 (was ~50), so mid-tones read better.
+- **Refactor** — about 4,000 lines of dead or duplicated code removed: shared UI components (capture prompt, modal actions, table head/rows, drag handle, icon button, …), logic moved out of components into hooks/domain, one IOHID helper and one clock in the backend, safer event-tap teardown. No intended behaviour change.
+
 ## [2.0.3] — 2026-11-27
 
 ### Added

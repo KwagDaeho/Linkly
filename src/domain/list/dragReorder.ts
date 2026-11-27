@@ -10,7 +10,7 @@ export type DragState = {
   lastSwapClientY: number;
 };
 
-export const SWAP_COOLDOWN_PX = 18;
+const SWAP_COOLDOWN_PX = 18;
 
 export const moveItem = <T>(items: T[], from: number, to: number): T[] => {
   if (from === to) {
@@ -20,33 +20,6 @@ export const moveItem = <T>(items: T[], from: number, to: number): T[] => {
   const [moved] = next.splice(from, 1);
   next.splice(to, 0, moved!);
   return next;
-};
-
-export const measureStride = (
-  list: HTMLElement | null,
-  index: number,
-): number => {
-  const item = list?.children.item(index);
-  const next = list?.children.item(index + 1);
-  if (item instanceof HTMLElement && next instanceof HTMLElement) {
-    return next.offsetTop - item.offsetTop;
-  }
-  if (item instanceof HTMLElement) {
-    const listStyles = window.getComputedStyle(list!);
-    const gap = Number.parseFloat(listStyles.rowGap || listStyles.gap || "0") || 0;
-    return item.offsetHeight + gap;
-  }
-  return 40;
-};
-
-export const pointerListY = (
-  clientY: number,
-  list: HTMLElement,
-  viewport: HTMLElement | null,
-): number => {
-  const listRect = list.getBoundingClientRect();
-  const scrollTop = viewport?.scrollTop ?? 0;
-  return clientY - listRect.top + scrollTop;
 };
 
 const desiredOverIndex = (
@@ -95,22 +68,6 @@ export const itemShiftY = (index: number, drag: DragState): number => {
     return stride;
   }
   return 0;
-};
-
-export const autoScrollViewport = (
-  viewport: HTMLElement | null,
-  clientY: number,
-) => {
-  if (!viewport) {
-    return;
-  }
-  const rect = viewport.getBoundingClientRect();
-  const edge = 32;
-  if (clientY < rect.top + edge) {
-    viewport.scrollTop -= 6;
-  } else if (clientY > rect.bottom - edge) {
-    viewport.scrollTop += 6;
-  }
 };
 
 /** `ids` sorted by a saved order; ids not in it keep their relative order at the end. */

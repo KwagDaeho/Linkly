@@ -61,6 +61,7 @@ export const HeaderSegmentToggle = ({
             key={segment.id}
             type="button"
             data-header-segment=""
+            data-own-hover="press"
             className={cx(
               styles.headerSegmentButton,
               selected && styles.headerSegmentButtonActive,

@@ -1,4 +1,4 @@
-import { CHORD_MODIFIERS } from "@/domain/profile";
+import { CHORD_MODIFIER_TOKENS } from "@/domain/keys/modifiers";
 import type {
   ActivatorCapturePayload,
   ActivatorCaptureResult,
@@ -7,13 +7,12 @@ import type {
 } from "@/types";
 export const applyKeyCapture = (
   editor: EditorMode,
-  captureMode: "custom_key" | "macro" | "combo_capture",
   payload: KeyCapturePayload,
 ): EditorMode | null => {
   const { keys, escape } = payload;
-  if (captureMode === "macro" && editor.kind === "macro" && editor.keyPrompt) {
+  if (editor.kind === "macro" && editor.keyPrompt) {
     if (escape) return { ...editor, keyPrompt: null };
-    const hasMain = keys.some((k) => !CHORD_MODIFIERS.has(k));
+    const hasMain = keys.some((k) => !CHORD_MODIFIER_TOKENS.has(k));
     if (!hasMain) return editor;
     const step = { type: "key_stroke" as const, keys };
     if (editor.keyPrompt.mode === "add") {

@@ -1,6 +1,8 @@
 import type { MacroStep } from "../action";
 import type { InstalledAppWithIcon } from "../device";
 import type { ButtonId, ButtonMappingEntry, CustomMappingEntry } from "../profile";
+export type PermissionKind = "accessibility" | "input_monitoring";
+
 export type PermissionStatus = {
   accessibility: boolean;
   inputMonitoring: boolean;

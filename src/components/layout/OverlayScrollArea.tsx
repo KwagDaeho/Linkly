@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
+import { SCROLLBAR_FADE_START_MS, SCROLLBAR_FADE_MS } from "@/constants/scrollbar";
 import { cx } from "@/utils/cx";
 
 import * as scrollAreaStyles from "./OverlayScrollArea.css";
@@ -16,9 +17,6 @@ type Thumb = {
   height: number;
 };
 
-const SCROLLBAR_GONE_MS = 1120;
-const SCROLLBAR_FADE_START_MS = 480;
-const SCROLLBAR_FADE_MS = SCROLLBAR_GONE_MS - SCROLLBAR_FADE_START_MS;
 
 interface OverlayScrollAreaProps {
   children: ReactNode;

@@ -2,7 +2,7 @@ import { activatorRejectedMessage } from "@/domain/editors";
 import { usePrefs } from "@/hooks/prefs";
 import { useEditor } from "@/hooks/editor";
 
-import { MacroKeyPrompt } from "../macro/MacroKeyPrompt";
+import { CapturePromptModal } from "../shared";
 import type { EditorMode } from "@/types";
 
 type ButtonMappingActivatorEditorState = Extract<
@@ -31,12 +31,15 @@ export const ButtonMappingActivatorEditor = (
       : i18n.captureInputWaiting;
 
   return (
-    <MacroKeyPrompt
+    <CapturePromptModal
       title={i18n.buttonMappingTriggerModalTitle}
       hint={i18n.macroKeystrokeHint}
-      waitingLabel={waitingLabel}
+      status={waitingLabel}
       cancelLabel={i18n.cancel}
       onCancel={() => setEditor(null)}
+      nested
+      closeOnBackdrop
+      closeOnEscape
     />
   );
 };

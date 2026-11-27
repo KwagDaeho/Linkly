@@ -27,16 +27,6 @@ pub(crate) const MODIFIER_ORDER: [&str; 12] = [
     SIDE_MODIFIER_ORDER[7],
 ];
 
-pub(crate) const FLAG_CONTROL: u64 = 0x0004_0000;
-pub(crate) const FLAG_OPTION: u64 = 0x0008_0000;
-pub(crate) const FLAG_SHIFT: u64 = 0x0002_0000;
-pub(crate) const FLAG_COMMAND: u64 = 0x0010_0000;
-
-#[link(name = "CoreGraphics", kind = "framework")]
-extern "C" {
-    fn CGEventSourceFlagsState(state_id: u32) -> u64;
-}
-
 static ENTRIES: Mutex<Vec<CustomMappingEntry>> = Mutex::new(Vec::new());
 static MODIFIERS_HELD: LazyLock<Mutex<HashSet<String>>> =
     LazyLock::new(|| Mutex::new(HashSet::new()));
@@ -67,21 +57,9 @@ pub(crate) fn button_state() -> parking_lot::MutexGuard<'static, ButtonState> {
 }
 
 pub(crate) fn live_modifiers() -> HashSet<String> {
-    let flags = unsafe { CGEventSourceFlagsState(0) };
-    let mut mods = HashSet::new();
-    if flags & FLAG_CONTROL != 0 {
-        mods.insert("Control".into());
-    }
-    if flags & FLAG_OPTION != 0 {
-        mods.insert("Option".into());
-    }
-    if flags & FLAG_SHIFT != 0 {
-        mods.insert("Shift".into());
-    }
-    if flags & FLAG_COMMAND != 0 {
-        mods.insert("Meta".into());
-    }
-    mods
+    modifier::legacy_names_from_flags(crate::platform::inject::live_modifier_flags())
+        .map(String::from)
+        .collect()
 }
 
 pub fn sync_from_profile(profile: &Profile, trigger_device: Option<DeviceIdentityKey>) {
@@ -141,27 +119,6 @@ pub(crate) fn merge_held_and_live_modifiers(
     merged
 }
 
-pub(crate) fn effective_keys() -> HashSet<String> {
-    KEYS_HELD.lock().clone()
-}
-
-pub(crate) fn modifiers_from_flags(flags: u64) -> HashSet<String> {
-    let mut mods = HashSet::new();
-    if flags & FLAG_CONTROL != 0 {
-        mods.insert("Control".into());
-    }
-    if flags & FLAG_OPTION != 0 {
-        mods.insert("Option".into());
-    }
-    if flags & FLAG_SHIFT != 0 {
-        mods.insert("Shift".into());
-    }
-    if flags & FLAG_COMMAND != 0 {
-        mods.insert("Meta".into());
-    }
-    mods
-}
-
 pub(crate) fn sorted_modifiers(set: &HashSet<String>) -> Vec<String> {
     MODIFIER_ORDER
         .iter()
@@ -178,10 +135,6 @@ pub(crate) fn sorted_keys(set: &HashSet<String>) -> Vec<String> {
 
 pub(crate) fn effective_sorted_modifiers() -> Vec<String> {
     sorted_modifiers(&effective_modifiers())
-}
-
-pub(crate) fn effective_sorted_keys() -> Vec<String> {
-    sorted_keys(&effective_keys())
 }
 
 /// Held keys for one combo entry — matches FE `snapshotToComboActivator` (trigger key excluded).

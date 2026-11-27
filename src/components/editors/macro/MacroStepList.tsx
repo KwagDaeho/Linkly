@@ -1,17 +1,15 @@
 import { formatMacroStepLabel } from "@/i18n";
 import { cx } from "@/utils/cx";
 import { Button } from "@/components/ui";
-import {
-  OverlayScrollArea,
-  overlayScrollAreaStyles,
-} from "@/components/layout/OverlayScrollArea";
+import { OverlayScrollArea } from "@/components/layout/OverlayScrollArea";
+import { DragHandle } from "@/components/ui/DragHandle";
 import type { Lang, MacroStep } from "@/types";
 
 import { moveItem } from "@/domain/list/dragReorder";
 import { useDragReorder } from "@/hooks/useDragReorder";
 import * as reorder from "@/components/ui/reorder.css";
 
-import { isEditableStep } from "./macroStepDrag";
+import { isEditableStep } from "@/domain/editors";
 import * as styles from "./MacroStepList.css";
 
 interface MacroStepListProps {
@@ -25,7 +23,7 @@ interface MacroStepListProps {
 }
 
 export const MacroStepList = (props: MacroStepListProps) => {
-  const { listRef, viewportRef, dragging, handleProps, rowState } = useDragReorder({
+  const { bindList, dragging, handleProps, rowState } = useDragReorder({
     count: props.steps.length,
     onReorder: (from, to) => props.onStepsChange(moveItem(props.steps, from, to)),
   });
@@ -36,11 +34,7 @@ export const MacroStepList = (props: MacroStepListProps) => {
       contentKey={String(props.steps.length)}
     >
       <ul
-        ref={(node) => {
-          listRef.current = node;
-          viewportRef.current =
-            node?.closest(`.${overlayScrollAreaStyles.viewport}`) ?? null;
-        }}
+        ref={bindList}
         aria-label={props.reorderHint}
         className={cx(styles.list, dragging && reorder.listDragging)}
       >
@@ -58,18 +52,13 @@ export const MacroStepList = (props: MacroStepListProps) => {
               )}
               style={row.style}
             >
-              <button
-                type="button"
-                className={cx(reorder.dragHandle, styles.dragZone)}
-                aria-label={props.reorderHint}
-                title={props.reorderHint}
+              <DragHandle
+                className={styles.dragZone}
+                label={props.reorderHint}
                 {...handleProps(stepIndex)}
               >
-                <span className={reorder.dragDots} aria-hidden>
-                  ⋮⋮
-                </span>
                 <span className={styles.order}>{stepIndex + 1}</span>
-              </button>
+              </DragHandle>
               <span className={styles.label}>
                 {formatMacroStepLabel(step, props.lang)}
               </span>

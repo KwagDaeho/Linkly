@@ -75,10 +75,6 @@ pub fn uses_os_watch() -> bool {
     })
 }
 
-pub fn entries() -> parking_lot::MutexGuard<'static, Vec<ButtonMappingEntry>> {
-    ENTRIES.lock()
-}
-
 pub fn entry_by_id(id: &str) -> Option<ButtonMappingEntry> {
     ENTRIES.lock().iter().find(|e| e.id == id).cloned()
 }

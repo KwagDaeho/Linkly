@@ -6,14 +6,17 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 
+import { viewport as overlayViewport } from "@/components/layout/OverlayScrollArea.css";
 import {
-  autoScrollViewport,
   itemShiftY,
-  measureStride,
-  pointerListY,
   updateOverIndex,
   type DragState,
 } from "@/domain/list/dragReorder";
+import {
+  autoScrollViewport,
+  measureStride,
+  pointerListY,
+} from "@/utils/dragReorderDom";
 
 interface UseDragReorderOptions {
   count: number;
@@ -137,7 +140,7 @@ export const useDragReorder = (options: UseDragReorderOptions) => {
 
   /** Spread onto the drag handle of row `index`. */
   const handleProps = (index: number) => ({
-    "data-drag-handle": "",
+    "data-own-hover": "",
     onPointerDown: (event: ReactPointerEvent<HTMLElement>) => startDrag(index, event),
     onPointerEnter: () => {
       if (dragRef.current === null) {
@@ -174,5 +177,12 @@ export const useDragReorder = (options: UseDragReorderOptions) => {
     };
   };
 
-  return { listRef, viewportRef, dragging: drag !== null, handleProps, rowState };
+  /** Ref callback for the list element (rows are its direct children). */
+  const bindList = (node: HTMLElement | null) => {
+    listRef.current = node;
+    viewportRef.current =
+      node?.closest<HTMLElement>(`.${overlayViewport}`) ?? null;
+  };
+
+  return { bindList, dragging: drag !== null, handleProps, rowState };
 };

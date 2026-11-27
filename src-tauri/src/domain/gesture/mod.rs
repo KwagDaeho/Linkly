@@ -18,6 +18,7 @@ use std::time::{Duration, Instant};
 use parking_lot::Mutex;
 
 use crate::domain::device::{ButtonId, ButtonState};
+use crate::domain::modifier::is_modifier_name;
 use crate::domain::profile::{
     Activator, GesturePoint, GestureSettings, MouseClickButton, PointerSettings, Profile,
 };
@@ -26,12 +27,6 @@ use crate::platform::inject;
 const SAMPLE_INTERVAL: Duration = Duration::from_millis(8);
 /// HID + CGEvent can both report one physical press; ignore the echo.
 const TOGGLE_DEBOUNCE: Duration = Duration::from_millis(80);
-
-const MODIFIER_KEYS: [&str; 12] = [
-    "Control", "Option", "Shift", "Meta",
-    "LeftControl", "RightControl", "LeftOption", "RightOption",
-    "LeftShift", "RightShift", "LeftMeta", "RightMeta",
-];
 
 static SETTINGS: LazyLock<Mutex<GestureSettings>> =
     LazyLock::new(|| Mutex::new(GestureSettings::default()));
@@ -113,7 +108,7 @@ fn matches_toggle(activator: &Activator) -> bool {
 }
 
 fn is_modifier_key(activator: &Activator) -> bool {
-    matches!(activator, Activator::Key { name } if MODIFIER_KEYS.contains(&name.as_str()))
+    matches!(activator, Activator::Key { name } if is_modifier_name(name))
 }
 
 /// Returns true when the event is consumed (modifiers pass through so the OS keeps

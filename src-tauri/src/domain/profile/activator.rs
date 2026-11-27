@@ -85,26 +85,10 @@ pub fn activator_options_same(a: &Option<Activator>, b: &Option<Activator>) -> b
 }
 
 impl Activator {
-    /// Match live OS/HID input to a stored activator (incl. legacy off-by-one `Other` numbers).
+    /// Exact match (mouse buttons compare by event number). No ±1 tolerance: that made
+    /// neighbouring buttons (e.g. Button 26 / 27) trigger each other.
     pub fn same_as(&self, other: &Self) -> bool {
-        if self == other {
-            return true;
-        }
-        match (self, other) {
-            (
-                Activator::Mouse {
-                    button: MouseClickButton::Other { number: a },
-                },
-                Activator::Mouse {
-                    button: MouseClickButton::Other { number: b },
-                },
-            ) => {
-                let a = *a as i64;
-                let b = *b as i64;
-                a == b || a + 1 == b || a == b + 1
-            }
-            _ => false,
-        }
+        self == other
     }
 
     /// Match stored activator to live OS/HID input (incl. catalog ↔ shared pointer mouse).
@@ -135,13 +119,22 @@ impl Activator {
             }
         )
     }
+}
 
-    pub fn is_catalog_tilt_button(&self) -> bool {
-        matches!(
-            self,
-            Activator::Device {
-                button: ButtonId::WheelTiltLeft | ButtonId::WheelTiltRight
-            }
-        )
+#[cfg(test)]
+mod same_as_tests {
+    use super::*;
+
+    fn other(number: u8) -> Activator {
+        Activator::Mouse {
+            button: MouseClickButton::Other { number },
+        }
+    }
+
+    #[test]
+    fn neighbouring_extra_buttons_are_distinct() {
+        assert!(other(25).same_as(&other(25)));
+        assert!(!other(25).same_as(&other(26)));
+        assert!(!other(26).matches_input(&other(25)));
     }
 }

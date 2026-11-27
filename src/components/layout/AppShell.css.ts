@@ -30,13 +30,6 @@ export const shell = style({
   overflow: "hidden",
 });
 
-/** Tab panels — extra top inset so gap below tabs matches sectionGroupFollow (~14px). */
-export const tabPanel = style({
-  display: "grid",
-  gap: 8,
-  paddingTop: 6,
-});
-
 export const tabs = style({
   position: "relative",
   display: "grid",

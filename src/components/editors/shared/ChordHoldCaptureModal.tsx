@@ -7,7 +7,6 @@ import {
   ChordPreview,
   Modal,
   ModalFooter,
-  Muted,
   Row,
 } from "@/components/ui";
 import * as styles from "./ChordHoldCaptureModal.css";
@@ -58,10 +57,14 @@ export const ChordHoldCaptureModal = (props: ChordHoldCaptureModalProps) => {
   };
 
   return (
-    <Modal ref={dialogRef} tabIndex={-1} onKeyDown={handleKeyDown}>
-      <h2>{props.title}</h2>
-      <Muted variant="modal">{props.hint}</Muted>
-      <ChordPreview variant="field">{props.preview}</ChordPreview>
+    <Modal
+      ref={dialogRef}
+      tabIndex={-1}
+      title={props.title}
+      hint={props.hint}
+      onKeyDown={handleKeyDown}
+    >
+      <ChordPreview>{props.preview}</ChordPreview>
       {props.error ? <ChordError>{props.error}</ChordError> : null}
       <Row className={styles.actionRow}>
         {showRetry ? (

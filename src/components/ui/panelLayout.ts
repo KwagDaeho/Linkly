@@ -1,26 +1,15 @@
+import { REORDER_EASE } from "@/constants/motion";
+
 /** Main shell inset from window left/right edges (AppShell, BootScreen). */
 export const shellSideInsetPx = 72;
 
 /** Vertical gap between AppShell grid rows (see AppShell.css.ts `shell`). */
 export const shellSectionGapPx = 8;
 
-/** Contact footer: space from tab content to top border (excludes shell row gap). */
-export const footerSpaceAboveBorderPx = 40;
-
-/** Contact footer: space from top border to footer text. */
-export const footerSpaceBelowBorderPx = 48;
-
-/** Contact footer: trailing space below footer block. */
-export const footerSpaceBottomPx = 120;
-
 /** Section tab pill, panel track, and label color (keep in sync). */
 export const tabTransitionMs = 520;
 export const tabTransitionEase = "cubic-bezier(0.4, 0, 0.2, 1)";
-/** List reorder (MacroStepList). */
-export const listReorderTransition =
-  "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)";
-const reorderEase = "cubic-bezier(0.22, 1, 0.36, 1)";
-export const tabPillNudgeTransition = `left 260ms ${reorderEase}, top 260ms ${reorderEase}, width 260ms ${reorderEase}, height 260ms ${reorderEase}`;
+export const tabPillNudgeTransition = `left 260ms ${REORDER_EASE}, top 260ms ${REORDER_EASE}, width 260ms ${REORDER_EASE}, height 260ms ${REORDER_EASE}`;
 
 /** Segmented controls (section tabs, header theme/lang, font scale) — not toggle switches. */
 export const chromeSegmentRadiusPx = 8;
@@ -32,9 +21,6 @@ export const chromeSegmentIconRem = 1.25;
 export const chromeSegmentButtonPadYRem = 0.36;
 /** Primary section tab column widths (system, trigger, mouse). */
 export const sectionTabColumnWidthsRem = [5.75, 5.5, 5.5] as const;
-/** @deprecated use sectionTabColumnWidthsRem */
-export const sectionTabColumnWidthRem = 5.5;
-export const sectionTabDevicesFontRem = 1.0625;
 /** Primary section tab (Info / Link) typography & inset. */
 export const sectionTabFontRem = 1;
 export const sectionTabPadYRem = 0.72;

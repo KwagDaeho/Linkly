@@ -4,28 +4,13 @@ import { cx } from "@/utils/cx";
 
 import * as styles from "./ChordPreview.css";
 
-export type ChordPreviewVariant = "inline" | "field";
-
-interface ChordPreviewProps {
-  children: ReactNode;
-  className?: string;
-  variant?: ChordPreviewVariant;
-}
-
 export const ChordPreview = ({
   children,
   className,
-  variant = "inline",
-}: ChordPreviewProps) => (
-  <div
-    className={cx(
-      variant === "field" ? styles.field : styles.inline,
-      className,
-    )}
-  >
-    {children}
-  </div>
-);
+}: {
+  children: ReactNode;
+  className?: string;
+}) => <div className={cx(styles.field, className)}>{children}</div>;
 
 export const ChordError = ({
   children,

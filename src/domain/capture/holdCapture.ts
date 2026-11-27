@@ -1,6 +1,6 @@
 import type { EditorMode, HoldCapturePhase, Lang } from "@/types";
 
-export const initialHoldCapture = () => ({
+const initialHoldCapture = () => ({
   listening: false,
   holdPhase: "idle" as HoldCapturePhase,
   pending: [] as string[],

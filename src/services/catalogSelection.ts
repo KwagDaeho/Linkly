@@ -46,7 +46,7 @@ export const applyCatalogSelection = (
     updateSlot(target, slot, result.action);
   }
 };
-export const loadOpenAppList = async (
+const loadOpenAppList = async (
   setEditor: Dispatch<SetStateAction<EditorMode | null>>,
 ) => {
   try {

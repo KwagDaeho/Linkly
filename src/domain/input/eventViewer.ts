@@ -8,6 +8,20 @@ import {
 
 export type EventViewerChannel = "keyboard" | "mouse";
 
+const timeFormat = new Intl.DateTimeFormat(undefined, {
+  hour12: false,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
+/** Local wall-clock time with milliseconds (`HH:MM:SS.mmm`). */
+export const formatEventTime = (tsMs: number): string => {
+  const date = new Date(tsMs);
+  const ms = String(date.getMilliseconds()).padStart(3, "0");
+  return `${timeFormat.format(date)}.${ms}`;
+};
+
 const isKeyboardKind = (kind: string): boolean =>
   kind === "keyDown" ||
   kind === "keyUp" ||
@@ -46,10 +60,6 @@ export const eventViewerChannels = (
   }
   return [...channels];
 };
-
-export const eventViewerChannel = (
-  line: InputEventLine,
-): EventViewerChannel => eventViewerChannels(line)[0] ?? "mouse";
 
 const parseKeyOrModLine = (
   summary: string,

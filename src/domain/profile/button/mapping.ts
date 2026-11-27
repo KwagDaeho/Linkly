@@ -1,5 +1,5 @@
+import { DEFAULT_BINDING } from "../binding";
 import type {
-  Activator,
   ButtonBinding,
   ButtonId,
   ButtonMappingEntry,
@@ -23,27 +23,12 @@ export const buttonMappingsOf = (profile: Profile): ButtonMappingEntry[] => {
   return profile.buttonMappings ?? [];
 };
 
-export const findButtonMapping = (
-  profile: Profile,
-  entryId: string,
-): ButtonMappingEntry | undefined => {
-  return buttonMappingsOf(profile).find((entry) => entry.id === entryId);
-};
-
-export const buttonMappingActivatorValid = (
-  activator: Activator | null,
-): activator is Activator => {
-  return activator !== null;
-};
 
 export const newButtonMappingEntry = (): ButtonMappingEntry => {
   return {
     id: crypto.randomUUID(),
     activator: null,
-    click: { type: "default" },
-    longPress: { type: "disabled" },
-    longPressEnabled: false,
-    autoClick: false,
+    ...DEFAULT_BINDING,
   };
 };
 
@@ -64,12 +49,7 @@ export const migrateLegacyButtonMappings = (profile: Profile): Profile => {
     const binding =
       typeof raw === "object" && raw !== null && "click" in raw
         ? (raw as ButtonBinding)
-        : ({
-            click: raw,
-            longPress: { type: "disabled" },
-            longPressEnabled: false,
-            autoClick: false,
-          } satisfies ButtonBinding);
+        : { ...DEFAULT_BINDING, click: raw };
     entries.push({
       id: crypto.randomUUID(),
       activator: { type: "device", button: id },

@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import { ActionSelect } from "./ActionSelect";
 import { resolveBindingButtonId } from "@/domain/mapping";
 import {
@@ -15,8 +14,6 @@ import * as styles from "./BindingRow.css";
 interface BindingRowProps {
   target: MappingTarget;
   binding: ButtonBinding;
-  label: ReactNode;
-  hideLabel?: boolean;
   onFlags: (
     patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
   ) => void;
@@ -38,12 +35,8 @@ export const BindingRow = (props: BindingRowProps) => {
   const longPressOn = forceAutoClickOn
     ? false
     : bindingLongPressEnabled(props.binding);
-  const hideLabel = props.hideLabel === true;
   return (
     <>
-      {!hideLabel ? (
-        <span className={styles.btnName}>{props.label}</span>
-      ) : null}
       <ActionSelect
         action={props.binding.click}
         onPick={(value) => props.onPick("click", value)}

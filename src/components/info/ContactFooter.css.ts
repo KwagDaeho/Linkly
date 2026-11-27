@@ -1,7 +1,6 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
-import { footerSpaceBelowBorderPx, footerSpaceBottomPx } from "@/components/ui/panelLayout";
-
+/** Lives inside the System tab (no shell footer chrome). */
 export const footer = style({
   display: "flex",
   alignItems: "flex-end",
@@ -10,22 +9,8 @@ export const footer = style({
   color: "var(--muted)",
   fontSize: "0.86rem",
   boxSizing: "border-box",
-  paddingTop: footerSpaceBelowBorderPx,
-  paddingRight: 4,
-  paddingBottom: 10,
-  paddingLeft: 4,
-  borderTop: "1px solid var(--line)",
-  marginTop: 0,
-  marginBottom: footerSpaceBottomPx,
-});
-
-export const footerEmbedded = style({
-  marginBottom: 0,
-  paddingTop: 0,
-  paddingBottom: 0,
-  paddingLeft: 0,
-  paddingRight: 0,
-  borderTop: "none",
+  padding: 0,
+  margin: 0,
 });
 
 export const footerMain = style({

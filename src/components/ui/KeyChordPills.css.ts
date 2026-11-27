@@ -39,20 +39,3 @@ export const pillCompact = style({
   fontSize: "0.8rem",
   lineHeight: 1.15,
 });
-
-export const prefix = style({
-  display: "inline-flex",
-  alignItems: "center",
-  padding: "0.28rem 0.55rem",
-  borderRadius: chipRadius,
-  border: "1px solid var(--line)",
-  background: "transparent",
-  color: "var(--muted)",
-  fontSize: "0.78rem",
-  fontWeight: 600,
-});
-
-export const prefixCompact = style({
-  padding: "0.2rem 0.42rem",
-  fontSize: "0.78rem",
-});

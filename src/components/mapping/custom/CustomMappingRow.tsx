@@ -7,10 +7,10 @@ import { comboEditorStateFromEntry } from "@/domain/editors";
 import { comboIsValid } from "@/domain/profile";
 import { usePrefs, useEditor } from "@/hooks";
 import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
-import { Button } from "@/components/ui";
 import { MappingTriggerButton } from "../MappingTriggerButton";
+import { RowRemoveButton } from "../RowRemoveButton";
 import type { CustomMappingEntry } from "@/types";
-import * as styles from "./CustomMappingRow.css";
+import * as styles from "../mappingTableRow.css";
 
 interface CustomMappingRowProps {
   entry: CustomMappingEntry;
@@ -30,7 +30,7 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
   return (
     <div className={cx(styles.row, props.reorder?.className)} style={props.reorder?.style}>
       {props.reorder?.handle ?? <span aria-hidden />}
-      <div className={styles.comboTrigger}>
+      <div className={styles.triggerCell}>
         <MappingTriggerButton
           lang={lang}
           keys={triggerKeys}
@@ -41,23 +41,13 @@ export const CustomMappingRow = (props: CustomMappingRowProps) => {
       <BindingRow
         target={{ kind: "custom", id: entry.id }}
         binding={binding}
-        label={null}
-        hideLabel
         buttonId={catalogButtonFromComboTrigger(entry.activator)}
         onFlags={(patch) => customMappings.updateFlags(entry.id, patch)}
         onPick={(slot, value) =>
           catalogSelection.selectCustom(entry.id, slot, value)
         }
       />
-      <div className={styles.remove}>
-        <Button
-          variant="remove"
-          size="tiny"
-          onClick={() => void customMappings.remove(entry.id)}
-        >
-          {i18n.remove}
-        </Button>
-      </div>
+      <RowRemoveButton onClick={() => customMappings.remove(entry.id)} />
     </div>
   );
 };

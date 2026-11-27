@@ -6,6 +6,13 @@ import type {
   GestureSettings,
 } from "@/types/profile/gesture";
 
+export const newGestureEntry = (template: GesturePoint[]): GestureEntry => ({
+  id: crypto.randomUUID(),
+  template,
+  click: { type: "default" },
+  longPress: { type: "disabled" },
+});
+
 export const gestureSettingsOf = (profile: Profile): Required<GestureSettings> => ({
   holdActivator: profile.gestures?.holdActivator ?? null,
   toggleActivator: profile.gestures?.toggleActivator ?? null,

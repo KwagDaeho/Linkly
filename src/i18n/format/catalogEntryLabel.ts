@@ -1,20 +1,9 @@
 import type { Lang } from "@/types";
-import { catalogModifierLabel } from "@/domain/keys/modifierLabel";
 import { letterKeyDisplayHint } from "@/domain/actions/catalog/buildEntries";
 import {
   jaKanaCatalogEntryLabel,
   jaKanaCatalogRow,
 } from "@/domain/actions/catalog/jaKanaCatalog";
-
-const parseGeneratedEntryId = (
-  id: string,
-): { kind: string; rest: string } | null => {
-  const parts = id.split("_");
-  if (parts.length < 2) {
-    return null;
-  }
-  return { kind: parts[0] ?? "", rest: parts.slice(1).join("_") };
-};
 
 export const resolveGeneratedEntryLabel = (
   id: string,
@@ -57,67 +46,36 @@ export const resolveGeneratedEntryLabel = (
     }
     return rest.toUpperCase();
   }
-  const parsed = parseGeneratedEntryId(id);
-  if (parsed?.kind === "key" && id.startsWith("key_")) {
-    return null;
-  }
   return null;
 };
 
-export const modifierEntryLabel = (id: string, lang: Lang): string | null => {
-  return catalogModifierLabel(id, lang);
+/** Same text in every language. */
+const EDITING_KEY_LABELS: Record<string, string> = {
+  key_space: "Space",
+  key_tab: "Tab",
+  key_return: "Return / Enter",
+  key_escape: "Esc",
+  key_delete: "Delete (Backspace)",
+  key_forward_delete: "Forward Delete",
+  key_insert: "Insert",
+  key_home: "Home",
+  key_end: "End",
+  key_page_up: "Page Up",
+  key_page_down: "Page Down",
+  key_help: "Help",
+  key_clear: "Clear",
+  key_caps_lock: "Caps Lock",
 };
 
-export const editingKeyEntryLabel = (id: string, lang: Lang): string | null => {
-  const ko: Record<string, string> = {
-    key_space: "Space",
-    key_tab: "Tab",
-    key_return: "Return / Enter",
-    key_escape: "Esc",
-    key_delete: "Delete (Backspace)",
-    key_forward_delete: "Forward Delete",
-    key_insert: "Insert",
-    key_home: "Home",
-    key_end: "End",
-    key_page_up: "Page Up",
-    key_page_down: "Page Down",
-    key_help: "Help",
-    key_clear: "Clear",
-    key_caps_lock: "Caps Lock",
-  };
-  const en: Record<string, string> = {
-    key_space: "Space",
-    key_tab: "Tab",
-    key_return: "Return / Enter",
-    key_escape: "Esc",
-    key_delete: "Delete (Backspace)",
-    key_forward_delete: "Forward Delete",
-    key_insert: "Insert",
-    key_home: "Home",
-    key_end: "End",
-    key_page_up: "Page Up",
-    key_page_down: "Page Down",
-    key_help: "Help",
-    key_clear: "Clear",
-    key_caps_lock: "Caps Lock",
-  };
-  const table = lang === "ko" ? ko : en;
-  return table[id] ?? null;
+const ARROW_LABELS: Record<string, string> = {
+  arrow_left: "← Left",
+  arrow_right: "→ Right",
+  arrow_up: "↑ Up",
+  arrow_down: "↓ Down",
 };
 
-export const arrowEntryLabel = (id: string, lang: Lang): string | null => {
-  const ko: Record<string, string> = {
-    arrow_left: "← Left",
-    arrow_right: "→ Right",
-    arrow_up: "↑ Up",
-    arrow_down: "↓ Down",
-  };
-  const en: Record<string, string> = {
-    arrow_left: "← Left",
-    arrow_right: "→ Right",
-    arrow_up: "↑ Up",
-    arrow_down: "↓ Down",
-  };
-  const table = lang === "ko" ? ko : en;
-  return table[id] ?? null;
-};
+export const editingKeyEntryLabel = (id: string): string | null =>
+  EDITING_KEY_LABELS[id] ?? null;
+
+export const arrowEntryLabel = (id: string): string | null =>
+  ARROW_LABELS[id] ?? null;

@@ -1,53 +1,33 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
 export const keys = style({
-  display: "grid",
-  gap: 12,
   marginBottom: 14,
 });
 
-export const list = style({
-  display: "grid",
-  gap: 6,
+/** Gesture rows/head: handle · shape · action · remove (other columns of the trigger table unused). */
+const gestureTracks = "1.1rem minmax(7.5rem, 10.5rem) minmax(0, 1fr) 3.5rem";
+
+export const gestureColumns = style({});
+
+// Doubled class: wins over the shared row/head tracks regardless of CSS order.
+globalStyle(`${gestureColumns}${gestureColumns}`, {
+  gridTemplateColumns: gestureTracks,
 });
 
-export const row = style({
-  display: "grid",
-  gridTemplateColumns: "1.1rem auto minmax(0, 1fr) auto",
-  alignItems: "center",
-  gap: 10,
-  minHeight: "2rem",
-  padding: "0.25rem 0.5rem 0.25rem 0.4rem",
-  border: "1px solid var(--line)",
-  borderRadius: "0.5rem",
-  background: "var(--accent-soft)",
+// The shared row aligns columns 4–6 for the flag cells; here column 4 is "remove".
+globalStyle(`${gestureColumns} > *:nth-child(4)`, {
+  justifySelf: "end",
+  marginLeft: 0,
 });
 
-globalStyle(`${row} [data-action-select]`, {
-  minWidth: 0,
-  width: "100%",
-});
-
-export const thumbButton = style({
-  display: "grid",
-  placeItems: "center",
-  padding: 2,
-  border: "1px solid var(--line)",
-  borderRadius: 6,
-  background: "var(--panel-solid)",
-  color: "var(--accent)",
-  cursor: "pointer",
-  selectors: {
-    "&:hover": {
-      borderColor: "var(--interaction-hover-border)",
-    },
-  },
+export const shapePill = style({
+  padding: "0.15rem 0.45rem",
 });
 
 export const thumb = style({
   display: "block",
-  width: 56,
-  height: 36,
+  width: "2.4rem",
+  height: "1.55rem",
 });
 
 export const drawHint = style({

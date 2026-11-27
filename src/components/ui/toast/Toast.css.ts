@@ -21,5 +21,5 @@ export const toast = style({
   fontWeight: 600,
   lineHeight: 1.35,
   textAlign: "center",
-  boxShadow: "0 8px 28px rgba(0, 0, 0, 0.22)",
+  boxShadow: "0 8px 28px var(--toast-shadow)",
 });

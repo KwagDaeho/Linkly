@@ -10,8 +10,8 @@ import { useProfileCtx } from "@/hooks/profile";
 import { useTriggerScope } from "@/hooks/trigger/TriggerScopeContext";
 import { useTriggerScopeMutations } from "@/hooks/trigger/useTriggerScopeMutations";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
-import { withGesturePatch } from "@/domain/profile/patches/gestures";
-import { publishToast } from "@/components/ui/toast/toastBus";
+import { applyCatalogSelection } from "@/services/catalogSelection";
+import { publishToast } from "@/services/toastBus";
 import type {
   ActionSlot,
   ButtonId,
@@ -35,11 +35,12 @@ export const useEditorState = (): EditorContextValue => {
   const {
     profile,
     ballScroll,
+    gestures,
+    mappings,
     catalogSelection: profileCatalog,
-    mutateProfile,
   } = useProfileCtx();
   const scope = useTriggerScope();
-  const { buttonMappings, customMappings, catalogSelection } =
+  const { buttonMappings, catalogSelection } =
     useTriggerScopeMutations(scope);
   const [editor, setEditor] = useState<EditorMode | null>(null);
 
@@ -66,12 +67,7 @@ export const useEditorState = (): EditorContextValue => {
       }
       const next = normalizeActivator(activator);
       if (editor?.kind === "ball_scroll_activator" && editor.target === "gesture") {
-        mutateProfile((loaded) =>
-          withGesturePatch(
-            loaded,
-            slot === "toggle" ? { toggleActivator: next } : { holdActivator: next },
-          ),
-        );
+        gestures.setActivator(slot, next);
         return true;
       }
       if (
@@ -91,13 +87,6 @@ export const useEditorState = (): EditorContextValue => {
         }
         return false;
       }
-    },
-    (entryId, combo) => {
-      if (combo === null) {
-        return false;
-      }
-      customMappings.updateActivator(entryId, combo);
-      return true;
     },
     async (entryId, activator, draftEntry?: ButtonMappingEntry) => {
       if (profile === null) {
@@ -149,6 +138,15 @@ export const useEditorState = (): EditorContextValue => {
       selectButtonMapping,
       selectCustom: (entryId, slot, value) =>
         catalogSelection.selectCustom(entryId, slot, value, setEditor),
+      selectGesture: (entryId, value) =>
+        applyCatalogSelection(
+          { kind: "gesture", id: entryId },
+          "click",
+          value,
+          profile,
+          setEditor,
+          mappings.updateSlot,
+        ),
     },
   };
 };

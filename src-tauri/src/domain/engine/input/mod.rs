@@ -241,31 +241,6 @@ pub(crate) fn fire_due_key_repeats_for<K, F>(
     }
 }
 
-fn start_key_repeat(repeats: &mut HashMap<ButtonId, ActionRepeat>, id: ButtonId, action: &Action) {
-    // Default is "noop" for long-press binding checks, but auto-click on OS-default
-    // must still repeat (resolve to the native mouse button when possible).
-    if matches!(action, Action::Disabled) || is_scroll_action(action) {
-        return;
-    }
-    let action = match action {
-        Action::Default => {
-            if let Some(btn) = inject::default_mouse_button(id) {
-                Action::MouseClick { button: btn }
-            } else {
-                return;
-            }
-        }
-        other => other.clone(),
-    };
-    repeats.insert(
-        id,
-        ActionRepeat {
-            action,
-            next_at: Instant::now() + KEY_REPEAT_DELAY,
-        },
-    );
-}
-
 pub(crate) fn fire_due_scroll_repeats(
     repeats: &mut HashMap<ButtonId, ScrollRepeat>,
     pointer: &crate::domain::profile::PointerSettings,
@@ -301,21 +276,6 @@ where
 /// so the engine can merge them with the same report's wheel/pan into one gesture.
 pub(crate) fn take_due_scroll_repeats(repeats: &mut HashMap<ButtonId, ScrollRepeat>) -> (i32, i32) {
     take_due_scroll_repeats_for(repeats)
-}
-
-fn start_scroll_repeat(repeats: &mut HashMap<ButtonId, ScrollRepeat>, id: ButtonId, action: &Action) {
-    if let Action::Scroll { dx, dy } = action {
-        if *dx != 0 || *dy != 0 {
-            repeats.insert(
-                id,
-                ScrollRepeat {
-                    dx: *dx,
-                    dy: *dy,
-                    next_at: Instant::now() + SCROLL_REPEAT_DELAY,
-                },
-            );
-        }
-    }
 }
 
 pub(crate) fn binding_of(profile: &Profile, id: ButtonId) -> ButtonBinding {
@@ -358,6 +318,8 @@ fn start_key_repeat_for<K: Eq + Hash>(
     id: ButtonId,
     action: &Action,
 ) {
+    // Default is "noop" for long-press binding checks, but auto-click on OS-default
+    // must still repeat (resolve to the native mouse button when possible).
     if matches!(action, Action::Disabled) || is_scroll_action(action) {
         return;
     }
@@ -535,7 +497,6 @@ pub(crate) fn apply_binding_press<K>(
 
 pub(crate) fn cancel_regular_binding(
     id: ButtonId,
-    profile: &Profile,
     pending: &mut HashMap<ButtonId, PendingHold>,
     held: &mut HashMap<ButtonId, Action>,
     scroll_repeats: &mut HashMap<ButtonId, ScrollRepeat>,

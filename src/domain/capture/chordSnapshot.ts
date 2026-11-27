@@ -8,18 +8,6 @@ import type { Activator, ComboActivator } from "@/types";
 
 export const CAPTURE_HOLD_MS = 1000;
 
-const MODIFIER_ORDER = CHORD_MODIFIER_ORDER;
-
-const MOUSE_CAPTURE_TOKENS = new Set([
-  "MouseLeft",
-  "MouseRight",
-  "MouseMiddle",
-  "MouseBack",
-  "MouseForward",
-  "WheelTiltLeft",
-  "WheelTiltRight",
-]);
-
 const CATALOG_CAPTURE_TOKENS: Record<string, Activator> = {
   Fn1: { type: "device", button: "fn1" },
   Fn2: { type: "device", button: "fn2" },
@@ -28,12 +16,9 @@ const CATALOG_CAPTURE_TOKENS: Record<string, Activator> = {
   WheelTiltRight: { type: "device", button: "wheel_tilt_right" },
 };
 
-export const isCaptureMouseToken = (token: string): boolean => {
-  return MOUSE_CAPTURE_TOKENS.has(token) || token.startsWith("Button");
-};
 
 export const normalizeCaptureSnapshot = (tokens: string[]): string[] => {
-  const mods = MODIFIER_ORDER.filter((m) => tokens.includes(m));
+  const mods = CHORD_MODIFIER_ORDER.filter((m) => tokens.includes(m));
   const modSet = new Set<string>(mods);
   const rest = tokens.filter((t) => !CHORD_MODIFIER_TOKENS.has(t) && !modSet.has(t));
   const seen = new Set<string>();
@@ -76,7 +61,7 @@ export const snapshotToComboActivator = (
   if (normalized.length === 0) {
     return null;
   }
-  const modifiers = MODIFIER_ORDER.filter((m) => normalized.includes(m));
+  const modifiers = CHORD_MODIFIER_ORDER.filter((m) => normalized.includes(m));
   const nonMods = normalized.filter((t) => !CHORD_MODIFIER_TOKENS.has(t));
   if (nonMods.length === 0) {
     return modifiers.length > 0 ? null : null;
@@ -105,7 +90,7 @@ export const snapshotToComboActivator = (
   return combo;
 };
 
-export const tokenToActivator = (token: string): Activator | null => {
+const tokenToActivator = (token: string): Activator | null => {
   if (CATALOG_CAPTURE_TOKENS[token]) {
     return CATALOG_CAPTURE_TOKENS[token]!;
   }

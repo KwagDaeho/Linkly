@@ -22,9 +22,6 @@ export const headingH3 = style({
   color: "var(--heading-h3)",
 });
 
-/** @deprecated use headingH2 */
-export const text = headingH2;
-
 /** Info 등 비아코디언 본문 — 아코디언과 같은 들여쓰기, 세로선 없음 */
 export const staticSectionBody = style({
   display: "grid",
@@ -67,19 +64,6 @@ export const headingRow = style({
   gap: 8,
   width: "100%",
   padding: "2px 0",
-});
-
-export const headingLead = style({
-  display: "inline-block",
-  width: "1.1rem",
-  height: "1.1rem",
-  flexShrink: 0,
-});
-
-export const contentIndent = style({
-  display: "grid",
-  gap: 10,
-  paddingLeft: "1.2rem",
 });
 
 export const sectionGroup = style({

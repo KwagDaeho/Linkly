@@ -5,9 +5,8 @@
 import {
   mouseButtonEventNumber,
   normalizeActivator,
-  extraMouseButtonLabel,
 } from "@/domain/profile/mouseButton";
-import type { Activator, ButtonId, ComboActivator } from "@/types";
+import type { Activator, ComboActivator } from "@/types";
 
 export const comboEffectiveTrigger = (
   combo: ComboActivator,
@@ -31,34 +30,7 @@ export const comboWithTrigger = (
   trigger: normalizeActivator(trigger),
 });
 
-export const formatActivatorLabel = (
-  activator: Activator,
-  lang: "ko" | "en",
-): string => {
-  const normalized = normalizeActivator(activator);
-  if (normalized.type === "key") {
-    return normalized.name;
-  }
-  if (normalized.type === "device") {
-    return catalogButtonShort(normalized.button, lang);
-  }
-  const button = normalized.button;
-  if (typeof button === "string") {
-    return button;
-  }
-  return extraMouseButtonLabel(button.number, lang);
-};
 
-const catalogButtonShort = (id: ButtonId, lang: "ko" | "en"): string => {
-  if (lang === "ko") {
-    return id === "wheel_tilt_left"
-      ? "틸트左"
-      : id === "wheel_tilt_right"
-        ? "틸트右"
-        : id.toUpperCase();
-  }
-  return id.replace(/_/g, " ");
-};
 
 export const activatorsEqual = (
   left: Activator | null,

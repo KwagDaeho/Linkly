@@ -1,7 +1,7 @@
 import type { Action, CatalogEntry } from "@/types";
 import { normalizeKeys } from "@/domain/keys";
 import { ACTION_CATALOG } from "./catalog";
-export const actionsEqual = (a: Action, b: Action): boolean => {
+const actionsEqual = (a: Action, b: Action): boolean => {
   if (a.type !== b.type) return false;
   if (a.type === "key_stroke" && b.type === "key_stroke") {
     const normalizedLeft = normalizeKeys(a.keys).join("+");

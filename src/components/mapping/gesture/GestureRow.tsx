@@ -1,9 +1,12 @@
-import type { ReorderRowProps } from "@/components/ui/ReorderableList";
-import { cx } from "@/utils/cx";
 import { ActionSelect } from "@/components/mapping/button/ActionSelect";
-import { Button } from "@/components/ui";
+import { MappingTriggerButton } from "@/components/mapping/MappingTriggerButton";
+import { RowRemoveButton } from "@/components/mapping/RowRemoveButton";
+import * as rowStyles from "@/components/mapping/mappingTableRow.css";
+import { pill, pillCompact } from "@/components/ui/KeyChordPills.css";
+import type { ReorderRowProps } from "@/components/ui/ReorderableList";
 import { usePrefs } from "@/hooks";
 import type { GestureEntry } from "@/types/profile/gesture";
+import { cx } from "@/utils/cx";
 
 import { GestureThumbnail } from "./GestureThumbnail";
 import * as styles from "./GesturePanel.css";
@@ -17,23 +20,30 @@ interface GestureRowProps {
   reorder?: ReorderRowProps;
 }
 
+/** Same row look as the other trigger tables; the shape sits in a trigger pill. */
 export const GestureRow = ({ entry, onRedraw, onPick, onRemove, reorder }: GestureRowProps) => {
-  const { i18n } = usePrefs();
+  const { lang, i18n } = usePrefs();
   return (
-    <div className={cx(styles.row, reorder?.className)} style={reorder?.style}>
+    <div
+      className={cx(rowStyles.row, styles.gestureColumns, reorder?.className)}
+      style={reorder?.style}
+    >
       {reorder?.handle ?? <span aria-hidden />}
-      <button
-        type="button"
-        className={styles.thumbButton}
-        aria-label={i18n.gestureRedraw}
-        onClick={onRedraw}
-      >
-        <GestureThumbnail points={entry.template} />
-      </button>
+      <div className={rowStyles.triggerCell}>
+        <MappingTriggerButton
+          lang={lang}
+          keys={null}
+          unsetLabel=""
+          ariaLabel={i18n.gestureRedraw}
+          onClick={onRedraw}
+        >
+          <span className={cx(pill, pillCompact, styles.shapePill)}>
+            <GestureThumbnail points={entry.template} />
+          </span>
+        </MappingTriggerButton>
+      </div>
       <ActionSelect action={entry.click} onPick={onPick} />
-      <Button variant="remove" size="tiny" onClick={onRemove}>
-        {i18n.remove}
-      </Button>
+      <RowRemoveButton onClick={onRemove} />
     </div>
   );
 };

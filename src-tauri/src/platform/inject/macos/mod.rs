@@ -12,23 +12,18 @@ mod gesture_overlay;
 pub use action::{
     default_mouse_button, press_action, press_action_forced, release_action, release_action_forced,
 };
-pub use keyboard::{
-    key_code_for_name, keystroke_isolated, mouse_button_from_token, release_chord_hold,
-};
+pub use keyboard::{key_code_for_name, live_modifier_flags, release_chord_hold};
 pub use mouse::synthetic_buttons_held;
 pub use mouse::click_at_cursor;
-pub use mouse::{left_down_at_cursor, left_drag_at_cursor, left_up_at_cursor};
 // mouse_down / mouse_up stay crate-visible via mouse::* for action; also re-export for API parity.
 #[allow(unused_imports)]
 pub use mouse::{mouse_down, mouse_up};
 pub use pointer::{
-    end_idle_ball_scroll, expire_post_unpin_if_due, expire_restored_cursor_if_due,
-    expire_restore_sync_if_due, finish_restore_sync, finish_restored_cursor, keep_pinned_cursor,
-    maintain_post_unpin_cursor, maintain_restored_cursor, move_by, pin_cursor,
-    post_unpin_active, release_ball_scroll_pin,
-    release_ball_scroll_pin_for_quit, restore_cursor_active, restore_pinned_cursor,
-    restore_sync_pin, scroll_ball, scroll_by_units_ex, scroll_notches_ex, set_shared_pointer_mode,
-    shared_pointer_mode, sync_cursor_from_system, tick_restore_cursor, POST_UNPIN_BALL_IGNORE,
+    end_idle_ball_scroll, expire_restored_cursor_if_due, finish_restored_cursor,
+    keep_pinned_cursor, maintain_restored_cursor, move_by, pin_cursor,
+    release_ball_scroll_pin_for_quit, restore_cursor_active, restore_pinned_cursor, scroll_ball,
+    scroll_by_units_ex, scroll_notches_ex, set_shared_pointer_mode, shared_pointer_mode,
+    sync_cursor_from_system, tick_restore_cursor, POST_UNPIN_BALL_IGNORE,
 };
 
 /// Synchronous overlay teardown during app exit (must run on the main thread).
@@ -46,13 +41,6 @@ pub fn cursor_location() -> (f64, f64) {
     let p = cursor_pos();
     (p.x, p.y)
 }
-// Extra scroll helpers kept public for API parity with the former monolith.
-#[allow(unused_imports)]
-pub use pointer::{
-    scroll, scroll_by_units, scroll_notches, scroll_pixels, SCROLL_BASE_HORIZONTAL_PX,
-    SCROLL_BASE_VERTICAL_PX,
-};
-
 use core_graphics::event::CGEvent;
 use core_graphics::event_source::{CGEventSource, CGEventSourceStateID};
 use core_graphics::geometry::CGPoint;
@@ -197,7 +185,7 @@ fn catalog_physical_drag() -> &'static Mutex<ButtonsDown> {
     CATALOG_PHYSICAL_DRAG.get_or_init(|| Mutex::new(ButtonsDown::default()))
 }
 
-pub(super) fn move_drag_buttons() -> ButtonsDown {
+fn move_drag_buttons() -> ButtonsDown {
     let synth = *buttons_down().lock();
     if synth.any() {
         synth

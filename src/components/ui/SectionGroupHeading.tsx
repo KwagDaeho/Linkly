@@ -13,10 +13,7 @@ export const SectionGroupHeading = ({
   children: ReactNode;
   className?: string;
 }) => (
-  <SectionHeading
-    alignWithAccordion
-    className={cx(styles.sectionGroupTitle, className)}
-  >
+  <SectionHeading className={cx(styles.sectionGroupTitle, className)}>
     {children}
   </SectionHeading>
 );

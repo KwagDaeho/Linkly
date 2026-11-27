@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui";
 import { usePrefs } from "@/hooks";
 import { useAppUpdate } from "@/hooks/useAppUpdate";
+import { fillTemplate } from "@/i18n";
 
 import * as styles from "./UpdateBanner.css";
 
@@ -10,7 +11,8 @@ export const UpdateBanner = () => {
   if (state.phase === "idle") {
     return null;
   }
-  const fill = (template: string) => template.replace("{version}", state.version);
+  const fill = (template: string) =>
+    fillTemplate(template, { version: state.version });
   return (
     <div className={styles.banner} role="status">
       <span className={styles.text}>

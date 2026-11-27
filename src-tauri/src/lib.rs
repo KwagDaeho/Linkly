@@ -1,4 +1,5 @@
 mod app;
+mod clock;
 mod commands;
 mod constants;
 mod domain;

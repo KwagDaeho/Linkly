@@ -1,33 +1,16 @@
 import { moveItem } from "@/domain/list/dragReorder";
 import type {
-  Action,
-  ActionSlot,
   ButtonBinding,
   ButtonMappingEntry,
-  ComboActivator,
   CustomMappingEntry,
-  MappingTarget,
   InputDeviceSettings,
   Profile,
 } from "@/types";
 
-import {
-  asBinding,
-  enforceTiltBindingFlags,
-  catalogButtonFromComboTrigger,
-  isTiltButton,
-  resolveBindingFlags,
-} from "@/domain/profile";
-import { withButtonSlot } from "@/domain/profile/patches/buttons";
-import { withGestureSlot } from "@/domain/profile/patches/gestures";
-import { withButtonMappingSlot } from "@/domain/profile/patches/buttonMappings";
+import { asBinding, resolveBindingFlags } from "@/domain/profile";
 
 import type { TriggerScope } from "../triggerScope";
-import {
-  scopeOfButtonMapping,
-  scopedButtonMappingsOf,
-  scopedCustomMappingsOf,
-} from "../triggerScope";
+import { scopedButtonMappingsOf } from "../triggerScope";
 import { assertScopedActivatorAvailable } from "../triggerConflict";
 
 const ensureDeviceOverride = (
@@ -90,15 +73,6 @@ export const withScopedButtonMappings = (
   return writeDeviceOverride(profile, scope.deviceKey, {
     buttonMappings: entries,
   });
-};
-
-export const withScopedCustomMappings = (
-  profile: Profile,
-  scope: TriggerScope,
-  entries: CustomMappingEntry[],
-): Profile => {
-  void scope;
-  return { ...profile, customMappings: entries };
 };
 
 export const withScopedButtonMappingAdded = (
@@ -176,82 +150,6 @@ export const withScopedButtonMappingFlags = (
   return withScopedButtonMappings(profile, scope, nextEntries);
 };
 
-export const withScopedCustomMappingAdded = (
-  profile: Profile,
-  scope: TriggerScope,
-  entry: CustomMappingEntry,
-): Profile =>
-  withScopedCustomMappings(profile, scope, [
-    ...scopedCustomMappingsOf(profile, scope),
-    entry,
-  ]);
-
-export const withScopedCustomMappingMoved = (
-  profile: Profile,
-  scope: TriggerScope,
-  from: number,
-  to: number,
-): Profile =>
-  withScopedCustomMappings(
-    profile,
-    scope,
-    moveItem(scopedCustomMappingsOf(profile, scope), from, to),
-  );
-
-export const withScopedCustomMappingRemoved = (
-  profile: Profile,
-  scope: TriggerScope,
-  entryId: string,
-): Profile =>
-  withScopedCustomMappings(
-    profile,
-    scope,
-    scopedCustomMappingsOf(profile, scope).filter(
-      (entry) => entry.id !== entryId,
-    ),
-  );
-
-export const withScopedCustomMappingActivator = (
-  profile: Profile,
-  scope: TriggerScope,
-  entryId: string,
-  activator: ComboActivator,
-): Profile => {
-  const nextEntries = scopedCustomMappingsOf(profile, scope).map((entry) => {
-    if (entry.id !== entryId) {
-      return entry;
-    }
-    const next = { ...entry, activator };
-    const catalogButton = catalogButtonFromComboTrigger(activator);
-    if (catalogButton !== undefined && isTiltButton(catalogButton)) {
-      return { ...next, ...enforceTiltBindingFlags(asBinding(entry)) };
-    }
-    return next;
-  });
-  return withScopedCustomMappings(profile, scope, nextEntries);
-};
-
-export const withScopedCustomMappingFlags = (
-  profile: Profile,
-  scope: TriggerScope,
-  entryId: string,
-  patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-): Profile => {
-  const nextEntries = scopedCustomMappingsOf(profile, scope).map((entry) => {
-    if (entry.id !== entryId) {
-      return entry;
-    }
-    const currentBinding = asBinding(entry);
-    const catalogButton = catalogButtonFromComboTrigger(entry.activator);
-    if (catalogButton !== undefined && isTiltButton(catalogButton)) {
-      return { ...entry, ...currentBinding, ...enforceTiltBindingFlags(currentBinding) };
-    }
-    const flags = resolveBindingFlags(currentBinding, patch);
-    return { ...entry, ...currentBinding, ...flags };
-  });
-  return withScopedCustomMappings(profile, scope, nextEntries);
-};
-
 export const withInputDeviceSettings = (
   profile: Profile,
   deviceKey: string,
@@ -266,53 +164,3 @@ export const withInputDeviceSettings = (
     },
   },
 });
-
-export const withScopedMappingSlot = (
-  profile: Profile,
-  scope: TriggerScope,
-  target: MappingTarget,
-  slot: ActionSlot,
-  action: Action,
-): Profile => {
-  if (target.kind === "button") {
-    return withButtonSlot(profile, target.id, slot, action);
-  }
-  if (target.kind === "gesture") {
-    return withGestureSlot(profile, target.id, slot, action);
-  }
-  if (target.kind === "button_mapping") {
-    // Editors run in the app-level (common) scope; route by where the row lives.
-    scope = scopeOfButtonMapping(profile, target.id);
-    if (scope.kind === "common") {
-      return withButtonMappingSlot(profile, target.id, slot, action);
-    }
-    const nextEntries = scopedButtonMappingsOf(profile, scope).map((entry) => {
-      if (entry.id !== target.id) {
-        return entry;
-      }
-      const currentBinding = asBinding(entry);
-      const next =
-        slot === "click"
-          ? { ...entry, ...currentBinding, click: action }
-          : { ...entry, ...currentBinding, longPress: action };
-      return next;
-    });
-    return withScopedButtonMappings(profile, scope, nextEntries);
-  }
-  const nextEntries = scopedCustomMappingsOf(profile, scope).map((entry) => {
-    if (entry.id !== target.id) {
-      return entry;
-    }
-    const currentBinding = asBinding(entry);
-    const next =
-      slot === "click"
-        ? { ...entry, ...currentBinding, click: action }
-        : { ...entry, ...currentBinding, longPress: action };
-    const catalogButton = catalogButtonFromComboTrigger(entry.activator);
-    if (catalogButton !== undefined && isTiltButton(catalogButton) && slot === "click") {
-      return { ...next, ...enforceTiltBindingFlags(asBinding(next)) };
-    }
-    return next;
-  });
-  return withScopedCustomMappings(profile, scope, nextEntries);
-};

@@ -3,7 +3,6 @@ export {
   beginHoldCaptureListening,
   captureWaitingPressButton,
   holdCapturePreviewContent,
-  initialHoldCapture,
   stopHoldListening,
   type HoldCapturePreview,
 } from "./holdCapture";
@@ -17,16 +16,9 @@ export {
   snapshotToComboActivator,
 } from "./chordSnapshot";
 export {
+  CAPTURE_SESSION_OFF,
   captureModeOf,
   captureSessionFor,
-  captureSessionForEditor,
 } from "./session";
 export { armActivatorCaptureGrace } from "./captureArm";
 export { shouldDropActivatorCaptureEvent } from "./activatorCaptureGate";
-export {
-  CAPTURE_CANCEL_ATTR,
-  CAPTURE_IGNORE_ACTIVATOR_ATTR,
-  ensurePointerHitTracking,
-  hitCaptureCancelAtPointer,
-  hitCaptureIgnoresActivatorsAtPointer,
-} from "./pointerHit";

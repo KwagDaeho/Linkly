@@ -1,11 +1,10 @@
-import { listen } from "@tauri-apps/api/event";
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { Button, Modal, ModalFooter, Muted } from "@/components/ui";
+import { ACCENT_DEFAULT } from "@/constants/accent";
+import { Modal, ModalActions, Muted } from "@/components/ui";
 import { arrowHead, fitPoints, MIN_GESTURE_LENGTH, pathLength } from "@/domain/gesture/fit";
 import { usePrefs } from "@/hooks";
-import { setGestureRecording } from "@/services/tauri";
+import { useGestureRecording } from "@/hooks/useGestureRecording";
 import type { GesturePoint } from "@/types/profile/gesture";
 
 import * as styles from "./GesturePanel.css";
@@ -33,18 +32,11 @@ export const GestureDrawModal = ({ initial, ready, onSave, onClose }: GestureDra
   const [points, setPoints] = useState<GesturePoint[]>([]);
   const valid = pathLength(points) >= MIN_GESTURE_LENGTH;
 
-  useEffect(() => {
-    void setGestureRecording(true).catch(() => undefined);
-    const off = listen<GesturePoint[]>("gesture-recorded", (event) => {
-      if (pathLength(event.payload) >= MIN_GESTURE_LENGTH) {
-        setPoints(event.payload);
-      }
-    });
-    return () => {
-      void off.then((un) => un());
-      void setGestureRecording(false).catch(() => undefined);
-    };
-  }, []);
+  useGestureRecording((stroke) => {
+    if (pathLength(stroke) >= MIN_GESTURE_LENGTH) {
+      setPoints(stroke);
+    }
+  });
 
   const shown = fitPoints(points.length > 0 ? points : (initial ?? []), W, H, PAD);
 
@@ -62,7 +54,7 @@ export const GestureDrawModal = ({ initial, ready, onSave, onClose }: GestureDra
     if (shown.length === 0) {
       return;
     }
-    const accent = getComputedStyle(canvas).getPropertyValue("--accent").trim() || "#c07bc4";
+    const accent = getComputedStyle(canvas).getPropertyValue("--accent").trim() || ACCENT_DEFAULT;
     ctx.globalAlpha = points.length > 0 ? 1 : 0.45;
     ctx.strokeStyle = accent;
     ctx.fillStyle = accent;
@@ -89,22 +81,24 @@ export const GestureDrawModal = ({ initial, ready, onSave, onClose }: GestureDra
   }, [shown, points.length]);
 
   // Portal: the trigger section slides with a transform that would trap a fixed modal.
-  return createPortal(
-    <Modal onBackdropClick={onClose} onEscape={onClose}>
-      <h2>{i18n.gestureDrawTitle}</h2>
+  return (
+    <Modal
+      portal
+      title={i18n.gestureDrawTitle}
+      onBackdropClick={onClose}
+      onEscape={onClose}
+    >
       <Muted as="p" className={styles.drawHint}>
         {ready ? i18n.gestureDrawHint : i18n.gestureDrawNeedsKey}
       </Muted>
       <canvas ref={canvasRef} className={styles.canvas} />
-      <ModalFooter>
-        <Button variant="ghost" onClick={onClose}>
-          {i18n.cancel}
-        </Button>
-        <Button disabled={!valid} onClick={() => onSave(points)}>
-          {i18n.save}
-        </Button>
-      </ModalFooter>
-    </Modal>,
-    document.body,
+      <ModalActions
+        cancelLabel={i18n.cancel}
+        onCancel={onClose}
+        confirmLabel={i18n.save}
+        onConfirm={() => onSave(points)}
+        confirmDisabled={!valid}
+      />
+    </Modal>
   );
 };

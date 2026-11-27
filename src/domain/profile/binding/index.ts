@@ -1,4 +1,10 @@
-export { asBinding, longPressMs } from "./binding";
+export {
+  asBinding,
+  bindingSlot,
+  bindingWithSlot,
+  DEFAULT_BINDING,
+  longPressMs,
+} from "./binding";
 export {
   resolveBindingFlags,
   bindingLongPressEnabled,

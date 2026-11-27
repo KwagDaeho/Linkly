@@ -60,7 +60,7 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
     <nav
       ref={tabListRef}
       className={styles.tabs}
-      aria-label="Sections"
+      aria-label={i18n.sectionTabs}
       role="tablist"
       onPointerLeave={clearHover}
       onPointerMove={syncHoverFromPointer}
@@ -77,6 +77,7 @@ export const TabBar = ({ tab, onTab }: TabBarProps) => {
           type="button"
           role="tab"
           data-tab-item=""
+          data-own-hover="press"
           aria-selected={tab === id}
           aria-controls={`tabpanel-${id}`}
           className={cx(styles.tab, tab === id && styles.tabActive)}

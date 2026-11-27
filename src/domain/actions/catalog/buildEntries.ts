@@ -13,7 +13,7 @@ import {
 const EN_LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
 
 /** Two-set Korean (Dubeolsik) labels on US QWERTY positions. */
-export const KO_KEY_LABEL: Record<string, string> = {
+const KO_KEY_LABEL: Record<string, string> = {
   q: "ㅂ",
   w: "ㅈ",
   e: "ㄷ",
@@ -43,7 +43,7 @@ export const KO_KEY_LABEL: Record<string, string> = {
 };
 
 /** Legacy QWERTY-position hints (old `key_ja_<letter>` ids). */
-export const JA_KEY_LABEL: Record<string, string> = {
+const JA_KEY_LABEL: Record<string, string> = {
   q: "た",
   w: "て",
   e: "い",
@@ -92,8 +92,6 @@ const gojuonRank = (char: string): number => {
   const index = GOJUON_HIRAGANA.indexOf(char);
   return index === -1 ? GOJUON_HIRAGANA.length + char.codePointAt(0)! : index;
 };
-
-export const gojuonSortIndex = (char: string): number => gojuonRank(char);
 
 const sortedPhysicalForSubcategory = (
   subcategory: ActionLetterSubcategoryId,

@@ -1,21 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 
-import { Button, Modal, ModalFooter } from "@/components/ui";
-import { withInputDeviceSettings } from "@/domain/profile/patches/scopedTriggers";
+import { Modal, ModalActions } from "@/components/ui";
 import { deviceSettingsOf } from "@/domain/profile/triggerScope";
 import { usePrefs, useProfileCtx } from "@/hooks";
 import { hexPid } from "@/utils/format";
+import type { DeviceInfoSummary } from "@/types";
 
 import * as styles from "./DeviceInfoModal.css";
-
-export type DeviceInfoSummary = {
-  deviceKey: string;
-  productName: string;
-  vendorId: number;
-  productId: number;
-  connected: boolean;
-};
 
 interface DeviceInfoModalProps {
   device: DeviceInfoSummary;
@@ -25,7 +16,7 @@ interface DeviceInfoModalProps {
 /** Device details + editable display name (shown on the trigger sub-tab). */
 export const DeviceInfoModal = ({ device, onClose }: DeviceInfoModalProps) => {
   const { i18n } = usePrefs();
-  const { profile, mutateProfile } = useProfileCtx();
+  const { profile, devices } = useProfileCtx();
   const [name, setName] = useState(
     () => (profile ? deviceSettingsOf(profile, device.deviceKey).displayName : "") ?? "",
   );
@@ -38,19 +29,18 @@ export const DeviceInfoModal = ({ device, onClose }: DeviceInfoModalProps) => {
   }, []);
 
   const save = () => {
-    const trimmed = name.trim();
-    mutateProfile((loaded) =>
-      withInputDeviceSettings(loaded, device.deviceKey, {
-        displayName: trimmed.length > 0 && trimmed !== device.productName ? trimmed : undefined,
-      }),
-    );
+    devices.setDisplayName(device.deviceKey, name, device.productName);
     onClose();
   };
 
   // Portal: the trigger pages slide with a transform that would trap a fixed modal.
-  return createPortal(
-    <Modal onBackdropClick={onClose} onEscape={onClose}>
-      <h2>{i18n.deviceInfoTitle}</h2>
+  return (
+    <Modal
+      portal
+      title={i18n.deviceInfoTitle}
+      onBackdropClick={onClose}
+      onEscape={onClose}
+    >
       <label className={styles.nameField}>
         {i18n.deviceInfoDisplayName}
         <input
@@ -79,13 +69,12 @@ export const DeviceInfoModal = ({ device, onClose }: DeviceInfoModalProps) => {
           {device.connected ? i18n.deviceInfoConnected : i18n.deviceTriggerDisconnected}
         </dd>
       </dl>
-      <ModalFooter>
-        <Button variant="ghost" onClick={onClose}>
-          {i18n.cancel}
-        </Button>
-        <Button onClick={save}>{i18n.save}</Button>
-      </ModalFooter>
-    </Modal>,
-    document.body,
+      <ModalActions
+        cancelLabel={i18n.cancel}
+        onCancel={onClose}
+        confirmLabel={i18n.save}
+        onConfirm={save}
+      />
+    </Modal>
   );
 };

@@ -136,12 +136,7 @@ pub(crate) fn run(
         }
         if !profile_snap.enabled {
             // Release any held virtual buttons and don't seize the device.
-            for (id, action) in held.drain() {
-                inject::release_action(id, &action);
-            }
-            pending.clear();
-            scroll_repeats.clear();
-            key_repeats.clear();
+            release_regular(&mut held, &mut pending, &mut scroll_repeats, &mut key_repeats);
             session.clear_maps();
             tilt_gate = TiltHoldGate::default();
             prev = ButtonState::default();
@@ -170,12 +165,9 @@ pub(crate) fn run(
         inject::set_shared_pointer_mode(true);
         #[cfg(target_os = "macos")]
         api.set_open_exclusive(false);
-        suppress::ensure_started();
         // Watch tap creation can fail early at login (TCC not ready yet); retry here
         // so key/mouse triggers come back without a profile edit.
-        if watch::needs_os_event_watch(&profile_snap) || input_monitor::enabled() {
-            capture::ensure_watch_tap();
-        }
+        ensure_taps(&profile_snap);
         suppress::sync_scroll_transform(true);
 
         let device = match open_catalog_hid_device(&api, &info) {
@@ -224,10 +216,7 @@ pub(crate) fn run(
                 Ok(0) => {
                     if last_tap_check.elapsed() >= TAP_RETRY_INTERVAL {
                         last_tap_check = Instant::now();
-                        suppress::ensure_started();
-                        if watch::needs_os_event_watch(&profile_snap) || input_monitor::enabled() {
-                            capture::ensure_watch_tap();
-                        }
+                        ensure_taps(&profile_snap);
                     }
                     if input_device_registry_for_ui()
                         && last_input_scan.elapsed() >= REGISTRY_IDLE_POLL
@@ -253,18 +242,10 @@ pub(crate) fn run(
                     // Reports arrive on change only: commit a debounced release on quiet ticks.
                     let idle_buttons = button_debounce.filter_idle(last_raw, prev);
                     session.with_maps(&profile_snap, |custom_maps, button_maps| {
-                        fire_due_long_presses(
+                        fire_due_holds(
                             &mut pending,
                             &mut held,
-                            &profile_snap.pointer,
-                            long_press,
-                        );
-                        custom_mapping::fire_due_ticks(
                             custom_maps,
-                            &profile_snap,
-                            long_press,
-                        );
-                        button_mapping::fire_due_ticks(
                             button_maps,
                             &profile_snap,
                             long_press,
@@ -339,21 +320,7 @@ pub(crate) fn run(
 
                     let Some(parsed) = ParsedReport::from_bytes(data) else {
                         if input_monitor::enabled() {
-                            let hex = format_report_hex(data);
-                            let report = LastReport {
-                                hex,
-                                buttons: vec![],
-                                dx: 0,
-                                dy: 0,
-                                wheel: 0,
-                                pan: 0,
-                                ignored: true,
-                                ts_ms: std::time::SystemTime::now()
-                                    .duration_since(std::time::UNIX_EPOCH)
-                                    .map(|d| d.as_millis())
-                                    .unwrap_or(0),
-                            };
-                            input_monitor::on_hid_report(&report);
+                            input_monitor::on_hid_report(&monitor_report(data, None, vec![]));
                         }
                         continue;
                     };
@@ -386,7 +353,6 @@ pub(crate) fn run(
                     custom_mapping::sync_button_state(state);
 
                     if input_monitor::enabled() {
-                        let hex = format_report_hex(data);
                         let buttons = ButtonId::ALL
                             .into_iter()
                             .filter(|id| match id {
@@ -397,20 +363,7 @@ pub(crate) fn run(
                             })
                             .map(|id| id.id_str())
                             .collect::<Vec<_>>();
-                        let report = LastReport {
-                            hex,
-                            buttons,
-                            dx: parsed.dx,
-                            dy: parsed.dy,
-                            wheel: parsed.wheel,
-                            pan: parsed.pan,
-                            ignored: false,
-                            ts_ms: std::time::SystemTime::now()
-                                .duration_since(std::time::UNIX_EPOCH)
-                                .map(|d| d.as_millis())
-                                .unwrap_or(0),
-                        };
-                        input_monitor::on_hid_report(&report);
+                        input_monitor::on_hid_report(&monitor_report(data, Some(&parsed), buttons));
                     }
 
                     let shared = inject::shared_pointer_mode();
@@ -456,8 +409,8 @@ pub(crate) fn run(
                     inject::expire_restored_cursor_if_due();
                     inject::tick_restore_cursor(parsed.dx as f64, parsed.dy as f64);
                     inject::maintain_restored_cursor();
-                        let ball_scroll_on = ball_scroll::is_active();
-                        // Shared: OS moves cursor (Dock). Speed ≥ 1 — extras only when
+                    let ball_scroll_on = ball_scroll::is_active();
+                    // Shared: OS moves cursor (Dock). Speed ≥ 1 — extras only when
                     // faster than 1× (dx-raw). Skip extras on wheel/pan reports.
                     {
                         let ignore_ball = ball_scroll::ignore_ball_pointer_motion();
@@ -505,15 +458,11 @@ pub(crate) fn run(
                             &state,
                             &profile_snap,
                         ) || session.with_maps(&profile_snap, |custom_maps, button_maps| {
-                            custom_mapping::pointer_takeover_active(
-                                custom_maps,
-                                prev,
-                                &state,
-                                &profile_snap,
-                            ) || button_mapping::pointer_takeover_active(
-                                button_maps,
-                                &profile_snap,
-                            )
+                            custom_mapping::pointer_takeover_active(custom_maps, prev, &state)
+                                || button_mapping::pointer_takeover_active(
+                                    button_maps,
+                                    &profile_snap,
+                                )
                         });
                         suppress::set_suppress_motion(inject::synthetic_buttons_held());
                         let (out_x, out_y) = if ball_scroll_on {
@@ -592,18 +541,10 @@ pub(crate) fn run(
                     }
 
                     session.with_maps(&profile_snap, |custom_maps, button_maps| {
-                        fire_due_long_presses(
+                        fire_due_holds(
                             &mut pending,
                             &mut held,
-                            &profile_snap.pointer,
-                            long_press,
-                        );
-                        custom_mapping::fire_due_ticks(
                             custom_maps,
-                            &profile_snap,
-                            long_press,
-                        );
-                        button_mapping::fire_due_ticks(
                             button_maps,
                             &profile_snap,
                             long_press,
@@ -645,18 +586,12 @@ pub(crate) fn run(
             }
         }
 
-        for (id, action) in held.drain() {
-            inject::release_action(id, &action);
-        }
+        release_regular(&mut held, &mut pending, &mut scroll_repeats, &mut key_repeats);
         session.clear_maps();
-        pending.clear();
-        scroll_repeats.clear();
-        key_repeats.clear();
         tilt_gate = TiltHoldGate::default();
         // Release catalog hold activators and stop ball-scroll: tick() only runs in
         // the inner loop, so a pin / wheel drop would otherwise outlive the device.
-        ball_scroll::note_catalog_button_edges(prev, ButtonState::default());
-        crate::domain::gesture::note_catalog_button_edges(prev, ButtonState::default());
+        note_activator_edges(prev, ButtonState::default());
         stop_ball_scroll();
         prev = ButtonState::default();
         last_raw = ButtonState::default();
@@ -677,8 +612,65 @@ fn stop_ball_scroll() {
     inject::finish_restored_cursor();
 }
 
-fn sticky_button_down(prev: ButtonState, state: ButtonState, id: ButtonId) -> bool {
-    sticky_catalog_button_down(prev, state, id)
+/// Suppress tap always; watch tap when the profile or input viewer needs OS events.
+fn ensure_taps(profile: &Profile) {
+    suppress::ensure_started();
+    if watch::needs_os_event_watch(profile) || input_monitor::enabled() {
+        capture::ensure_watch_tap();
+    }
+}
+
+/// Release held regular-binding actions and drop pending holds / repeats.
+fn release_regular(
+    held: &mut HashMap<ButtonId, Action>,
+    pending: &mut HashMap<ButtonId, PendingHold>,
+    scroll_repeats: &mut HashMap<ButtonId, ScrollRepeat>,
+    key_repeats: &mut HashMap<ButtonId, ActionRepeat>,
+) {
+    for (id, action) in held.drain() {
+        inject::release_action(id, &action);
+    }
+    pending.clear();
+    scroll_repeats.clear();
+    key_repeats.clear();
+}
+
+/// Long-press deadlines for regular, custom, and single-activator bindings.
+fn fire_due_holds(
+    pending: &mut HashMap<ButtonId, PendingHold>,
+    held: &mut HashMap<ButtonId, Action>,
+    custom_maps: &mut CustomMaps,
+    button_maps: &mut ButtonMaps,
+    profile: &Profile,
+    long_press: Duration,
+) {
+    fire_due_long_presses(pending, held, &profile.pointer, long_press);
+    custom_mapping::fire_due_ticks(custom_maps, profile, long_press);
+    button_mapping::fire_due_ticks(button_maps, profile, long_press);
+}
+
+/// Catalog button edges → ball-scroll and gesture activators.
+fn note_activator_edges(prev: ButtonState, state: ButtonState) {
+    ball_scroll::note_catalog_button_edges(prev, state);
+    crate::domain::gesture::note_catalog_button_edges(prev, state);
+}
+
+/// Input-monitor row for one raw HID report (`parsed: None` = unparsed, ignored).
+fn monitor_report(
+    data: &[u8],
+    parsed: Option<&ParsedReport>,
+    buttons: Vec<&'static str>,
+) -> LastReport {
+    LastReport {
+        hex: format_report_hex(data),
+        buttons,
+        dx: parsed.map_or(0, |p| p.dx),
+        dy: parsed.map_or(0, |p| p.dy),
+        wheel: parsed.map_or(0, |p| p.wheel),
+        pan: parsed.map_or(0, |p| p.pan),
+        ignored: parsed.is_none(),
+        ts_ms: crate::clock::unix_ms(),
+    }
 }
 
 fn sync_catalog_physical_drag(profile: &Profile, prev: ButtonState, state: ButtonState) {
@@ -710,7 +702,7 @@ fn neutralize_remapped_catalog_presses(
     }
 }
 
-fn catalog_button_remap(profile: &Profile, id: ButtonId, legacy: bool) -> bool {
+fn catalog_button_remap(id: ButtonId, legacy: bool) -> bool {
     legacy
         || ball_scroll::is_reserved_catalog_button(id)
         || crate::domain::gesture::is_reserved_catalog_button(id)
@@ -753,7 +745,7 @@ fn arm_remap_click_grace(prev: ButtonState, state: ButtonState, profile: &Profil
         if !edge {
             continue;
         }
-        if !catalog_button_remap(profile, id, legacy) {
+        if !catalog_button_remap(id, legacy) {
             continue;
         }
         grace |= catalog_remap_bit(id);
@@ -780,15 +772,15 @@ fn sync_catalog_suppress_mask(
         down(ButtonId::Back),
         down(ButtonId::Forward),
         (capture_block && state.left)
-            || catalog_button_remap(profile, ButtonId::Left, rl),
+            || catalog_button_remap(ButtonId::Left, rl),
         (capture_block && state.right)
-            || catalog_button_remap(profile, ButtonId::Right, rr),
+            || catalog_button_remap(ButtonId::Right, rr),
         (capture_block && state.middle)
-            || catalog_button_remap(profile, ButtonId::Middle, rm),
+            || catalog_button_remap(ButtonId::Middle, rm),
         (capture_block && state.back)
-            || catalog_button_remap(profile, ButtonId::Back, rb),
+            || catalog_button_remap(ButtonId::Back, rb),
         (capture_block && state.forward)
-            || catalog_button_remap(profile, ButtonId::Forward, rf),
+            || catalog_button_remap(ButtonId::Forward, rf),
     ));
 }
 
@@ -827,16 +819,8 @@ fn apply_button_edges(
         scroll_repeats,
         key_repeats,
     );
-    let (skip_rel, skip_from_custom) = custom_mapping::handle_transitions(
-        prev,
-        state,
-        profile,
-        custom_maps,
-        pending,
-        held,
-        scroll_repeats,
-        key_repeats,
-    );
+    let (skip_rel, skip_from_custom) =
+        custom_mapping::handle_transitions(prev, state, profile, custom_maps);
     skip_press.extend(skip_from_custom);
     let (bm_skip_rel, bm_skip_press) = button_mapping::handle_catalog_button_transitions(
         prev,
@@ -874,8 +858,7 @@ fn note_catalog_button_activators(prev: ButtonState, state: ButtonState) {
                 capture::emit_combo_trigger_catalog_button(id);
             }
         }
-        ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
-        crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
+        note_activator_edges(prev, state.releases_only(prev));
         return;
     }
     if capture::activator_capture_active() {
@@ -888,22 +871,19 @@ fn note_catalog_button_activators(prev: ButtonState, state: ButtonState) {
                 });
             }
         }
-        ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
-        crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
+        note_activator_edges(prev, state.releases_only(prev));
         return;
     }
     if capture::ui_modal_active() {
         for id in state.pressed_edges(prev) {
             if id == ButtonId::Left {
                 inject::click_at_cursor();
-                ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
-                crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
+                note_activator_edges(prev, state.releases_only(prev));
                 return;
             }
         }
     }
-    ball_scroll::note_catalog_button_edges(prev, state);
-    crate::domain::gesture::note_catalog_button_edges(prev, state);
+    note_activator_edges(prev, state);
 }
 
 fn sync_input_device_registry(
@@ -951,7 +931,7 @@ fn publish_input_device_registry(
     let mut known = known_input_devices.lock();
     let (mut statuses, dirty) =
         build_input_device_statuses(&mut known, snapshot, profile_target);
-    apply_wireless_rf_link(api, &mut statuses, profile_enabled, rf_last_hid_input);
+    patch_wireless_rf_link_status(api, &mut statuses, rf_last_hid_input.as_ref(), profile_enabled);
     {
         let mut guard = input_devices.lock();
         if statuses != *guard {
@@ -963,15 +943,6 @@ fn publish_input_device_registry(
     }
 }
 
-
-fn apply_wireless_rf_link(
-    api: &HidApi,
-    statuses: &mut [InputDeviceStatus],
-    profile_enabled: bool,
-    rf_last_hid_input: &Arc<Mutex<Option<Instant>>>,
-) {
-    patch_wireless_rf_link_status(api, statuses, rf_last_hid_input.as_ref(), profile_enabled);
-}
 
 fn long_press_threshold(
     profile: &Profile,

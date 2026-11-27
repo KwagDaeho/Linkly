@@ -23,17 +23,11 @@ pub(crate) const KEYBOARD_EVENT_KEYCODE: u32 = 9;
 pub(crate) const KEYBOARD_EVENT_AUTOREPEAT: u32 = 8;
 pub(crate) const MOUSE_EVENT_BUTTON_NUMBER: u32 = 3;
 
-pub(crate) const FLAG_COMMAND: u64 = 0x0010_0000;
-pub(crate) const FLAG_SHIFT: u64 = 0x0002_0000;
-pub(crate) const FLAG_CONTROL: u64 = 0x0004_0000;
-pub(crate) const FLAG_OPTION: u64 = 0x0008_0000;
-
 #[link(name = "CoreGraphics", kind = "framework")]
 extern "C" {
     pub(crate) fn CGEventGetIntegerValueField(event: CGEventRef, field: u32) -> i64;
     pub(crate) fn CGEventGetFlags(event: CGEventRef) -> u64;
     pub(crate) fn CGEventSetFlags(event: CGEventRef, flags: u64);
-    pub(crate) fn CGEventSourceFlagsState(stateID: i32) -> u64;
 }
 
 pub(crate) fn mask_bit(t: u32) -> CGEventMask {
@@ -148,19 +142,9 @@ pub(crate) fn chord_from_event(event: CGEventRef) -> Option<CaptureChord> {
         return None;
     };
 
-    let mut keys = Vec::new();
-    if flags & FLAG_CONTROL != 0 {
-        keys.push("Control".into());
-    }
-    if flags & FLAG_OPTION != 0 {
-        keys.push("Option".into());
-    }
-    if flags & FLAG_SHIFT != 0 {
-        keys.push("Shift".into());
-    }
-    if flags & FLAG_COMMAND != 0 {
-        keys.push("Meta".into());
-    }
+    let mut keys: Vec<String> = crate::domain::modifier::legacy_names_from_flags(flags)
+        .map(String::from)
+        .collect();
     if modifier_name(code).is_some() {
         if !keys.iter().any(|k| k == &main) {
             keys.push(main.into());

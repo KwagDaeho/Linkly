@@ -1,6 +1,6 @@
 import type { EventViewerChannel } from "@/domain/input/eventViewer";
 
-import * as styles from "@/components/info/InputEventViewerPanel.css";
+import * as styles from "./EventViewerWindow.css";
 
 import { EventViewerWindow } from "./EventViewerWindow";
 

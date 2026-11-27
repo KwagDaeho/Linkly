@@ -28,6 +28,7 @@ export const OpenAppList = (props: OpenAppListProps) => {
           <li key={app.bundleId}>
             <button
               type="button"
+              data-own-hover="press"
               className={cx(styles.row, selected && styles.rowSelected)}
               role="option"
               aria-selected={selected}

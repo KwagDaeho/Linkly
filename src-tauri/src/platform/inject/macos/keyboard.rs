@@ -16,11 +16,17 @@ extern "C" {
     fn CGEventSetIntegerValueField(event: *mut std::ffi::c_void, field: u32, value: i64);
     fn CGEventPost(tap: u32, event: *mut std::ffi::c_void);
     fn CGEventSourceCreate(state_id: u32) -> *mut std::ffi::c_void;
+    fn CGEventSourceFlagsState(state_id: u32) -> u64;
 }
 
 #[link(name = "CoreFoundation", kind = "framework")]
 extern "C" {
     fn CFRelease(cf: *mut std::ffi::c_void);
+}
+
+/// Live modifier `flags` of the combined session state (physical + injected).
+pub fn live_modifier_flags() -> u64 {
+    unsafe { CGEventSourceFlagsState(0) }
 }
 
 /// Key-stroke / trigger key name → macOS keycode (incl. side modifiers).
@@ -267,27 +273,6 @@ pub(super) fn tap_key_with_modifier_plist(key_code: u16, mod_plist: u32) {
     }
 }
 
-/// `MouseLeft` … / Karabiner-style `ButtonN` key-stroke token → mouse button.
-pub fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
-    match name {
-        "MouseLeft" => Some(MouseClickButton::Left),
-        "MouseRight" => Some(MouseClickButton::Right),
-        "MouseMiddle" => Some(MouseClickButton::Middle),
-        "MouseBack" => Some(MouseClickButton::Back),
-        "MouseForward" => Some(MouseClickButton::Forward),
-        _ => {
-            let rest = name.strip_prefix("Button")?;
-            let karabiner: u8 = rest.parse().ok()?;
-            if karabiner <= 5 {
-                return None;
-            }
-            Some(MouseClickButton::Other {
-                number: karabiner.saturating_sub(1),
-            })
-        }
-    }
-}
-
 fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
     let mut flags = CGEventFlags::empty();
     let mut mod_keys: Vec<String> = Vec::new();
@@ -304,7 +289,7 @@ fn keystroke_with_source(src: &CGEventSource, keys: &[String]) {
         } else if let Some(code) = key_code(k) {
             main_key = Some(code);
             main_mouse = None;
-        } else if let Some(button) = mouse_button_from_token(k) {
+        } else if let Some(button) = MouseClickButton::from_token(k) {
             main_mouse = Some(button);
             main_key = None;
         }

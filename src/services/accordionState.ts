@@ -1,8 +1,8 @@
-const STORAGE_KEY = "linkly-accordion-open";
+import { ACCORDION_OPEN_KEY } from "@/constants/storage";
 
 const readMap = (): Record<string, boolean> => {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(ACCORDION_OPEN_KEY);
     if (raw === null) {
       return {};
     }
@@ -31,7 +31,7 @@ export const writeAccordionOpen = (id: string, open: boolean): void => {
   try {
     const map = readMap();
     map[id] = open;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map));
+    localStorage.setItem(ACCORDION_OPEN_KEY, JSON.stringify(map));
   } catch {
     /* ignore quota / private mode */
   }
@@ -39,7 +39,6 @@ export const writeAccordionOpen = (id: string, open: boolean): void => {
 
 /** Stable ids for persisted accordion open state. */
 export const accordionStateId = {
-  devicesInputDevices: "devices.inputDevices",
   mousePointerScroll: "mouse.pointerScroll",
   mouseBallScroll: "mouse.ballScroll",
   triggerButtonMapping: "trigger.buttonMapping",

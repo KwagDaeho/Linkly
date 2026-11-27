@@ -10,7 +10,7 @@ use parking_lot::Mutex;
 use crate::domain::device::{
     device_identity_key, is_catalog_device, is_wireless_receiver_pid, merge_device_info,
     merge_known_transports, preferred_product_name, DeviceIdentityKey, DeviceInfo, HidTransport,
-    InputDeviceStatus, ParsedReport, CATALOG_VENDOR_ID,
+    InputDeviceStatus,
 };
 
 #[cfg(target_os = "macos")]
@@ -105,34 +105,6 @@ fn wireless_rf_dongle_attached(_api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     hid_node_online(d)
 }
 
-/// Best-effort RF link (ball powered on). Idle may yield no reports; do not use for dongle presence.
-pub fn probe_wireless_rf_ball_link(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
-    let Ok(handle) = d.open_device(api) else {
-        return false;
-    };
-    let _ = handle.set_blocking_mode(true);
-    // Wake/status poke seen on wireless vendor wireless receivers (best-effort).
-    let ping = [0x06u8, 0x01, 0x00, 0, 0, 0, 0, 0];
-    let _ = handle.send_feature_report(&ping);
-    let mut buf = [0u8; 64];
-    let deadline = std::time::Instant::now() + std::time::Duration::from_millis(420);
-    while std::time::Instant::now() < deadline {
-        match handle.read_timeout(&mut buf, 90) {
-            Ok(0) => continue,
-            Ok(n) => {
-                if ParsedReport::from_bytes(&buf[..n]).is_some() {
-                    return true;
-                }
-                if n >= 1 && buf[0] == 0x01 {
-                    return true;
-                }
-            }
-            Err(_) => return false,
-        }
-    }
-    false
-}
-
 fn hid_entry_attached(api: &HidApi, d: &hidapi::DeviceInfo, force_probe: bool) -> bool {
     if !hid_node_online(d) {
         ATTACH_CACHE.lock().remove(&attach_cache_key(d));
@@ -197,18 +169,6 @@ pub fn find_catalog_hid_device(api: &HidApi) -> Option<DeviceInfo> {
         })
 }
 
-pub fn list_catalog_vendor_devices() -> Result<Vec<DeviceInfo>, String> {
-    let api = HidApi::new().map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
-    for d in api.device_list() {
-        if d.vendor_id() != CATALOG_VENDOR_ID {
-            continue;
-        }
-        out.push(device_info_from_hid(&d));
-    }
-    Ok(out)
-}
-
 fn is_input_hid(usage_page: u16, usage: u16) -> bool {
     matches!((usage_page, usage), (0x0001, 0x02) | (0x0001, 0x06))
 }
@@ -269,11 +229,6 @@ pub fn scan_input_snapshot(api: &mut HidApi) -> InputScanSnapshot {
     let _ = api.refresh_devices();
     clear_attach_probe_cache();
     collect_input_snapshot(api, true)
-}
-
-/// Refresh the OS device list, then return presently attached input devices.
-pub fn scan_input_devices(api: &mut HidApi) -> Vec<DeviceInfo> {
-    scan_input_snapshot(api).devices
 }
 
 pub fn collect_input_snapshot(api: &HidApi, force_probe: bool) -> InputScanSnapshot {
@@ -372,7 +327,8 @@ pub fn collect_input_snapshot(api: &HidApi, force_probe: bool) -> InputScanSnaps
 }
 
 /// Input devices from an existing `HidApi` (safe on the HID worker — never `HidApi::new` from UI).
-pub fn collect_input_devices(api: &HidApi) -> Vec<DeviceInfo> {
+#[cfg(all(test, target_os = "macos"))]
+fn collect_input_devices(api: &HidApi) -> Vec<DeviceInfo> {
     collect_input_snapshot(api, false).devices
 }
 

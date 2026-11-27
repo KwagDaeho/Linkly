@@ -39,11 +39,6 @@ export const dialog = style({
   display: "grid",
   gap: "0.75rem",
 });
-export const dialogHeading = style({
-  margin: 0,
-  fontSize: "1rem",
-});
-
 globalStyle(`${dialog} h2`, {
   margin: 0,
   fontSize: "1rem",

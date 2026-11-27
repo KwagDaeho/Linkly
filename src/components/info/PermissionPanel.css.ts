@@ -12,13 +12,6 @@ globalStyle(`${permSteps} li + li`, {
   marginTop: 4,
 });
 
-export const permList = style({
-  margin: "8px 0 10px",
-  paddingLeft: "1.2rem",
-  color: "var(--muted)",
-  fontSize: "0.92rem",
-});
-
 export const permRows = style({
   display: "flex",
   flexDirection: "column",

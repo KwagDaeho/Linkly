@@ -1,0 +1,50 @@
+import { globalStyle, style } from "@vanilla-extract/css";
+
+import { mappingTableGap, reorderTableColumns } from "./mappingTableGrid.css";
+
+/** Trigger table row: handle · trigger · action · flags · long action · remove. */
+export const row = style({
+  display: "grid",
+  gridTemplateColumns: reorderTableColumns,
+  alignItems: "center",
+  gap: mappingTableGap,
+  minHeight: "2rem",
+  padding: "0.1875rem 0.5rem 0.1875rem 0.3rem",
+  border: "1px solid var(--line)",
+  borderRadius: "0.5rem",
+  background: "var(--accent-soft)",
+});
+
+export const triggerCell = style({
+  justifySelf: "start",
+  maxWidth: "100%",
+  overflow: "hidden",
+});
+
+/** Single-input trigger: one line, ellipsis. */
+export const triggerCellSingleLine = style({
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
+export const remove = style({
+  justifySelf: "end",
+});
+
+globalStyle(`${row} [data-action-select], ${row} select`, {
+  minWidth: 0,
+  width: "100%",
+});
+
+globalStyle(`${row} [data-action-select][data-disabled="true"], ${row} select:disabled`, {
+  opacity: 0.45,
+  cursor: "not-allowed",
+});
+
+globalStyle(`${row} > *:nth-child(4), ${row} > *:nth-child(5)`, {
+  justifySelf: "start",
+});
+
+globalStyle(`${row} > *:nth-child(6)`, {
+  marginLeft: "-0.875rem",
+});

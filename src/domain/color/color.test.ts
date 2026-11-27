@@ -20,5 +20,8 @@ describe("color", () => {
     expect(accentInk(rgb)).toBe("dark");
     expect(accentInk(hexToRgb("#f5f080"))).toBe("dark");
     expect(accentInk(hexToRgb("#3a2a8a"))).toBe("light");
+    // Mid-tones (L* ≈ 50–58) now get white text.
+    expect(accentInk(hexToRgb("#8a6bb0"))).toBe("light");
+    expect(accentInk(hexToRgb("#4fa3c7"))).toBe("dark");
   });
 });

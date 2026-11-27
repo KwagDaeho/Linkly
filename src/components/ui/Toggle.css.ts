@@ -14,13 +14,6 @@ export const root = style({
   margin: 0,
 });
 
-export const inline = style({
-  width: "fit-content",
-  maxWidth: "100%",
-  gap: 8,
-  minHeight: "0.875rem",
-});
-
 /** Label column, then switch (settings list rows). */
 export const labelFirst = style({
   display: "grid",
@@ -59,22 +52,6 @@ export const title = style({
   padding: 0,
   flex: "0 1 auto",
   minWidth: 0,
-});
-
-export const description = style({
-  display: "inline-flex",
-  alignItems: "center",
-  height: "0.875rem",
-  lineHeight: 1,
-  margin: 0,
-  padding: 0,
-  minWidth: 0,
-  color: "var(--muted)",
-  fontSize: "0.78rem",
-  fontWeight: 400,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
 });
 
 globalStyle(`${labelFirst} input[type="checkbox"]`, {

@@ -5,7 +5,6 @@ import {
   sectionContentPadLeft,
 } from "./panelLayout";
 import {
-  headingH2,
   headingH3,
   headingShell,
   headingRow,
@@ -77,8 +76,6 @@ const headingTextBase = {
   alignItems: "center",
   minHeight: "28px",
 } as const;
-
-export const headingTextH2 = style([headingH2, headingTextBase]);
 
 export const headingTextH3 = style([headingH3, headingTextBase]);
 

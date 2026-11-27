@@ -11,7 +11,6 @@ interface ToggleProps {
   disabled?: boolean;
   title?: string;
   children?: ReactNode;
-  description?: ReactNode;
   variant?: ToggleVariant;
 }
 
@@ -20,7 +19,6 @@ export const Toggle = (props: ToggleProps) => {
   const variant = props.variant !== undefined ? props.variant : "default";
   const className = cx(
     styles.root,
-    variant === "inline" && styles.inline,
     variant === "flag" && styles.flag,
     variant === "labelFirst" && styles.labelFirst,
   );
@@ -34,16 +32,12 @@ export const Toggle = (props: ToggleProps) => {
       {props.children}
     </span>
   ) : null;
-  const description = props.description ? (
-    <span className={styles.description}>{props.description}</span>
-  ) : null;
 
   return (
     <label className={className} title={props.title}>
       {variant === "labelFirst" ? (
         <>
           {labelText}
-          {description}
           <input
             type="checkbox"
             checked={props.checked}
@@ -59,14 +53,7 @@ export const Toggle = (props: ToggleProps) => {
             disabled={disabled}
             onChange={(event) => props.onChange(event.target.checked)}
           />
-          {variant === "inline" ? (
-            <>
-              {labelText}
-              {description}
-            </>
-          ) : (
-            props.children
-          )}
+          {props.children}
         </>
       )}
     </label>

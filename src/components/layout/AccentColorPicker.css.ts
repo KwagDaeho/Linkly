@@ -28,6 +28,7 @@ export const trigger = style({
   padding: 0,
   border: "1px solid var(--line)",
   borderRadius: chromeSegmentRadiusPx,
+  background: "var(--panel)",
   transition: "border-color 0.15s ease",
   selectors: {
     "&:hover, &[aria-expanded='true']": {
@@ -78,6 +79,7 @@ export const reset = style({
   color: "var(--muted)",
   border: "1px solid var(--line)",
   borderRadius: 6,
+  background: "transparent",
   selectors: {
     "&:hover:not(:disabled)": {
       color: "var(--ink)",

@@ -26,10 +26,11 @@ export type {
   ProfileMutateFn,
   ProfileMutations,
   ProfileMappingMutations,
-  ProfileCustomMappingMutations,
-  ProfileButtonMappingMutations,
   ProfilePointerMutations,
   ProfileBallScrollMutations,
+  ProfileGestureMutations,
+  ProfileSettingsMutations,
+  ProfileDeviceMutations,
   ProfileCatalogMutations,
 } from "./profile";
 export type {
@@ -42,16 +43,16 @@ export type {
 } from "./capture";
 export type { CatalogSelectionResult } from "./catalog";
 export type {
-  DeviceInfo,
-  HidTransport,
-  InputDeviceStatus,
   ButtonMeta,
   InputEventLine,
-  LastReport,
+  DeviceInfoSummary,
+  KeyboardInfo,
+  KeyRemapCapture,
   InstalledApp,
   InstalledAppWithIcon,
 } from "./device";
 export type {
+  PermissionKind,
   PermissionStatus,
   ActionSlot,
   HoldCapturePhase,
@@ -62,8 +63,6 @@ export type {
   ButtonVariant,
   ButtonSize,
   ToggleVariant,
-  ModalCopy,
-  ModalActionHandlers,
 } from "./ui";
 export type { Lang, Dict } from "./i18n";
 export type {

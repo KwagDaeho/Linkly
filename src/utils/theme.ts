@@ -42,6 +42,9 @@ export const loadFontScale = (): number => {
   }
   return clampFontScale(parsed);
 };
+export const saveFontScale = (percent: number) => {
+  localStorage.setItem(FONT_SCALE_KEY, String(percent));
+};
 export const applyTheme = (theme: Theme) => {
   document.documentElement.setAttribute("data-theme", theme);
 };
@@ -52,9 +55,15 @@ export const loadTheme = (): Theme => {
     ? "dark"
     : "light";
 };
+export const saveTheme = (theme: Theme) => {
+  localStorage.setItem(THEME_KEY, theme);
+};
 export const loadLang = (): Lang => {
   const saved = localStorage.getItem(LANG_KEY);
   return saved === "en" ? "en" : "ko";
+};
+export const saveLang = (lang: Lang) => {
+  localStorage.setItem(LANG_KEY, lang);
 };
 
 /** Accent + the neutral tint derived from it (see `styles/theme.css.ts`). */
@@ -73,3 +82,6 @@ export const applyAccent = (hex: string) => {
 
 export const loadAccent = (): string =>
   normalizeHex(localStorage.getItem(ACCENT_COLOR_KEY) ?? "") ?? ACCENT_DEFAULT;
+export const saveAccent = (hex: string) => {
+  localStorage.setItem(ACCENT_COLOR_KEY, hex);
+};

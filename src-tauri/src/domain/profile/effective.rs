@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use crate::domain::device::DeviceIdentityKey;
 use crate::domain::profile::{ButtonMappingEntry, CustomMappingEntry, Profile};
 
-use super::model::{DeviceTriggerOverride, InputDeviceSettings};
+use super::model::DeviceTriggerOverride;
 
 fn settings_key(key: DeviceIdentityKey) -> String {
     format!("{}-{}", key.0, key.1)
@@ -80,17 +78,6 @@ pub fn effective_long_press_ms(
         }
     }
     profile.long_press_ms
-}
-
-pub fn effective_profile_for_triggers(
-    profile: &Profile,
-    trigger_device: Option<DeviceIdentityKey>,
-) -> Profile {
-    let mut next = profile.clone();
-    next.button_mappings = scoped_button_mappings(profile, trigger_device);
-    next.custom_mappings = effective_custom_mappings(profile, trigger_device);
-    next.long_press_ms = effective_long_press_ms(profile, trigger_device);
-    next
 }
 
 #[cfg(test)]

@@ -9,7 +9,6 @@ import * as styles from "./KeyChordPills.css";
 interface KeyChordPillsProps {
   keys: string[];
   lang: Lang;
-  prefix?: string;
   size?: "default" | "compact";
   /** Table rows default to start; modal capture fields use center. */
   align?: "start" | "center";
@@ -19,7 +18,7 @@ export const KeyChordPills = (props: KeyChordPillsProps) => {
   const compact = props.size === "compact";
   const align = props.align ?? "start";
   const tokens = normalizeKeys(props.keys);
-  if (tokens.length === 0 && props.prefix === undefined) {
+  if (tokens.length === 0) {
     return null;
   }
   return (
@@ -30,11 +29,6 @@ export const KeyChordPills = (props: KeyChordPillsProps) => {
           (align === "center" ? styles.rowCompactCenter : styles.rowCompact),
       )}
     >
-      {props.prefix !== undefined ? (
-        <span className={cx(styles.prefix, compact && styles.prefixCompact)}>
-          {props.prefix}
-        </span>
-      ) : null}
       {tokens.map((token) => (
         <span
           key={token}

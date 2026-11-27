@@ -104,8 +104,25 @@ impl MouseClickButton {
         })
     }
 
-    pub fn matches_event_number(&self, number: i64) -> bool {
-        self.event_number().is_some_and(|n| i64::from(n) == number)
+    /// `MouseLeft` … / Karabiner-style `ButtonN` key-stroke token → mouse button.
+    pub fn from_token(name: &str) -> Option<Self> {
+        match name {
+            "MouseLeft" => Some(MouseClickButton::Left),
+            "MouseRight" => Some(MouseClickButton::Right),
+            "MouseMiddle" => Some(MouseClickButton::Middle),
+            "MouseBack" => Some(MouseClickButton::Back),
+            "MouseForward" => Some(MouseClickButton::Forward),
+            _ => {
+                let rest = name.strip_prefix("Button")?;
+                let karabiner: u8 = rest.parse().ok()?;
+                if karabiner <= 5 {
+                    return None;
+                }
+                Some(MouseClickButton::Other {
+                    number: karabiner.saturating_sub(1),
+                })
+            }
+        }
     }
 }
 

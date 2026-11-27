@@ -1,7 +1,7 @@
 import { scopedLongPressMs } from "@/domain/profile/triggerScope";
 import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { SettingsList, SettingsRow } from "@/components/ui";
+import { RangeField, SettingsList, SettingsRow } from "@/components/ui";
 import * as styles from "./LongPressTimeSetting.css";
 
 export const LongPressTimeSetting = () => {
@@ -15,19 +15,15 @@ export const LongPressTimeSetting = () => {
   return (
     <SettingsList className={styles.root}>
       <SettingsRow stack>
-        <label>
-          {i18n.longPressTime} ({ms} ms)
-          <input
-            type="range"
-            min={150}
-            max={2000}
-            step={50}
-            value={ms}
-            onChange={(event) =>
-              void persistLongPressMs(Number(event.target.value))
-            }
-          />
-        </label>
+        <RangeField
+          label={i18n.longPressTime}
+          display={`(${ms} ms)`}
+          min={150}
+          max={2000}
+          step={50}
+          value={ms}
+          onChange={(next) => void persistLongPressMs(next)}
+        />
       </SettingsRow>
     </SettingsList>
   );

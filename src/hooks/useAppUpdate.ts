@@ -15,7 +15,7 @@ const skippedVersion = (): string | null => {
   }
 };
 
-export type AppUpdateState =
+type AppUpdateState =
   | { phase: "idle" }
   | { phase: "available"; version: string }
   | { phase: "downloading"; version: string; percent: number | null }

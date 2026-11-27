@@ -69,12 +69,6 @@ pub struct Profile {
     pub device_trigger_overrides: HashMap<String, DeviceTriggerOverride>,
 }
 
-impl Profile {
-    pub fn long_press_threshold(&self) -> std::time::Duration {
-        std::time::Duration::from_millis(self.long_press_ms.clamp(150, 2000))
-    }
-}
-
 impl Default for Profile {
     fn default() -> Self {
         let mut buttons = HashMap::new();

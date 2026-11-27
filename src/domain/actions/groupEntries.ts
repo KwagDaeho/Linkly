@@ -10,12 +10,12 @@ import {
 import { catalogEntryPickValue } from "./catalogPickValue";
 import { ACTION_CATALOG } from "./catalog";
 
-export type CatalogSubcategoryGroup = {
+type CatalogSubcategoryGroup = {
   id: ActionLetterSubcategoryId;
   entries: CatalogEntry[];
 };
 
-export type CatalogGroup = {
+type CatalogGroup = {
   id: ActionCategoryId;
   entries: CatalogEntry[];
   subcategories?: CatalogSubcategoryGroup[];
@@ -72,7 +72,7 @@ export const groupCatalogEntries = (): CatalogGroup[] => {
   });
 };
 
-export type CatalogSelection = {
+type CatalogSelection = {
   category: ActionCategoryId;
   subcategory?: ActionLetterSubcategoryId;
 };

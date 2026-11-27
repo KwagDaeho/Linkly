@@ -26,6 +26,7 @@ fn combo_device_button(combo: &ComboActivator) -> ButtonId {
     }
 }
 
+#[derive(Default)]
 pub struct CustomMaps {
     pub pending: HashMap<String, PendingHold>,
     pub held: HashMap<String, Action>,
@@ -35,19 +36,6 @@ pub struct CustomMaps {
     pub active: HashMap<ButtonId, String>,
     /// OS trigger activator → entry id (mouse N, key, …).
     pub active_os: HashMap<String, Activator>,
-}
-
-impl Default for CustomMaps {
-    fn default() -> Self {
-        Self {
-            pending: HashMap::new(),
-            held: HashMap::new(),
-            scroll_repeats: HashMap::new(),
-            key_repeats: HashMap::new(),
-            active: HashMap::new(),
-            active_os: HashMap::new(),
-        }
-    }
 }
 
 impl CustomMaps {
@@ -65,7 +53,7 @@ impl CustomMaps {
         self.active.clear();
         self.active_os.clear();
         ACTIVE_BUTTONS.lock().clear();
-        super::os_trigger::clear_os_active(self);
+        super::os_trigger::clear_os_active();
     }
 }
 
@@ -118,7 +106,7 @@ fn reconcile_held_chords(
         if maps.active.contains_key(&id) {
             continue;
         }
-        cancel_regular_binding(id, profile, pending, held, scroll_repeats, key_repeats);
+        cancel_regular_binding(id, pending, held, scroll_repeats, key_repeats);
         maps.active.insert(id, entry.id.clone());
         ACTIVE_BUTTONS.lock().insert(id);
         if state::uses_os_watch() {
@@ -167,10 +155,6 @@ pub fn handle_transitions(
     state: ButtonState,
     profile: &Profile,
     maps: &mut CustomMaps,
-    pending: &mut HashMap<ButtonId, PendingHold>,
-    held: &mut HashMap<ButtonId, Action>,
-    scroll_repeats: &mut HashMap<ButtonId, ScrollRepeat>,
-    key_repeats: &mut HashMap<ButtonId, ActionRepeat>,
 ) -> (HashSet<ButtonId>, HashSet<ButtonId>) {
     let mut skip_release = HashSet::new();
     let mut skip_press = HashSet::new();
@@ -273,7 +257,6 @@ pub fn pointer_takeover_active(
     maps: &CustomMaps,
     prev: ButtonState,
     down: &ButtonState,
-    profile: &Profile,
 ) -> bool {
     for (entry_id, action) in &maps.held {
         let Some(entry) = entry_by_id(entry_id) else {

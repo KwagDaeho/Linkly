@@ -6,7 +6,7 @@ import {
 
 /** Viewer row labels — plain text in `[ name ] Up/Down` (not chord pill symbols). */
 export const formatViewerInputName = (token: string, lang: Lang): string => {
-  const sided = formatSidedModifierWord(token, lang);
+  const sided = formatSidedModifierWord(token);
   if (sided !== null) {
     return sided;
   }

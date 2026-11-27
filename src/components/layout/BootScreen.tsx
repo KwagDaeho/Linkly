@@ -6,7 +6,7 @@ import { useProfileCtx } from "@/hooks/profile";
 import * as tauri from "@/services/tauri";
 
 import { AppBrandMark } from "./AppBrandTitle";
-import * as probeStyles from "../info/ProbePanel.css";
+import * as probeStyles from "./BootScreen.probe.css";
 import * as styles from "./BootScreen.css";
 
 const BOOT_ACTIONS_DELAY_MS = 6_000;

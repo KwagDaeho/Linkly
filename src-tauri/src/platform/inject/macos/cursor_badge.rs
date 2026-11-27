@@ -3,7 +3,7 @@
 //! Always rendered as a click-through NSPanel at the system shielding level,
 //! independent of which app is frontmost or focused.
 
-use cocoa::appkit::{NSColor, NSEvent, NSView, NSWindow};
+use cocoa::appkit::{NSColor, NSEvent, NSWindow};
 use cocoa::base::{id, nil, NO};
 use cocoa::foundation::{NSPoint, NSRect, NSSize};
 use objc::declare::ClassDecl;
@@ -47,12 +47,6 @@ pub fn hide() {
 /// Quit path: stop the raise loop without scheduling AppKit work from a tap thread.
 pub fn abort_for_quit() {
     stop_raise_loop(&RAISING);
-}
-
-/// App exit: stop the raise loop and tear down the overlay immediately.
-pub fn shutdown() {
-    stop_raise_loop(&RAISING);
-    app_bus::run_on_main(|| unsafe { hide_on_main() });
 }
 
 /// Main-thread exit: tear down without queueing AppKit work.

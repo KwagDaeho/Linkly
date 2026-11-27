@@ -7,7 +7,6 @@ use crate::constants::{APP_LOG_DIR_NAME, BUNDLE_ID, PRODUCT_NAME};
 use crate::domain::engine::Engine;
 use crate::platform::lifecycle;
 use crate::persistence::{instance_lock, profile_store};
-use crate::platform::capture;
 use std::io::Write;
 use std::sync::Arc;
 use tauri::{Manager, WindowEvent};

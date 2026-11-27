@@ -1,21 +1,13 @@
-import { CHORD_MODIFIER_ORDER } from "@/domain/keys/modifiers";
-import type {
-  Activator,
-  ButtonId,
-  ComboActivator,
-  Lang,
-  MouseClickButton,
-} from "@/types";
-import { comboEffectiveTrigger } from "@/domain/input";
-import { normalizeActivator } from "@/domain/profile/mouseButton";
-import { buttonLabel, entryLabel } from "../translate";
+import type { Activator, ButtonId, Lang, MouseClickButton } from "@/types";
 import {
   extraMouseButtonLabel,
+  normalizeActivator,
   normalizeMouseButton,
 } from "@/domain/profile/mouseButton";
+import { buttonLabel, entryLabel } from "../translate";
 import { formatKeyChord } from "./keys";
 /** Catalog entry ids for injectable mouse-click actions (SSOT with ACTION_CATALOG). */
-export const MOUSE_CLICK_ENTRY = {
+const MOUSE_CLICK_ENTRY = {
   left: "mouse_left",
   right: "mouse_right",
   middle: "mouse_middle",
@@ -38,7 +30,7 @@ export const mouseClickLabel = (
   }
   return lang === "ko" ? "마우스 버튼" : "Mouse button";
 };
-export const deviceButtonLabel = (id: ButtonId, lang: Lang): string => {
+const deviceButtonLabel = (id: ButtonId, lang: Lang): string => {
   return buttonLabel(id, lang);
 };
 export const formatActivator = (activator: Activator, lang: Lang): string => {
@@ -50,23 +42,4 @@ export const formatActivator = (activator: Activator, lang: Lang): string => {
     return mouseClickLabel(normalized.button, lang);
   }
   return deviceButtonLabel(normalized.button, lang);
-};
-export const formatComboActivator = (
-  combo: ComboActivator,
-  lang: Lang,
-): string => {
-  const parts: string[] = [];
-  for (const mod of CHORD_MODIFIER_ORDER) {
-    if (combo.modifiers.includes(mod)) {
-      parts.push(formatKeyChord([mod], lang).replace(/\s+/g, ""));
-    }
-  }
-  for (const key of combo.keys) {
-    parts.push(formatKeyChord([key], lang));
-  }
-  const trigger = comboEffectiveTrigger(combo);
-  if (trigger !== null) {
-    parts.push(formatActivator(trigger, lang));
-  }
-  return parts.join(" + ");
 };

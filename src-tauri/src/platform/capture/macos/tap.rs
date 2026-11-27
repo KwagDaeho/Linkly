@@ -9,9 +9,10 @@ use crate::platform::inject;
 
 use super::combo::{emit_combo_preview, note_capture_token, note_key_down, note_key_up, note_modifier_flags_changed};
 use super::super::token::activator_capture_token;
+use crate::domain::modifier::FLAG_COMMAND;
 use super::keycodes::{
     chord_from_event, key_activator, modifier_down, CGEventRef, CGEventTapProxy,
-    CGEventGetIntegerValueField, FLAG_COMMAND, KEYBOARD_EVENT_AUTOREPEAT,
+    CGEventGetIntegerValueField, KEYBOARD_EVENT_AUTOREPEAT,
     KEYBOARD_EVENT_KEYCODE, KEY_DOWN, KEY_UP, FLAGS_CHANGED, MOUSE_EVENT_BUTTON_NUMBER,
 };
 use super::super::emit::{

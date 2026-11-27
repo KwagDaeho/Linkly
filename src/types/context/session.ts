@@ -1,6 +1,5 @@
-import type { PermissionKind } from "@/services/tauri";
 
-import type { PermissionStatus } from "../ui";
+import type { PermissionKind, PermissionStatus } from "../ui";
 
 export type SessionAutostart = {
   enabled: boolean;

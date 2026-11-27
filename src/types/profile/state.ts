@@ -6,13 +6,10 @@ import type {
   Activator,
   BallScrollSettings,
   BallScrollSlot,
-  ButtonBinding,
   ButtonId,
-  ComboActivator,
-  CustomMappingEntry,
-  ButtonMappingEntry,
   Profile,
 } from "./model";
+import type { GesturePoint, GestureSlot } from "./gesture";
 
 export type ProfileLifecycle = {
   persist: (nextProfile: Profile) => Promise<boolean>;
@@ -34,35 +31,6 @@ export type ProfileLoader = {
 
 export type ProfileMappingMutations = {
   updateSlot: (target: MappingTarget, slot: ActionSlot, action: Action) => void;
-  updateButtonSlot: (
-    buttonId: ButtonId,
-    slot: ActionSlot,
-    action: Action,
-  ) => void;
-  updateButtonFlags: (
-    buttonId: ButtonId,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => void;
-};
-
-export type ProfileCustomMappingMutations = {
-  add: (entry: CustomMappingEntry) => void;
-  remove: (entryId: string) => void;
-  updateFlags: (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => void;
-  updateActivator: (entryId: string, activator: ComboActivator) => void;
-};
-
-export type ProfileButtonMappingMutations = {
-  add: (entry: ButtonMappingEntry) => void;
-  remove: (entryId: string) => void;
-  updateFlags: (
-    entryId: string,
-    patch: Partial<Pick<ButtonBinding, "longPressEnabled" | "autoClick">>,
-  ) => void;
-  updateActivator: (entryId: string, activator: Activator) => Promise<void>;
 };
 
 export type ProfilePointerMutations = {
@@ -80,21 +48,27 @@ export type ProfileBallScrollMutations = {
   ) => Promise<void>;
 };
 
+export type ProfileGestureMutations = {
+  setActivator: (slot: GestureSlot, activator: Activator | null) => void;
+  add: (template: GesturePoint[]) => void;
+  redraw: (id: string, template: GesturePoint[]) => void;
+  move: (from: number, to: number) => void;
+  remove: (id: string) => void;
+};
+
+export type ProfileSettingsMutations = {
+  setEnabled: (enabled: boolean) => Promise<void>;
+  setStartMinimized: (startMinimized: boolean) => Promise<void>;
+};
+
+export type ProfileDeviceMutations = {
+  /** `name` is normalized (empty / product name → default label). */
+  setDisplayName: (deviceKey: string, name: string, productName: string) => void;
+};
+
 export type ProfileCatalogMutations = {
   selectButton: (
     buttonId: ButtonId,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => void;
-  selectCustom: (
-    entryId: string,
-    slot: ActionSlot,
-    value: string,
-    setEditor: Dispatch<SetStateAction<EditorMode | null>>,
-  ) => void;
-  selectButtonMapping: (
-    entryId: string,
     slot: ActionSlot,
     value: string,
     setEditor: Dispatch<SetStateAction<EditorMode | null>>,
@@ -103,10 +77,11 @@ export type ProfileCatalogMutations = {
 
 export type ProfileMutations = {
   mappings: ProfileMappingMutations;
-  buttonMappings: ProfileButtonMappingMutations;
-  customMappings: ProfileCustomMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
+  gestures: ProfileGestureMutations;
+  settings: ProfileSettingsMutations;
+  devices: ProfileDeviceMutations;
   catalogSelection: ProfileCatalogMutations;
 };
 
@@ -116,10 +91,11 @@ export type ProfileState = {
   bootError: string;
   lifecycle: ProfileLifecycle;
   mappings: ProfileMappingMutations;
-  buttonMappings: ProfileButtonMappingMutations;
-  customMappings: ProfileCustomMappingMutations;
   pointer: ProfilePointerMutations;
   ballScroll: ProfileBallScrollMutations;
+  gestures: ProfileGestureMutations;
+  settings: ProfileSettingsMutations;
+  devices: ProfileDeviceMutations;
   catalogSelection: ProfileCatalogMutations;
   mutateProfile: ProfileMutateFn;
 };

@@ -1,6 +1,6 @@
 /** Matches `menuRow` minHeight (2rem, border-box) in ActionSelect.css.ts */
 export const MENU_CATEGORY_ROW_PX = 32;
-export const MENU_GAP_PX = 4;
+const MENU_GAP_PX = 4;
 export const MENU_COL_WIDTH_PX = 168;
 /** Menu shell: 1px border top + bottom */
 const MENU_BORDER_PX = 2;
@@ -25,7 +25,7 @@ export const firstColumnContentHeightPx = (categoryCount: number): number =>
   categoryCount * MENU_CATEGORY_ROW_PX + MENU_BORDER_PX;
 
 /** Read rendered 1dep list height from an open menu (SSOT when available). */
-export const measureCategoryColumnHeightPx = (
+const measureCategoryColumnHeightPx = (
   menuRoot: HTMLElement,
 ): number | null => {
   const list = menuRoot.querySelector("[data-action-select-category-list]");

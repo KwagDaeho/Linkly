@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { KeyChordPills } from "@/components/ui";
 import type { Lang } from "@/types";
 
@@ -8,6 +10,9 @@ interface MappingTriggerButtonProps {
   lang: Lang;
   unsetLabel: string;
   onClick: () => void;
+  /** Custom trigger content (e.g. a gesture shape) instead of key pills. */
+  children?: ReactNode;
+  ariaLabel?: string;
 }
 
 export const MappingTriggerButton = (props: MappingTriggerButtonProps) => {
@@ -17,10 +22,14 @@ export const MappingTriggerButton = (props: MappingTriggerButtonProps) => {
       type="button"
       className={styles.trigger}
       data-mapping-trigger=""
+      data-own-hover="press"
       data-capture-ignore-activator=""
+      aria-label={props.ariaLabel}
       onClick={props.onClick}
     >
-      {keys === null || keys.length === 0 ? (
+      {props.children !== undefined ? (
+        props.children
+      ) : keys === null || keys.length === 0 ? (
         <span className={styles.unsetChip}>{props.unsetLabel}</span>
       ) : (
         <KeyChordPills lang={props.lang} keys={keys} size="compact" />

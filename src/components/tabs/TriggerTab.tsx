@@ -8,104 +8,44 @@ import {
 } from "@/components/mapping";
 import { Accordion } from "@/components/ui";
 import {
-  deviceDisplayName,
-  scopedButtonMappingsOf,
   scopedCustomMappingsOf,
-  type TriggerScope,
+  scopedSingleTriggerCount,
 } from "@/domain/profile/triggerScope";
+import { buildTriggerScopeTabs, COMMON_SCOPE } from "@/domain/profile/triggerTabs";
 import { formatMappingEntryCount } from "@/i18n";
 import { TriggerScopeProvider } from "@/hooks/trigger/TriggerScopeContext";
 import { usePrefs, useProfileCtx } from "@/hooks";
+import { useDeviceTabOrder } from "@/hooks/useDeviceTabOrder";
 import { useKeyboards } from "@/hooks/useKeyboards";
 import { SegmentTabs } from "@/components/layout/SegmentTabs";
 import { SlidePages } from "@/components/layout/SlidePages";
-import type { DeviceInfoSummary } from "@/components/mapping/button/DeviceInfoModal";
 import { accordionStateId } from "@/services/accordionState";
-import { readDeviceTabOrder, writeDeviceTabOrder } from "@/services/deviceTabOrder";
-import { applySavedOrder } from "@/domain/list/dragReorder";
-import { hexPid } from "@/utils/format";
-import type { Profile } from "@/types";
 
 import * as sectionStyles from "@/components/ui/sectionTitle.css";
-
-type ScopeTab = {
-  scope: TriggerScope;
-  label: string;
-  connected: boolean;
-  /** Device tabs: details for the device-info dialog. */
-  device?: DeviceInfoSummary;
-};
-
-const COMMON: TriggerScope = { kind: "common" };
-
-const singleTriggerCount = (profile: Profile, scope: TriggerScope): number =>
-  scopedButtonMappingsOf(profile, scope).filter((entry) => entry.activator !== null)
-    .length;
 
 export const TriggerTab = ({ active }: { active: boolean }) => {
   const { i18n, lang } = usePrefs();
   const { profile } = useProfileCtx();
   const keyboards = useKeyboards(active);
   const [selectedKey, setSelectedKey] = useState<string>("common");
-  const [tabOrder, setTabOrder] = useState<string[]>(() => readDeviceTabOrder());
+  const [tabOrder, setTabOrder] = useDeviceTabOrder();
 
   if (profile === null) {
     return null;
   }
 
-  const tabs: ScopeTab[] = [
-    { scope: COMMON, label: i18n.triggerScopeCommon, connected: true },
-    ...keyboards.map((k) => ({
-      scope: { kind: "device", deviceKey: k.deviceKey } as TriggerScope,
-      label: deviceDisplayName(profile, k.deviceKey, k.productName),
-      connected: true,
-      device: {
-        deviceKey: k.deviceKey,
-        productName: k.productName,
-        vendorId: k.vendorId,
-        productId: k.productId,
-        connected: true,
-      },
-    })),
-  ];
-  // Keyboards with saved device triggers stay listed while unplugged.
-  for (const [deviceKey, bundle] of Object.entries(profile.deviceTriggerOverrides ?? {})) {
-    const hasKeyRows = (bundle.buttonMappings ?? []).some(
-      (entry) => entry.activator?.type === "key",
-    );
-    if (hasKeyRows && !tabs.some((t) => t.scope.kind === "device" && t.scope.deviceKey === deviceKey)) {
-      const [vid, pid] = deviceKey.split("-").map(Number);
-      const fallback = `${hexPid(vid)}:${hexPid(pid)}`;
-      tabs.push({
-        scope: { kind: "device", deviceKey },
-        label: deviceDisplayName(profile, deviceKey, fallback),
-        connected: false,
-        device: {
-          deviceKey,
-          productName: fallback,
-          vendorId: vid,
-          productId: pid,
-          connected: false,
-        },
-      });
-    }
-  }
-  const tabKey = (scope: TriggerScope) =>
-    scope.kind === "common" ? "common" : scope.deviceKey;
-  // "Common" stays first; device tabs follow the saved order.
-  const ordered = applySavedOrder(tabs.map((t) => tabKey(t.scope)), ["common", ...tabOrder]);
-  tabs.sort((a, b) => ordered.indexOf(tabKey(a.scope)) - ordered.indexOf(tabKey(b.scope)));
-  const current = tabs.find((t) => tabKey(t.scope) === selectedKey) ?? tabs[0];
+  const tabs = buildTriggerScopeTabs(profile, keyboards, tabOrder, i18n.triggerScopeCommon);
+  const current = tabs.find((t) => t.key === selectedKey) ?? tabs[0];
 
   const totalSingle = tabs.reduce(
-    (sum, tab) => sum + singleTriggerCount(profile, tab.scope),
+    (sum, tab) => sum + scopedSingleTriggerCount(profile, tab.scope),
     0,
   );
-  const comboCount = scopedCustomMappingsOf(profile, COMMON).length;
+  const comboCount = scopedCustomMappingsOf(profile, COMMON_SCOPE).length;
   const gestureCount = profile.gestures?.entries?.length ?? 0;
 
   return (
-    <TriggerScopeProvider scope={COMMON}>
+    <TriggerScopeProvider scope={COMMON_SCOPE}>
       <section className={sectionStyles.sectionGroup}>
         <div className={sectionStyles.staticSectionBody}>
           <LongPressTimeSetting />
@@ -120,23 +60,19 @@ export const TriggerTab = ({ active }: { active: boolean }) => {
           <div className={sectionStyles.segmentTabsRow}>
             <SegmentTabs
               ariaLabel={i18n.buttonMapping}
-              active={tabKey(current.scope)}
+              active={current.key}
               onSelect={setSelectedKey}
               reorder={{
                 lockedIds: ["common"],
-                onCommit: (ids) => {
-                  const devices = ids.filter((id) => id !== "common");
-                  setTabOrder(devices);
-                  writeDeviceTabOrder(devices);
-                },
+                onCommit: (ids) => setTabOrder(ids.filter((id) => id !== "common")),
                 startLabel: i18n.tabReorderStart,
                 confirmLabel: i18n.tabReorderConfirm,
                 cancelLabel: i18n.cancel,
               }}
               items={tabs.map((tab) => {
-                const count = singleTriggerCount(profile, tab.scope);
+                const count = scopedSingleTriggerCount(profile, tab.scope);
                 return {
-                  id: tabKey(tab.scope),
+                  id: tab.key,
                   label: tab.label,
                   suffix: count > 0 ? count : undefined,
                   muted: !tab.connected,
@@ -145,10 +81,10 @@ export const TriggerTab = ({ active }: { active: boolean }) => {
             />
           </div>
           <SlidePages
-            ids={tabs.map((tab) => tabKey(tab.scope))}
-            active={tabKey(current.scope)}
+            ids={tabs.map((tab) => tab.key)}
+            active={current.key}
             renderPage={(id) => {
-              const tab = tabs.find((t) => tabKey(t.scope) === id);
+              const tab = tabs.find((t) => t.key === id);
               if (tab === undefined) {
                 return null;
               }

@@ -2,15 +2,14 @@ import type { ReorderRowProps } from "@/components/ui/ReorderableList";
 import { cx } from "@/utils/cx";
 import { BindingRow } from "./BindingRow";
 import { buttonMappingActivatorEditorFromEntry } from "@/domain/editors";
-import { asBinding } from "@/domain/profile";
-import { activatorToCaptureToken } from "@/domain/keys/mouseKeyToken";
-import { buttonMappingActivatorValid } from "@/domain/profile";
+import { asBinding, catalogButtonFromActivator } from "@/domain/profile";
+import { activatorDisplayKeys } from "@/domain/keys/mouseKeyToken";
 import { usePrefs, useEditor } from "@/hooks";
 import { useScopedTriggerApi } from "@/hooks/trigger/TriggerScopeContext";
-import { Button } from "@/components/ui";
 import { MappingTriggerButton } from "../MappingTriggerButton";
-import type { ButtonId, ButtonMappingEntry } from "@/types";
-import * as styles from "./ButtonMappingRow.css";
+import { RowRemoveButton } from "../RowRemoveButton";
+import type { ButtonMappingEntry } from "@/types";
+import * as styles from "../mappingTableRow.css";
 
 interface ButtonMappingRowProps {
   entry: ButtonMappingEntry;
@@ -20,31 +19,17 @@ interface ButtonMappingRowProps {
   reorder?: ReorderRowProps;
 }
 
-const catalogButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
-  if (entry.activator?.type === "device") {
-    return entry.activator.button;
-  }
-  return undefined;
-};
-
 export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
   const { lang, i18n } = usePrefs();
   const { buttonMappings } = useScopedTriggerApi();
   const { catalogSelection, setEditor } = useEditor();
   const entry = props.entry;
   const binding = asBinding(entry);
-  const inputKeys =
-    entry.activator !== null && buttonMappingActivatorValid(entry.activator)
-      ? (() => {
-          const token = activatorToCaptureToken(entry.activator);
-          return token !== null ? [token] : null;
-        })()
-      : null;
-  const resolvedButtonId = catalogButtonId(entry);
+  const inputKeys = activatorDisplayKeys(entry.activator);
   return (
     <div className={cx(styles.row, props.reorder?.className)} style={props.reorder?.style}>
       {props.reorder?.handle ?? <span aria-hidden />}
-      <div className={styles.inputCell}>
+      <div className={cx(styles.triggerCell, styles.triggerCellSingleLine)}>
         <MappingTriggerButton
           lang={lang}
           keys={inputKeys}
@@ -59,23 +44,13 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
       <BindingRow
         target={{ kind: "button_mapping", id: entry.id }}
         binding={binding}
-        label={null}
-        hideLabel
-        buttonId={resolvedButtonId}
+        buttonId={catalogButtonFromActivator(entry.activator)}
         onFlags={(patch) => buttonMappings.updateFlags(entry.id, patch)}
         onPick={(slot, value) =>
           catalogSelection.selectButtonMapping(entry.id, slot, value)
         }
       />
-      <div className={styles.remove}>
-        <Button
-          variant="remove"
-          size="tiny"
-          onClick={() => void buttonMappings.remove(entry.id)}
-        >
-          {i18n.remove}
-        </Button>
-      </div>
+      <RowRemoveButton onClick={() => buttonMappings.remove(entry.id)} />
     </div>
   );
 };

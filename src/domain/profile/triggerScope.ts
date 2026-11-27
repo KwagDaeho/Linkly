@@ -1,4 +1,3 @@
-import { deviceKeyFromIds } from "@/domain/device/deviceKey";
 import { buttonMappingsOf, customMappingsOf, longPressMs } from "@/domain/profile";
 import type {
   ButtonMappingEntry,
@@ -11,6 +10,7 @@ export type TriggerScope =
   | { kind: "common" }
   | { kind: "device"; deviceKey: string };
 
+/** Stable id of a scope ("common" or the device key). */
 export const triggerScopeKey = (scope: TriggerScope): string =>
   scope.kind === "common" ? "common" : scope.deviceKey;
 
@@ -29,6 +29,15 @@ export const deviceDisplayName = (
   deviceKey: string,
   fallback: string,
 ): string => deviceSettingsOf(profile, deviceKey).displayName?.trim() || fallback;
+
+/** Saved display name: trimmed, or unset when empty / same as the product name. */
+export const normalizeDisplayName = (
+  name: string,
+  productName: string,
+): string | undefined => {
+  const trimmed = name.trim();
+  return trimmed.length > 0 && trimmed !== productName ? trimmed : undefined;
+};
 
 const overrideBundle = (profile: Profile, deviceKey: string) =>
   profile.deviceTriggerOverrides?.[deviceKey];
@@ -78,16 +87,10 @@ export const scopedLongPressMs = (
   return longPressMs(profile);
 };
 
-export const deviceKeyForStatus = (vendorId: number, productId: number): string =>
-  deviceKeyFromIds(vendorId, productId);
-
-export const listIndividualLinkDeviceKeys = (profile: Profile): string[] => {
-  const settings = profile.inputDeviceSettings;
-  if (settings === undefined) {
-    return [];
-  }
-  return Object.entries(settings)
-    .filter(([, value]) => value.individualLinkEnabled === true)
-    .map(([key]) => key)
-    .sort((a, b) => a.localeCompare(b));
-};
+/** Rows of `scope` that have a trigger assigned. */
+export const scopedSingleTriggerCount = (
+  profile: Profile,
+  scope: TriggerScope,
+): number =>
+  scopedButtonMappingsOf(profile, scope).filter((entry) => entry.activator !== null)
+    .length;

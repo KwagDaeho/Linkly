@@ -22,8 +22,3 @@ export const closeOtherActionSelects = (exceptId: string): void => {
   }
 };
 
-export const closeAllActionSelects = (): void => {
-  for (const close of instances.values()) {
-    close();
-  }
-};

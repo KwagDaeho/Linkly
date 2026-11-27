@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef, type RefObject } from "react";
 
-import { listReorderTransition } from "@/components/ui/panelLayout";
+import { listReorderTransition } from "@/constants/motion";
 
 type Position = { top: number; left: number };
 

@@ -6,6 +6,8 @@ pub mod capture;
 pub mod input_monitor;
 pub mod input_sources;
 pub mod inject;
+#[cfg(target_os = "macos")]
+pub mod iohid;
 pub mod keyboards;
 pub mod launch_agent;
 pub mod lifecycle;

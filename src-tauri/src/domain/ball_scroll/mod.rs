@@ -12,7 +12,7 @@ pub use activator::{
     yield_modifier_hold_for_chord,
 };
 pub use state::{
-    ignore_ball_pointer_motion, is_active, is_reserved_catalog_button, latch_on, needs_event_watch,
+    ignore_ball_pointer_motion, is_active, is_reserved_catalog_button, needs_event_watch,
     shutdown, sync_from_profile,
 };
 

@@ -5,13 +5,21 @@ import {
   type KeyboardEvent,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { cx } from "@/utils/cx";
 
+import { Muted } from "./Muted";
 import * as styles from "./Modal.css";
 
 interface ModalProps {
   children: ReactNode;
+  /** Rendered as the dialog's `h2`. */
+  title?: ReactNode;
+  /** Muted helper text under the title. */
+  hint?: ReactNode;
+  /** Render into `document.body` (escapes transformed / clipped ancestors). */
+  portal?: boolean;
   wide?: boolean;
   compact?: boolean;
   plainBackdrop?: boolean;
@@ -61,7 +69,7 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>((props, ref) => {
   const tabIndex =
     props.tabIndex ?? (props.onEscape !== undefined ? -1 : undefined);
 
-  return (
+  const modal = (
     <div
       className={backdropClass}
       role="presentation"
@@ -81,9 +89,14 @@ export const Modal = forwardRef<HTMLDivElement, ModalProps>((props, ref) => {
         onClick={(event) => event.stopPropagation()}
         onKeyDown={handleKeyDown}
       >
+        {props.title !== undefined ? <h2>{props.title}</h2> : null}
+        {props.hint !== undefined ? (
+          <Muted variant="modal">{props.hint}</Muted>
+        ) : null}
         {props.children}
       </div>
     </div>
   );
+  return props.portal ? createPortal(modal, document.body) : modal;
 });
 Modal.displayName = "Modal";

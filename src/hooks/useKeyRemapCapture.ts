@@ -1,10 +1,7 @@
 import { useEffect, useRef } from "react";
 
-import {
-  KEY_REMAP_CAPTURE_EVENT,
-  setKeyRemapCapture,
-  type KeyRemapCapture,
-} from "@/services/tauri";
+import { KEY_REMAP_CAPTURE_EVENT, setKeyRemapCapture } from "@/services/tauri";
+import type { KeyRemapCapture } from "@/types";
 
 /**
  * While `session` is non-null, capture the next physical key on `deviceKey` (any

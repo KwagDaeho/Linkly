@@ -5,6 +5,3 @@ export const root = style({
   gap: 10,
   flexWrap: "wrap",
 });
-export const wrap = style({
-  flexWrap: "wrap",
-});

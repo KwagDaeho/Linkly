@@ -1,5 +1,5 @@
 import type { InstalledApp, OpenAppEditorState } from "@/types";
-export const matchesInstalledAppSearch = (
+const matchesInstalledAppSearch = (
   app: InstalledApp,
   query: string,
 ): boolean => {

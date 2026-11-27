@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
-import { listKeyboards, type KeyboardInfo } from "@/services/tauri";
+import { listKeyboards } from "@/services/tauri";
+import type { KeyboardInfo } from "@/types";
 
 const POLL_MS = 2000;
 

@@ -3,11 +3,12 @@ import { useState } from "react";
 import { usePrefs } from "@/hooks/prefs";
 import { useProfileCtx } from "@/hooks/profile";
 import { useEditor } from "@/hooks/editor";
-import { Button, Modal, ModalFooter, Muted, Row } from "@/components/ui";
+import { Button, Modal, ModalActions, Row } from "@/components/ui";
+import { CapturePromptModal } from "@/components/editors/shared";
+import { macroDelayAt, withMacroDelay } from "@/domain/editors";
 import type { MacroEditorState, MacroStep } from "@/types";
 
 import { MacroDelayPrompt } from "./MacroDelayPrompt";
-import { MacroKeyPrompt } from "./MacroKeyPrompt";
 import { MacroStepList } from "./MacroStepList";
 
 interface MacroEditorProps {
@@ -56,19 +57,19 @@ export const MacroEditor = (props: MacroEditorProps) => {
     }
   };
 
-  const promptInitialMs =
-    delayPrompt?.mode === "edit"
-      ? (() => {
-          const step = editor.steps[delayPrompt.index];
-          return step?.type === "delay" ? step.ms : 100;
-        })()
-      : 100;
+  const promptInitialMs = macroDelayAt(
+    editor.steps,
+    delayPrompt?.mode === "edit" ? delayPrompt.index : null,
+  );
 
   return (
     <>
-      <Modal wide onEscape={() => setEditor(null)}>
-        <h2>{i18n.macroTitle}</h2>
-        <Muted variant="modal">{i18n.macroHint}</Muted>
+      <Modal
+        wide
+        title={i18n.macroTitle}
+        hint={i18n.macroHint}
+        onEscape={() => setEditor(null)}
+      >
         <MacroStepList
           steps={editor.steps}
           lang={lang}
@@ -78,7 +79,7 @@ export const MacroEditor = (props: MacroEditorProps) => {
           onStepsChange={updateSteps}
           onEditStep={handleEditStep}
         />
-        <Row wrap>
+        <Row>
           <Button variant="ghost" onClick={() => openKeyPrompt("add")}>
             {i18n.addMacroAction}
           </Button>
@@ -86,26 +87,28 @@ export const MacroEditor = (props: MacroEditorProps) => {
             {i18n.addDelay}
           </Button>
         </Row>
-        <ModalFooter>
-          <Button variant="ghost" onClick={() => setEditor(null)}>
-            {i18n.cancel}
-          </Button>
-          <Button disabled={editor.steps.length === 0} onClick={handleSave}>
-            {i18n.save}
-          </Button>
-        </ModalFooter>
+        <ModalActions
+          cancelLabel={i18n.cancel}
+          onCancel={() => setEditor(null)}
+          confirmLabel={i18n.save}
+          onConfirm={handleSave}
+          confirmDisabled={editor.steps.length === 0}
+        />
       </Modal>
       {editor.keyPrompt ? (
-        <MacroKeyPrompt
+        <CapturePromptModal
           title={
             editor.keyPrompt.mode === "add"
               ? i18n.addMacroAction
               : i18n.editKeystroke
           }
           hint={i18n.macroKeystrokeHint}
-          waitingLabel={i18n.captureInputWaiting}
+          status={i18n.captureInputWaiting}
           cancelLabel={i18n.cancel}
           onCancel={() => setEditor({ ...editor, keyPrompt: null })}
+          nested
+          closeOnBackdrop
+          closeOnEscape
         />
       ) : null}
       {delayPrompt ? (
@@ -118,13 +121,13 @@ export const MacroEditor = (props: MacroEditorProps) => {
           cancelLabel={i18n.cancel}
           initialMs={promptInitialMs}
           onConfirm={(ms) => {
-            if (delayPrompt.mode === "add") {
-              updateSteps([...editor.steps, { type: "delay", ms }]);
-            } else {
-              const next = editor.steps.slice();
-              next[delayPrompt.index] = { type: "delay", ms };
-              updateSteps(next);
-            }
+            updateSteps(
+              withMacroDelay(
+                editor.steps,
+                delayPrompt.mode === "edit" ? delayPrompt.index : null,
+                ms,
+              ),
+            );
             setDelayPrompt(null);
           }}
           onCancel={() => setDelayPrompt(null)}

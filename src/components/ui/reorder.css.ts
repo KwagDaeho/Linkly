@@ -1,5 +1,7 @@
 import { globalStyle, style } from "@vanilla-extract/css";
 
+import { listReorderTransition } from "@/constants/motion";
+
 /** Shared look for drag-to-reorder lists (macro steps, trigger rows). */
 
 export const dragHandle = style({
@@ -52,5 +54,5 @@ export const rowDragging = style({
 export const listDragging = style({});
 
 globalStyle(`${listDragging} > *:not(${rowDragging})`, {
-  transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+  transition: listReorderTransition,
 });

@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.2] — 2026-11-27
+
+### Changed
+
+- **Permissions** — larger text on the Accessibility / Input Monitoring rows.
+
 ## [2.0.1] — 2026-11-27
 
 ### Changed

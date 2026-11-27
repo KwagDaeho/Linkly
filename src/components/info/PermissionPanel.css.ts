@@ -22,7 +22,7 @@ export const permList = style({
 export const permRows = style({
   display: "flex",
   flexDirection: "column",
-  gap: 6,
+  gap: 8,
   margin: "4px 0 0",
   padding: 0,
   listStyle: "none",
@@ -33,20 +33,20 @@ export const permRow = style({
   gridTemplateColumns: "minmax(0, 1fr) auto auto",
   alignItems: "center",
   gap: 10,
-  padding: "0.4rem 0.5rem 0.4rem 0.75rem",
+  padding: "0.55rem 0.6rem 0.55rem 0.9rem",
   border: "1px solid var(--line)",
   borderRadius: "0.5rem",
 });
 
 export const permName = style({
   color: "var(--ink)",
-  fontSize: "0.88rem",
+  fontSize: "1rem",
   fontWeight: 650,
 });
 
 export const permState = style({
   color: "var(--muted)",
-  fontSize: "0.78rem",
+  fontSize: "0.9rem",
   fontWeight: 700,
 });
 

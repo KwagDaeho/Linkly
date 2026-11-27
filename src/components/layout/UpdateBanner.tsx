@@ -6,7 +6,7 @@ import * as styles from "./UpdateBanner.css";
 
 export const UpdateBanner = () => {
   const { i18n } = usePrefs();
-  const { state, install, dismiss } = useAppUpdate();
+  const { state, install, skip } = useAppUpdate();
   if (state.phase === "idle") {
     return null;
   }
@@ -21,8 +21,8 @@ export const UpdateBanner = () => {
       </span>
       {state.phase !== "downloading" && (
         <>
-          <Button variant="ghost" className={styles.later} onClick={dismiss}>
-            {i18n.updateLater}
+          <Button variant="ghost" className={styles.later} onClick={skip}>
+            {i18n.updateSkip}
           </Button>
           <Button onClick={() => void install()}>
             {state.phase === "error" ? i18n.updateRetry : i18n.updateInstall}

@@ -1,10 +1,19 @@
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { useCallback, useEffect, useState } from "react";
 
+import { UPDATE_SKIPPED_KEY } from "@/constants/storage";
 import { relaunchApp } from "@/services/tauri";
 
 const FIRST_CHECK_DELAY_MS = 5_000;
 const CHECK_INTERVAL_MS = 6 * 60 * 60 * 1000;
+
+const skippedVersion = (): string | null => {
+  try {
+    return localStorage.getItem(UPDATE_SKIPPED_KEY);
+  } catch {
+    return null;
+  }
+};
 
 export type AppUpdateState =
   | { phase: "idle" }
@@ -25,7 +34,8 @@ export const useAppUpdate = () => {
     const run = () =>
       void check()
         .then((found) => {
-          if (alive && found !== null) {
+          // "Skip" hides only that version; a newer release shows again.
+          if (alive && found !== null && found.version !== skippedVersion()) {
             setUpdate(found);
             setState((prev) =>
               prev.phase === "downloading" ? prev : { phase: "available", version: found.version },
@@ -70,7 +80,17 @@ export const useAppUpdate = () => {
     }
   }, [update]);
 
-  const dismiss = useCallback(() => setState({ phase: "idle" }), []);
+  const skip = useCallback(() => {
+    if (update !== null) {
+      try {
+        localStorage.setItem(UPDATE_SKIPPED_KEY, update.version);
+      } catch {
+        // Still hide it for this session.
+      }
+    }
+    setUpdate(null);
+    setState({ phase: "idle" });
+  }, [update]);
 
-  return { state, install, dismiss };
+  return { state, install, skip };
 };

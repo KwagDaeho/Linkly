@@ -4,6 +4,13 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.1] — 2026-11-27
+
+### Changed
+
+- **Update banner** — "Skip this version" (that version is not offered again; newer ones are) and "Update & restart" (downloads, installs and restarts right away). Settings and permissions are kept.
+- **Release safety** — the update manifest is only produced for builds signed with the Linkly certificate, so an update can never drop granted permissions.
+
 ## [2.0.0] — 2026-11-27
 
 ### Added

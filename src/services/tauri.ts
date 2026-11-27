@@ -13,6 +13,7 @@ import type {
   PermissionStatus,
   Profile,
 } from "@/types";
+export type PermissionKind = "accessibility" | "input_monitoring";
 export const getProfile = async (): Promise<Profile> => {
   return invoke<Profile>("get_profile");
 };
@@ -41,15 +42,16 @@ export const setEventViewerChannel = async (channel: "keyboard" | "mouse", enabl
 export const getPermissionStatus = async (): Promise<PermissionStatus> => {
   return invoke<PermissionStatus>("permission_status");
 };
-export const requestPermission = async (kind: "accessibility" | "input_monitoring"): Promise<boolean> => {
-  void kind;
-  return invoke<boolean>("request_accessibility");
+export const requestPermission = async (kind: PermissionKind): Promise<boolean> => {
+  return invoke<boolean>(
+    kind === "accessibility" ? "request_accessibility" : "request_input_monitoring",
+  );
 };
 export const openAccessibilitySettings = async (): Promise<void> => {
   await invoke("open_accessibility_settings");
 };
 export const openInputMonitoringSettings = async (): Promise<void> => {
-  await invoke("open_privacy_security_settings");
+  await invoke("open_input_monitoring_settings");
 };
 export const relaunchApp = async (): Promise<void> => {
   await invoke("relaunch_app");
@@ -101,9 +103,33 @@ export const getAppIcon = async (path: string): Promise<string | null> => {
 export const resetTccPermissions = async (): Promise<void> => {
   await invoke("reset_tcc_permissions");
 };
+export type KeyboardInfo = {
+  deviceKey: string;
+  vendorId: number;
+  productId: number;
+  productName: string;
+};
+export type KeyRemapCapture = { deviceKey: string; usage: number; name: string };
+export const KEY_REMAP_CAPTURE_EVENT = "key-remap-capture";
+export const listKeyboards = async (): Promise<KeyboardInfo[]> => {
+  return invoke<KeyboardInfo[]>("list_keyboards");
+};
+/** One-shot physical key capture on `deviceKey` (any keyboard when null). */
+export const setKeyRemapCapture = async (
+  armed: boolean,
+  deviceKey: string | null,
+): Promise<void> => {
+  await invoke("set_key_remap_capture", { armed, deviceKey });
+};
 export const autostartIsEnabled = async (): Promise<boolean> => {
   return invoke<boolean>("autostart_is_enabled");
 };
 export const autostartSet = async (on: boolean): Promise<boolean> => {
   return invoke<boolean>("set_autostart_enabled", { enabled: on });
+};
+export const syncNativeAccent = async (rgb: number): Promise<void> => {
+  await invoke("set_accent_color", { rgb });
+};
+export const setGestureRecording = async (active: boolean): Promise<void> => {
+  await invoke("set_gesture_recording", { active });
 };

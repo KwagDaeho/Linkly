@@ -32,6 +32,7 @@ pub(crate) const FLAG_OPTION: u64 = 0x0008_0000;
 extern "C" {
     pub(crate) fn CGEventGetIntegerValueField(event: CGEventRef, field: u32) -> i64;
     pub(crate) fn CGEventGetFlags(event: CGEventRef) -> u64;
+    pub(crate) fn CGEventSetFlags(event: CGEventRef, flags: u64);
     pub(crate) fn CGEventSourceFlagsState(stateID: i32) -> u64;
 }
 
@@ -115,6 +116,14 @@ pub(crate) fn keycode_name(code: u16) -> Option<&'static str> {
         0x40 => "F17",
         0x4f => "F18",
         0x50 => "F19",
+        0x5a => "F20",
+        0x75 => "ForwardDelete",
+        0x73 => "Home",
+        0x77 => "End",
+        0x74 => "PageUp",
+        0x79 => "PageDown",
+        0x72 => "Help",
+        0x47 => "Clear",
         0x37 | 0x36 | 0x3a | 0x3d | 0x3b | 0x3e | 0x38 | 0x3c => return None,
         _ => return None,
     })

@@ -40,20 +40,30 @@ export const scopedButtonMappingsOf = (
   if (scope.kind === "common") {
     return buttonMappingsOf(profile);
   }
-  const override = overrideBundle(profile, scope.deviceKey)?.buttonMappings;
-  return override ?? buttonMappingsOf(profile);
+  // Device rows overlay the common ones (same input → device wins).
+  return overrideBundle(profile, scope.deviceKey)?.buttonMappings ?? [];
 };
 
+/** Scope whose list holds button-mapping row `entryId` (rows have unique ids). */
+export const scopeOfButtonMapping = (
+  profile: Profile,
+  entryId: string,
+): TriggerScope => {
+  for (const [deviceKey, bundle] of Object.entries(
+    profile.deviceTriggerOverrides ?? {},
+  )) {
+    if (bundle.buttonMappings?.some((entry) => entry.id === entryId)) {
+      return { kind: "device", deviceKey };
+    }
+  }
+  return { kind: "common" };
+};
+
+/** Combo triggers are common only (they may mix inputs from several devices). */
 export const scopedCustomMappingsOf = (
   profile: Profile,
-  scope: TriggerScope,
-): CustomMappingEntry[] => {
-  if (scope.kind === "common") {
-    return customMappingsOf(profile);
-  }
-  const override = overrideBundle(profile, scope.deviceKey)?.customMappings;
-  return override ?? customMappingsOf(profile);
-};
+  _scope: TriggerScope,
+): CustomMappingEntry[] => customMappingsOf(profile);
 
 export const scopedLongPressMs = (
   profile: Profile,

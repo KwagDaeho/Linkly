@@ -48,12 +48,25 @@ const centerOnMainWindow = async (
   await viewer.setPosition(new PhysicalPosition(x, y));
 };
 
+/** Only one of created / error fires — drop the other listener so it does not linger. */
 const waitForViewer = (viewer: WebviewWindow): Promise<void> =>
   new Promise((resolve, reject) => {
-    viewer.once("tauri://created", () => resolve());
-    viewer.once("tauri://error", (event) => {
-      reject(new Error(String(event.payload)));
-    });
+    const unlisteners: Array<Promise<() => void>> = [];
+    const done = () => {
+      for (const pending of unlisteners) {
+        void pending.then((off) => off());
+      }
+    };
+    unlisteners.push(
+      viewer.once("tauri://created", () => {
+        done();
+        resolve();
+      }),
+      viewer.once("tauri://error", (event) => {
+        done();
+        reject(new Error(String(event.payload)));
+      }),
+    );
   });
 
 export const openEventViewerWindow = async (

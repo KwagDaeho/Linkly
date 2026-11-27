@@ -34,6 +34,14 @@ export const formatKeyTokenLabel = (token: string, lang: Lang): string => {
       return "Enter/Return";
     case "Space":
       return lang === "ko" ? "스페이스" : "Space";
+    case "ForwardDelete":
+      return "Delete ⌦";
+    case "Delete":
+      return "Backspace ⌫";
+    case "PageUp":
+      return "Page Up";
+    case "PageDown":
+      return "Page Down";
     default:
       if (/^f\d+$/i.test(token)) {
         return token.toUpperCase();

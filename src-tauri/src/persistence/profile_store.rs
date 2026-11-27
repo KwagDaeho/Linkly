@@ -20,13 +20,26 @@ pub fn load_profile() -> Profile {
         return Profile::default();
     };
     match fs::read_to_string(&path) {
-        Ok(raw) => serde_json::from_str(&raw).unwrap_or_default(),
+        Ok(raw) => match serde_json::from_str(&raw) {
+            Ok(profile) => profile,
+            Err(err) => {
+                // Keep the unreadable file instead of overwriting it on the next save.
+                let backup = path.with_extension("json.corrupt");
+                log::error!("profile.json unreadable ({err}); moved to {}", backup.display());
+                let _ = fs::rename(&path, &backup);
+                Profile::default()
+            }
+        },
         Err(_) => Profile::default(),
     }
 }
 
+/// Write to a temp file and rename, so a kill mid-save (logout, power loss) cannot leave a
+/// truncated profile.json.
 pub fn save_profile(profile: &Profile) -> Result<(), String> {
     let path = profile_path()?;
     let raw = serde_json::to_string_pretty(profile).map_err(|e| e.to_string())?;
-    fs::write(path, raw).map_err(|e| e.to_string())
+    let tmp = path.with_extension("json.tmp");
+    fs::write(&tmp, raw).map_err(|e| e.to_string())?;
+    fs::rename(&tmp, &path).map_err(|e| e.to_string())
 }

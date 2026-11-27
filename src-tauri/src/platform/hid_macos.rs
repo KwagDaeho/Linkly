@@ -54,7 +54,14 @@ fn registry_entry_for_path(path: &str) -> Option<io_object_t> {
 
 /// hidapi `path` on macOS is `DevSrvsID:<registry entry id>`.
 pub fn registry_entry_online(path: &str) -> bool {
-    registry_entry_for_path(path).is_some()
+    match registry_entry_for_path(path) {
+        Some(entry) => {
+            // IOServiceGetMatchingService returns a +1 reference.
+            unsafe { IOObjectRelease(entry) };
+            true
+        }
+        None => false,
+    }
 }
 
 pub fn registry_transport(path: &str) -> HidTransport {

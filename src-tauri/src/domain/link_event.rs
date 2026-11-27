@@ -89,5 +89,6 @@ fn system_command_label(command: &SystemCommand) -> &'static str {
         SystemCommand::MoveSpaceRight => "Space 오른쪽",
         SystemCommand::InputSourceNext => "입력 소스 다음",
         SystemCommand::InputSourcePrevious => "입력 소스 이전",
+        SystemCommand::CenterCursor => "커서 화면 중앙",
     }
 }

@@ -25,11 +25,11 @@ export const useSessionState = (): SessionContextValue => {
   const { lifecycle } = useProfileCtx();
   const {
     trusted,
-    grantAccess,
+    requestPermission,
     permissionGateVisible,
     permissionRestarting,
     permissionStatus,
-    openAccessibilitySettings,
+    openPermissionSettings,
   } = usePermissions();
   const [autostartEnabled, setAutostartEnabledState] = useState(false);
 
@@ -51,11 +51,11 @@ export const useSessionState = (): SessionContextValue => {
   return useMemo(
     (): SessionContextValue => ({
       trusted,
-      grantAccess,
+      requestPermission,
       permissionGateVisible,
       permissionRestarting,
       permissionStatus,
-      openAccessibilitySettings,
+      openPermissionSettings,
       autostart: {
         enabled: autostartEnabled,
         setEnabled: setAutostartEnabled,
@@ -63,8 +63,8 @@ export const useSessionState = (): SessionContextValue => {
     }),
     [
       autostartEnabled,
-      grantAccess,
-      openAccessibilitySettings,
+      requestPermission,
+      openPermissionSettings,
       permissionGateVisible,
       permissionRestarting,
       permissionStatus,

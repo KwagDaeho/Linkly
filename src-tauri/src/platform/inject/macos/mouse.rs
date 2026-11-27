@@ -252,3 +252,26 @@ pub fn left_drag_at_cursor() {
         drag.post(CGEventTapLocation::Session);
     }
 }
+
+/// Move the pointer to the center of the main display (Karabiner
+/// `set_mouse_cursor_position` screen 0, 50%/50%). Posted as a move so apps update hover.
+pub fn center_cursor() {
+    use core_graphics::display::CGDisplay;
+    use core_graphics::geometry::CGPoint;
+
+    let bounds = CGDisplay::main().bounds();
+    let center = CGPoint::new(
+        bounds.origin.x + bounds.size.width / 2.0,
+        bounds.origin.y + bounds.size.height / 2.0,
+    );
+    let posted = source()
+        .and_then(|src| {
+            CGEvent::new_mouse_event(src, CGEventType::MouseMoved, center, CGMouseButton::Left)
+                .ok()
+        })
+        .map(|event| event.post(CGEventTapLocation::HID))
+        .is_some();
+    if !posted {
+        let _ = CGDisplay::warp_mouse_cursor_position(center);
+    }
+}

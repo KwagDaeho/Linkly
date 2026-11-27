@@ -1,3 +1,5 @@
+import { scopeOfButtonMapping } from "../triggerScope";
+import { withScopedMappingSlot } from "./scopedTriggers";
 import type {
   Action,
   ActionSlot,
@@ -17,6 +19,7 @@ import {
 import { customMappingsOf } from "@/domain/profile";
 import { withButtonMappingSlot } from "./buttonMappings";
 import { withButtonSlot } from "./buttons";
+import { withGestureSlot } from "./gestures";
 
 export const withMappingSlot = (
   profile: Profile,
@@ -27,8 +30,14 @@ export const withMappingSlot = (
   if (target.kind === "button") {
     return withButtonSlot(profile, target.id, slot, action);
   }
+  if (target.kind === "gesture") {
+    return withGestureSlot(profile, target.id, slot, action);
+  }
   if (target.kind === "button_mapping") {
-    return withButtonMappingSlot(profile, target.id, slot, action);
+    const scope = scopeOfButtonMapping(profile, target.id);
+    return scope.kind === "common"
+      ? withButtonMappingSlot(profile, target.id, slot, action)
+      : withScopedMappingSlot(profile, scope, target, slot, action);
   }
   const entries = customMappingsOf(profile);
   const nextEntries = entries.map((entry) => {

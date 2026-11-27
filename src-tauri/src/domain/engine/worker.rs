@@ -29,11 +29,17 @@ use crate::domain::profile::{effective_long_press_ms, Action, Profile};
 use crate::domain::remap_session::RemapSession;
 use crate::domain::remap;
 use crate::persistence::input_device_store;
+use crate::domain::watch;
 use crate::platform::hid::{
-    build_input_device_statuses, collect_input_snapshot, find_catalog_hid_device, open_catalog_hid_device,
-    patch_wireless_rf_link_status, scan_input_snapshot,
+    build_input_device_statuses, clear_attach_probe_cache, collect_input_snapshot,
+    find_catalog_hid_device, open_catalog_hid_device, patch_wireless_rf_link_status,
+    scan_input_snapshot,
 };
-use crate::platform::{capture, inject, input_monitor, permissions, suppress};
+use crate::platform::{autorelease, capture, inject, input_monitor, permissions, suppress};
+
+const HIDAPI_INIT_RETRY: Duration = Duration::from_secs(2);
+/// Event taps exit on creation failure / run-loop end; re-ensure while the device stays open.
+const TAP_RETRY_INTERVAL: Duration = Duration::from_secs(2);
 
 pub(crate) fn run(
     profile: Arc<Mutex<Profile>>,
@@ -48,17 +54,24 @@ pub(crate) fn run(
 ) {
     let mut prev = ButtonState::default();
     let mut button_debounce = CatalogButtonDebounce::default();
+    let mut last_raw = ButtonState::default();
     let mut held: HashMap<ButtonId, Action> = HashMap::new();
     let mut pending: HashMap<ButtonId, PendingHold> = HashMap::new();
     let mut scroll_repeats: HashMap<ButtonId, ScrollRepeat> = HashMap::new();
     let mut key_repeats: HashMap<ButtonId, ActionRepeat> = HashMap::new();
     let mut tilt_gate = TiltHoldGate::default();
-    let mut api = match HidApi::new() {
-        Ok(api) => api,
-        Err(err) => {
-            log::error!("hidapi init failed: {err}");
-            running.store(false, Ordering::SeqCst);
-            return;
+    // Early at login IOKit/HID can be unavailable — retry instead of leaving the
+    // app running with a dead engine.
+    let mut api = loop {
+        match HidApi::new() {
+            Ok(api) => break api,
+            Err(err) => {
+                log::error!("hidapi init failed (retrying): {err}");
+                if !running.load(Ordering::SeqCst) {
+                    return;
+                }
+                std::thread::sleep(HIDAPI_INIT_RETRY);
+            }
         }
     };
 
@@ -68,9 +81,24 @@ pub(crate) fn run(
     const FULL_DEVICE_SCAN_INTERVAL: Duration = Duration::from_secs(15);
     const REGISTRY_IDLE_POLL: Duration = Duration::from_millis(3000);
     const OUTER_REGISTRY_MIN: Duration = Duration::from_secs(3);
+    // hidapi's device list is a snapshot: after sleep/wake, USB re-plug, or a dongle
+    // reconnect the trackball gets a new registry path and is invisible until refresh.
+    const DEVICE_REFRESH_INTERVAL: Duration = Duration::from_secs(2);
+    let mut last_device_refresh = Instant::now();
+    let mut device_list_stale = false;
 
     while running.load(Ordering::SeqCst) {
-        let device_info = find_catalog_hid_device(&api);
+        let _pool = autorelease::Pool::new();
+        let mut device_info = find_catalog_hid_device(&api);
+        if (device_info.is_none() || device_list_stale)
+            && last_device_refresh.elapsed() >= DEVICE_REFRESH_INTERVAL
+        {
+            last_device_refresh = Instant::now();
+            device_list_stale = false;
+            let _ = api.refresh_devices();
+            clear_attach_probe_cache();
+            device_info = find_catalog_hid_device(&api);
+        }
 
         if input_device_registry_for_ui()
             && last_outer_registry.elapsed() >= OUTER_REGISTRY_MIN
@@ -117,17 +145,21 @@ pub(crate) fn run(
             session.clear_maps();
             tilt_gate = TiltHoldGate::default();
             prev = ButtonState::default();
+            stop_ball_scroll();
             suppress::clear_suppress();
             std::thread::sleep(Duration::from_millis(400));
             continue;
         }
 
-        if !permissions::accessibility_granted() {
+        if !permissions::event_tap_allowed() {
             std::thread::sleep(Duration::from_millis(800));
             continue;
         }
 
         let Some(info) = device_info else {
+            // No trackball to scroll with: a keyboard toggle must not pin the
+            // cursor or keep swallowing other mice's wheel.
+            stop_ball_scroll();
             std::thread::sleep(Duration::from_millis(800));
             continue;
         };
@@ -139,12 +171,18 @@ pub(crate) fn run(
         #[cfg(target_os = "macos")]
         api.set_open_exclusive(false);
         suppress::ensure_started();
+        // Watch tap creation can fail early at login (TCC not ready yet); retry here
+        // so key/mouse triggers come back without a profile edit.
+        if watch::needs_os_event_watch(&profile_snap) || input_monitor::enabled() {
+            capture::ensure_watch_tap();
+        }
         suppress::sync_scroll_transform(true);
 
         let device = match open_catalog_hid_device(&api, &info) {
             Ok(d) => d,
             Err(err) => {
                 log::warn!("open catalog HID device failed: {err}");
+                device_list_stale = true;
                 std::thread::sleep(Duration::from_millis(800));
                 continue;
             }
@@ -162,8 +200,10 @@ pub(crate) fn run(
         let mut buf = [0u8; 64];
         let mut last_input_scan = Instant::now();
         let mut last_registry_full_scan = Instant::now();
+        let mut last_tap_check = Instant::now();
         let trigger_device = Some(device_identity_key(&info));
         while running.load(Ordering::SeqCst) {
+            let _pool = autorelease::Pool::new();
             if profile_dirty.swap(false, Ordering::SeqCst) {
                 profile_snap = profile.lock().clone();
                 session.sync_runtime(&profile_snap, trigger_device);
@@ -177,6 +217,13 @@ pub(crate) fn run(
 
             match device.read_timeout(&mut buf, 8) {
                 Ok(0) => {
+                    if last_tap_check.elapsed() >= TAP_RETRY_INTERVAL {
+                        last_tap_check = Instant::now();
+                        suppress::ensure_started();
+                        if watch::needs_os_event_watch(&profile_snap) || input_monitor::enabled() {
+                            capture::ensure_watch_tap();
+                        }
+                    }
                     if input_device_registry_for_ui()
                         && last_input_scan.elapsed() >= REGISTRY_IDLE_POLL
                     {
@@ -198,6 +245,8 @@ pub(crate) fn run(
                         last_input_scan = Instant::now();
                     }
                     let now = Instant::now();
+                    // Reports arrive on change only: commit a debounced release on quiet ticks.
+                    let idle_buttons = button_debounce.filter_idle(last_raw, prev);
                     session.with_maps(&profile_snap, |custom_maps, button_maps| {
                         fire_due_long_presses(
                             &mut pending,
@@ -220,7 +269,7 @@ pub(crate) fn run(
                         tilt_gate.expire(now);
                         ball_scroll::tick();
                         inject::end_idle_ball_scroll();
-                        let mut state = prev;
+                        let mut state = idle_buttons;
                         tilt_gate.apply(&mut state);
                         custom_mapping::sync_button_state(state);
                         sync_catalog_suppress_mask(
@@ -305,6 +354,7 @@ pub(crate) fn run(
                     };
 
                     let raw_buttons = parsed.buttons;
+                    last_raw = raw_buttons;
                     let capture_block = capture::input_capture_active();
                     arm_remap_click_grace(prev, raw_buttons, &profile_snap);
                     sync_catalog_suppress_mask(
@@ -584,6 +634,7 @@ pub(crate) fn run(
                 Err(err) => {
                     log::warn!("catalog HID read error (device gone?): {err}");
                     *connected.lock() = None;
+                    device_list_stale = true;
                     break;
                 }
             }
@@ -597,7 +648,13 @@ pub(crate) fn run(
         scroll_repeats.clear();
         key_repeats.clear();
         tilt_gate = TiltHoldGate::default();
+        // Release catalog hold activators and stop ball-scroll: tick() only runs in
+        // the inner loop, so a pin / wheel drop would otherwise outlive the device.
+        ball_scroll::note_catalog_button_edges(prev, ButtonState::default());
+        crate::domain::gesture::note_catalog_button_edges(prev, ButtonState::default());
+        stop_ball_scroll();
         prev = ButtonState::default();
+        last_raw = ButtonState::default();
         button_debounce.reset();
         inject::clear_catalog_physical_drag();
         suppress::sync_scroll_transform(false);
@@ -606,6 +663,13 @@ pub(crate) fn run(
         drop(device);
         std::thread::sleep(Duration::from_millis(200));
     }
+}
+
+/// End ball-scroll now (no bounce grace) and drop the cursor-restore window,
+/// which is otherwise only expired by HID reports / idle ticks of an open device.
+fn stop_ball_scroll() {
+    ball_scroll::deactivate();
+    inject::finish_restored_cursor();
 }
 
 fn sticky_button_down(prev: ButtonState, state: ButtonState, id: ButtonId) -> bool {
@@ -644,6 +708,7 @@ fn neutralize_remapped_catalog_presses(
 fn catalog_button_remap(profile: &Profile, id: ButtonId, legacy: bool) -> bool {
     legacy
         || ball_scroll::is_reserved_catalog_button(id)
+        || crate::domain::gesture::is_reserved_catalog_button(id)
         || custom_mapping::is_reserved_catalog_button(id)
         || button_mapping::is_reserved_catalog_button(id)
 }
@@ -734,9 +799,17 @@ fn apply_button_edges(
     key_repeats: &mut HashMap<ButtonId, ActionRepeat>,
 ) {
     note_catalog_button_activators(prev, state);
-    if capture::input_capture_active() || capture::ui_modal_active() {
-        return;
-    }
+    // Capture / UI modal own new presses, but holds that began before the session
+    // must still release (callers advance `prev` regardless).
+    let state = if capture::input_capture_active() || capture::ui_modal_active() {
+        let releases = state.releases_only(prev);
+        if releases == prev {
+            return;
+        }
+        releases
+    } else {
+        state
+    };
     custom_mapping::sync_button_state(state);
     custom_mapping::process_os_trigger_queue(profile, custom_maps);
     button_mapping::process_os_trigger_queue(profile, button_maps);
@@ -796,6 +869,8 @@ fn note_catalog_button_activators(prev: ButtonState, state: ButtonState) {
                 capture::emit_combo_trigger_catalog_button(id);
             }
         }
+        ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
+        crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
         return;
     }
     if capture::activator_capture_active() {
@@ -808,17 +883,22 @@ fn note_catalog_button_activators(prev: ButtonState, state: ButtonState) {
                 });
             }
         }
+        ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
+        crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
         return;
     }
     if capture::ui_modal_active() {
         for id in state.pressed_edges(prev) {
             if id == ButtonId::Left {
                 inject::click_at_cursor();
+                ball_scroll::note_catalog_button_edges(prev, state.releases_only(prev));
+                crate::domain::gesture::note_catalog_button_edges(prev, state.releases_only(prev));
                 return;
             }
         }
     }
     ball_scroll::note_catalog_button_edges(prev, state);
+    crate::domain::gesture::note_catalog_button_edges(prev, state);
 }
 
 fn sync_input_device_registry(

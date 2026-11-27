@@ -2,7 +2,7 @@
   "name": "linkly",
   "description": "Linkly",
   "private": true,
-  "version": "1.5.4",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -14,6 +14,7 @@
     "tauri:build": "tauri build",
     "version:sync": "node scripts/sync-app-version.mjs",
     "release:dmg": "bash scripts/create-release-dmg.sh",
+    "release:manifest": "node scripts/make-latest-json.mjs",
     "app:open": "npm run tauri:build && open \"src-tauri/target/release/bundle/macos/Linkly.app\""
   },
   "dependencies": {
@@ -21,6 +22,7 @@
     "@tauri-apps/plugin-autostart": "^2",
     "@tauri-apps/plugin-opener": "^2",
     "@tauri-apps/plugin-process": "^2",
+    "@tauri-apps/plugin-updater": "~2.12.0",
     "@vanilla-extract/css": "^1.21.2",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"

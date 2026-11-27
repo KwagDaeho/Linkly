@@ -6,6 +6,8 @@ export type PrefsContextValue = {
   setLang: (next: Lang) => void;
   theme: Theme;
   setTheme: (next: Theme) => void;
+  accentColor: string;
+  setAccentColor: (next: string) => void;
   fontScale: number;
   setFontScale: (next: number) => void;
   decreaseFontScale: () => void;

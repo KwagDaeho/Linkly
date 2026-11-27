@@ -1,3 +1,5 @@
+import type { PermissionKind } from "@/services/tauri";
+
 import type { PermissionStatus } from "../ui";
 
 export type SessionAutostart = {
@@ -10,7 +12,9 @@ export type SessionContextValue = {
   permissionGateVisible: boolean;
   permissionRestarting: boolean;
   permissionStatus: PermissionStatus | null;
-  grantAccess: () => Promise<void>;
-  openAccessibilitySettings: () => Promise<void>;
+  /** Show the macOS prompt for one permission. */
+  requestPermission: (kind: PermissionKind) => Promise<void>;
+  /** Open that permission's pane in System Settings. */
+  openPermissionSettings: (kind: PermissionKind) => Promise<void>;
   autostart: SessionAutostart;
 };

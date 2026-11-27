@@ -44,4 +44,5 @@ export const accordionStateId = {
   mouseBallScroll: "mouse.ballScroll",
   triggerButtonMapping: "trigger.buttonMapping",
   triggerComboMapping: "trigger.comboMapping",
+  triggerGesture: "trigger.gesture",
 } as const;

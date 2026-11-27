@@ -82,6 +82,9 @@ fn install_app_menu(app: &App) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
+    crate::platform::launch_agent::refresh_if_enabled();
+    crate::platform::keyboards::start();
+    crate::platform::lifecycle::start_permission_guard();
     app.state::<AppState>().engine.start();
 
     capture::register_app_handle(app.handle().clone());
@@ -139,7 +142,9 @@ pub fn setup_app(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
         })
         .build(app)?;
 
-    let start_minimized = app.state::<AppState>().engine.profile().start_minimized;
+    // After a permission relaunch the user is looking at the window — keep it visible.
+    let relaunched = std::env::args().any(|arg| arg == crate::constants::RELAUNCH_ARG);
+    let start_minimized = app.state::<AppState>().engine.profile().start_minimized && !relaunched;
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.set_icon(icon);
         let _ = window.set_title(crate::constants::PRODUCT_NAME);

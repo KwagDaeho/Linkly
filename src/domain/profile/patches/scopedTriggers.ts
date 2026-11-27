@@ -12,18 +12,18 @@ import type {
 
 import {
   asBinding,
-  buttonMappingsOf,
-  customMappingsOf,
   enforceTiltBindingFlags,
   catalogButtonFromComboTrigger,
   isTiltButton,
   resolveBindingFlags,
 } from "@/domain/profile";
 import { withButtonSlot } from "@/domain/profile/patches/buttons";
+import { withGestureSlot } from "@/domain/profile/patches/gestures";
 import { withButtonMappingSlot } from "@/domain/profile/patches/buttonMappings";
 
 import type { TriggerScope } from "../triggerScope";
 import {
+  scopeOfButtonMapping,
   scopedButtonMappingsOf,
   scopedCustomMappingsOf,
 } from "../triggerScope";
@@ -41,11 +41,8 @@ const ensureDeviceOverride = (
     ...profile,
     deviceTriggerOverrides: {
       ...profile.deviceTriggerOverrides,
-      [deviceKey]: {
-        buttonMappings: [...buttonMappingsOf(profile)],
-        customMappings: [...customMappingsOf(profile)],
-        longPressMs: profile.longPressMs,
-      },
+      // Overlay: starts empty, common rows keep applying underneath.
+      [deviceKey]: { buttonMappings: [] },
     },
   };
 };
@@ -99,12 +96,8 @@ export const withScopedCustomMappings = (
   scope: TriggerScope,
   entries: CustomMappingEntry[],
 ): Profile => {
-  if (scope.kind === "common") {
-    return { ...profile, customMappings: entries };
-  }
-  return writeDeviceOverride(profile, scope.deviceKey, {
-    customMappings: entries,
-  });
+  void scope;
+  return { ...profile, customMappings: entries };
 };
 
 export const withScopedButtonMappingAdded = (
@@ -259,7 +252,12 @@ export const withScopedMappingSlot = (
   if (target.kind === "button") {
     return withButtonSlot(profile, target.id, slot, action);
   }
+  if (target.kind === "gesture") {
+    return withGestureSlot(profile, target.id, slot, action);
+  }
   if (target.kind === "button_mapping") {
+    // Editors run in the app-level (common) scope; route by where the row lives.
+    scope = scopeOfButtonMapping(profile, target.id);
     if (scope.kind === "common") {
       return withButtonMappingSlot(profile, target.id, slot, action);
     }

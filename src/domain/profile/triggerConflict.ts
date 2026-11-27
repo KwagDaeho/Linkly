@@ -100,6 +100,10 @@ export const findScopedActivatorConflict = (
   ) {
     return true;
   }
+  // Device rows overlay common ones on purpose — only clash within the device.
+  if (scope.kind === "device") {
+    return false;
+  }
   for (const entry of scopedCustomMappingsOf(profile, scope)) {
     const trigger = comboEffectiveTrigger(entry.activator);
     if (trigger !== null && activatorsConflict(trigger, activator)) {

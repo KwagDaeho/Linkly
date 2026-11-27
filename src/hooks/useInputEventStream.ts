@@ -10,26 +10,28 @@ const MAX_LINES_PER_CHANNEL = 300;
 const MAX_PENDING = 400;
 const FLUSH_MS = 50;
 
-const pushPending = (
-  pending: InputEventLine[],
-  line: InputEventLine,
-): InputEventLine[] => {
-  const next = [...pending, line];
-  if (next.length <= MAX_PENDING) {
-    return next;
+/** Stable React key: indexes shift once the list is capped, `tsMs` can repeat. */
+export type ViewerLine = InputEventLine & { seq: number };
+
+let nextSeq = 0;
+
+/** In-place: the pending buffer is a ref, never React state. */
+const pushPending = (pending: ViewerLine[], line: InputEventLine): void => {
+  pending.push({ ...line, seq: nextSeq++ });
+  if (pending.length > MAX_PENDING) {
+    pending.splice(0, pending.length - MAX_PENDING);
   }
-  return next.slice(next.length - MAX_PENDING);
 };
 
-const appendLine = (
-  previous: InputEventLine[],
-  line: InputEventLine,
-): InputEventLine[] => {
-  const next = [...previous, line];
-  if (next.length > MAX_LINES_PER_CHANNEL) {
-    return next.slice(next.length - MAX_LINES_PER_CHANNEL);
+/** One copy per flush instead of one per line. */
+const appendLines = (previous: ViewerLine[], lines: ViewerLine[]): ViewerLine[] => {
+  if (lines.length === 0) {
+    return previous;
   }
-  return next;
+  const next = previous.concat(lines);
+  return next.length > MAX_LINES_PER_CHANNEL
+    ? next.slice(next.length - MAX_LINES_PER_CHANNEL)
+    : next;
 };
 
 export const useInputEventStream = (
@@ -37,9 +39,9 @@ export const useInputEventStream = (
   onlyChannel?: EventViewerChannel,
 ) => {
   const [historyByChannel, setHistoryByChannel] = useState<
-    Record<EventViewerChannel, InputEventLine[]>
+    Record<EventViewerChannel, ViewerLine[]>
   >({ keyboard: [], mouse: [] });
-  const pendingRef = useRef<InputEventLine[]>([]);
+  const pendingRef = useRef<ViewerLine[]>([]);
 
   useEffect(() => {
     if (!active) {
@@ -55,22 +57,19 @@ export const useInputEventStream = (
       }
       const batch = pendingRef.current;
       pendingRef.current = [];
-      setHistoryByChannel((previous) => {
-        const next: Record<EventViewerChannel, InputEventLine[]> = {
-          keyboard: [...previous.keyboard],
-          mouse: [...previous.mouse],
-        };
-        for (const line of batch) {
-          const channels = eventViewerChannels(line);
-          for (const channel of channels) {
-            if (onlyChannel !== undefined && channel !== onlyChannel) {
-              continue;
-            }
-            next[channel] = appendLine(next[channel], line);
+      const added: Record<EventViewerChannel, ViewerLine[]> = { keyboard: [], mouse: [] };
+      for (const line of batch) {
+        for (const channel of eventViewerChannels(line)) {
+          if (onlyChannel !== undefined && channel !== onlyChannel) {
+            continue;
           }
+          added[channel].push(line);
         }
-        return next;
-      });
+      }
+      setHistoryByChannel((previous) => ({
+        keyboard: appendLines(previous.keyboard, added.keyboard),
+        mouse: appendLines(previous.mouse, added.mouse),
+      }));
     };
 
     const intervalId = window.setInterval(flush, FLUSH_MS);
@@ -89,7 +88,7 @@ export const useInputEventStream = (
             return;
           }
         }
-        pendingRef.current = pushPending(pendingRef.current, line);
+        pushPending(pendingRef.current, line);
       });
       if (cancelled) {
         off();
@@ -116,7 +115,7 @@ export const useInputEventStream = (
     }));
   };
 
-  const latestByChannel: Record<EventViewerChannel, InputEventLine | null> = {
+  const latestByChannel: Record<EventViewerChannel, ViewerLine | null> = {
     keyboard:
       historyByChannel.keyboard[historyByChannel.keyboard.length - 1] ?? null,
     mouse: historyByChannel.mouse[historyByChannel.mouse.length - 1] ?? null,

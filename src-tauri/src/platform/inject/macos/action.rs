@@ -1,5 +1,9 @@
 //! Action press/release dispatch (mouse, keys, macros, system commands).
 
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::mpsc::{sync_channel, SyncSender, TrySendError};
+use std::sync::OnceLock;
+
 use core_graphics::event::CGEventFlags;
 
 use crate::domain::device::ButtonId;
@@ -20,6 +24,89 @@ use super::{chord_action_inject, source};
 #[link(name = "ApplicationServices", kind = "framework")]
 extern "C" {
     fn CoreDockSendNotification(notification: core_foundation::string::CFStringRef);
+}
+
+/// Actions that spawn processes (`open`, `osascript`, `plutil`) or sleep (macro
+/// delays). They run on one background thread so the HID worker / OS dispatch
+/// thread never block on them while holding `RemapSession`.
+enum ActionJob {
+    System { command: SystemCommand, chord: bool },
+    OpenApp(String),
+    Macro(Vec<MacroStep>),
+}
+
+const ACTION_QUEUE_CAP: usize = 16;
+
+static ACTION_TX: OnceLock<Option<SyncSender<ActionJob>>> = OnceLock::new();
+static ACTION_QUEUE_FULL_LOGGED: AtomicBool = AtomicBool::new(false);
+
+fn action_sender() -> Option<&'static SyncSender<ActionJob>> {
+    ACTION_TX
+        .get_or_init(|| {
+            let (tx, rx) = sync_channel::<ActionJob>(ACTION_QUEUE_CAP);
+            match std::thread::Builder::new()
+                .name("link-action-runner".into())
+                .spawn(move || {
+                    // Jobs run in order, so macro steps keep their sequence.
+                    while let Ok(job) = rx.recv() {
+                        let _pool = crate::platform::autorelease::Pool::new();
+                        run_job(job);
+                    }
+                }) {
+                Ok(_) => Some(tx),
+                Err(err) => {
+                    log::error!("spawn link-action-runner failed: {err}");
+                    None
+                }
+            }
+        })
+        .as_ref()
+}
+
+fn run_job(job: ActionJob) {
+    match job {
+        ActionJob::System { command, chord } => system_command(&command, chord),
+        ActionJob::OpenApp(bundle_id) => open_app(&bundle_id),
+        ActionJob::Macro(steps) => run_macro(&steps),
+    }
+}
+
+/// Queue a blocking action; dropped (logged once) when the runner is backed up.
+fn enqueue(job: ActionJob) {
+    let Some(tx) = action_sender() else {
+        // No runner thread: run inline rather than lose the action.
+        run_job(job);
+        return;
+    };
+    match tx.try_send(job) {
+        Ok(()) => {
+            ACTION_QUEUE_FULL_LOGGED.store(false, Ordering::Relaxed);
+        }
+        Err(TrySendError::Full(_)) => {
+            if !ACTION_QUEUE_FULL_LOGGED.swap(true, Ordering::Relaxed) {
+                log::warn!("action runner busy — dropping queued actions");
+            }
+        }
+        Err(TrySendError::Disconnected(_)) => {
+            log::warn!("action runner gone — action dropped");
+        }
+    }
+}
+
+/// System commands that shell out (osascript / open / plutil) or sleep.
+fn system_command_blocks(cmd: &SystemCommand, chord: bool) -> bool {
+    match cmd {
+        SystemCommand::MissionControl
+        | SystemCommand::AppExpose
+        | SystemCommand::ShowDesktop
+        | SystemCommand::AppSwitcher
+        | SystemCommand::MoveSpaceLeft
+        | SystemCommand::MoveSpaceRight
+        | SystemCommand::InputSourceNext
+        | SystemCommand::InputSourcePrevious => true,
+        SystemCommand::Spotlight => !chord,
+        _ => false,
+    }
 }
 
 fn open_app(bundle_id: &str) {
@@ -45,9 +132,13 @@ fn open_app(bundle_id: &str) {
             return;
         }
         let _ = open_named_app("System Preferences");
-        let _ = std::process::Command::new("open")
+        // Runs on the action-runner thread: wait so the child is reaped.
+        if let Err(err) = std::process::Command::new("open")
             .args(["x-apple.systempreferences:"])
-            .spawn();
+            .status()
+        {
+            log::warn!("open x-apple.systempreferences: spawn failed: {err}");
+        }
     }
 }
 
@@ -81,24 +172,27 @@ fn launchpad() {
     }
 }
 
-fn chord_safe_keystroke(keys: &[String]) {
-    if chord_action_inject() {
+fn chord_safe_keystroke(keys: &[String], chord: bool) {
+    if chord {
         keystroke_isolated(keys);
     } else {
         keystroke(keys);
     }
 }
 
-fn system_command(cmd: &SystemCommand) {
+/// `chord` is `chord_action_inject()` captured at press time (the runner thread
+/// executes after `with_chord_action` has returned).
+fn system_command(cmd: &SystemCommand, chord: bool) {
     log::info!("system_command: {cmd:?}");
     match cmd {
         SystemCommand::MissionControl => mission_control(),
         SystemCommand::AppExpose => app_expose(),
         SystemCommand::ShowDesktop => show_desktop(),
         SystemCommand::Launchpad => launchpad(),
+        SystemCommand::CenterCursor => super::mouse::center_cursor(),
         SystemCommand::Spotlight => {
-            if chord_action_inject() {
-                chord_safe_keystroke(&["Meta".into(), "Space".into()]);
+            if chord {
+                chord_safe_keystroke(&["Meta".into(), "Space".into()], chord);
             } else if !run_osascript(
                 "tell application \"System Events\" to keystroke space using command down",
             ) {
@@ -315,6 +409,7 @@ pub fn press_action_forced(
 }
 
 fn notify_ball_scroll_mouse(button: &MouseClickButton, down: bool) {
+    crate::domain::gesture::on_synthetic_mouse(button, down);
     if !ball_scroll::synthetic_mouse_matches_armed(button) {
         return;
     }
@@ -356,10 +451,20 @@ fn press_action_with(
         }
         Action::DoubleClick => double_click(),
         Action::KeyStroke { keys } => keystroke(keys),
-        Action::System { command } => system_command(command),
-        Action::OpenApp { bundle_id, .. } => open_app(bundle_id),
+        Action::System { command } => {
+            let chord = chord_action_inject();
+            if system_command_blocks(command, chord) {
+                enqueue(ActionJob::System {
+                    command: command.clone(),
+                    chord,
+                });
+            } else {
+                system_command(command, chord);
+            }
+        }
+        Action::OpenApp { bundle_id, .. } => enqueue(ActionJob::OpenApp(bundle_id.clone())),
         Action::Scroll { dx, dy } => scroll_by_units_ex(*dx, *dy, pointer, true),
-        Action::Macro { steps } => run_macro(steps),
+        Action::Macro { steps } => enqueue(ActionJob::Macro(steps.clone())),
     }
 }
 

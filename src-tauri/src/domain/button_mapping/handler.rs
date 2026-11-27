@@ -37,13 +37,15 @@ impl Default for ButtonMaps {
 }
 
 impl ButtonMaps {
+    /// Drop all in-flight state; held synthetic buttons/keys are released first.
     pub fn clear(&mut self) {
+        release_held(self);
         self.pending.clear();
-        self.held.clear();
         self.scroll_repeats.clear();
         self.key_repeats.clear();
         self.active_os.clear();
         self.active_catalog_buttons.clear();
+        state::clear_catalog_buttons_held();
         super::os_trigger::clear_os_active(self);
     }
 }
@@ -147,27 +149,29 @@ pub(crate) fn fire_button_press(
 /// Drop in-flight presses when the profile no longer matches (e.g. row removed while L held).
 pub fn reset_pressed_state(maps: &mut ButtonMaps, profile: &Profile) {
     let _ = profile;
+    release_held(maps);
+    maps.pending.clear();
+    maps.scroll_repeats.clear();
+    maps.key_repeats.clear();
+    maps.active_catalog_buttons.clear();
+    state::clear_catalog_buttons_held();
+    super::os_trigger::clear_os_active(maps);
+    release_stray_synthetic_buttons();
+}
+
+/// Release every held action (long-press results live in `held` too).
+fn release_held(maps: &mut ButtonMaps) {
     for (entry_id, action) in maps.held.drain() {
         let inject_id = state::entry_by_id(&entry_id)
             .map(|e| inject_button_for_entry(&e))
             .unwrap_or(ButtonId::Left);
         crate::platform::inject::release_action(inject_id, &action);
     }
-    for (entry_id, hold) in maps.pending.drain() {
-        if hold.long_fired {
-            if let Some(action) = maps.held.remove(&entry_id) {
-                let inject_id = state::entry_by_id(&entry_id)
-                    .map(|e| inject_button_for_entry(&e))
-                    .unwrap_or(ButtonId::Left);
-                crate::platform::inject::release_action(inject_id, &action);
-            }
-        }
-    }
-    maps.scroll_repeats.clear();
-    maps.key_repeats.clear();
-    maps.active_catalog_buttons.clear();
-    state::clear_catalog_buttons_held();
-    super::os_trigger::clear_os_active(maps);
+}
+
+/// Blanket mouse-up when a synthetic button is still down after all mapping state
+/// was dropped (entry gone / native-skip mismatch) — otherwise drags stay suppressed.
+pub fn release_stray_synthetic_buttons() {
     if crate::platform::inject::synthetic_buttons_held() {
         use crate::domain::profile::MouseClickButton;
         for button in [

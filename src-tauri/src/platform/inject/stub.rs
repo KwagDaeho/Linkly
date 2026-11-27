@@ -24,6 +24,7 @@ pub fn restore_cursor_active() -> bool {
 }
 pub fn maintain_restored_cursor() {}
 pub fn expire_restored_cursor_if_due() {}
+pub fn finish_restored_cursor() {}
 pub fn tick_restore_cursor(_hid_dx: f64, _hid_dy: f64) {}
 pub fn post_unpin_active() -> Option<core_graphics::geometry::CGPoint> {
     None
@@ -118,3 +119,16 @@ pub fn should_block_chord_modifier(_name: &str) -> bool {
 }
 
 pub fn tear_down_overlays_on_main() {}
+pub fn key_code_for_name(_name: &str) -> Option<u16> {
+    None
+}
+pub fn mouse_button_from_token(_name: &str) -> Option<crate::domain::profile::MouseClickButton> {
+    None
+}
+
+pub fn show_gesture_trail() {}
+pub fn hide_gesture_trail() {}
+pub fn track_gesture_trail() {}
+pub fn cursor_location() -> (f64, f64) {
+    (0.0, 0.0)
+}

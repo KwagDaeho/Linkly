@@ -1,8 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { getCurrentWebviewWindow } from "@tauri-apps/api/webviewWindow";
 
 import { formatEventRowText, type EventViewerChannel } from "@/domain/input/eventViewer";
-import { useInputEventStream } from "@/hooks/useInputEventStream";
+import { useInputEventStream, type ViewerLine } from "@/hooks/useInputEventStream";
+import type { Lang } from "@/types";
 import { usePrefs } from "@/hooks/prefs";
 import * as tauri from "@/services/tauri";
 import { Button, Panel } from "@/components/ui";
@@ -10,17 +11,25 @@ import { OverlayScrollArea, overlayScrollAreaStyles } from "@/components/layout/
 
 import * as styles from "@/components/info/InputEventViewerPanel.css";
 
+const timeFormat = new Intl.DateTimeFormat(undefined, {
+  hour12: false,
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+});
+
 const formatTime = (tsMs: number): string => {
   const date = new Date(tsMs);
-  const base = date.toLocaleTimeString(undefined, {
-    hour12: false,
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
   const ms = String(date.getMilliseconds()).padStart(3, "0");
-  return `${base}.${ms}`;
+  return `${timeFormat.format(date)}.${ms}`;
 };
+
+const EventRow = memo(({ line, lang }: { line: ViewerLine; lang: Lang }) => (
+  <div className={styles.row}>
+    <span className={styles.time}>{formatTime(line.tsMs)}</span>
+    <span className={styles.summary}>{formatEventRowText(line, lang)}</span>
+  </div>
+));
 
 export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) => {
   const { i18n, lang } = usePrefs();
@@ -54,7 +63,8 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
     if (viewport) {
       viewport.scrollTop = viewport.scrollHeight;
     }
-  }, [history.length]);
+    // Last seq, not length: length stops changing once the list is capped.
+  }, [history[history.length - 1]?.seq]);
 
   const closeWindow = () => {
     void getCurrentWebviewWindow().close();
@@ -88,14 +98,7 @@ export const EventViewerWindow = ({ channel }: { channel: EventViewerChannel }) 
               {history.length === 0 ? (
                 <p className={styles.logEmpty}>{i18n.inputEventRowEmpty}</p>
               ) : (
-                history.map((line, index) => (
-                  <div key={`${line.tsMs}-${index}`} className={styles.row}>
-                    <span className={styles.time}>{formatTime(line.tsMs)}</span>
-                    <span className={styles.summary}>
-                      {formatEventRowText(line, lang)}
-                    </span>
-                  </div>
-                ))
+                history.map((line) => <EventRow key={line.seq} line={line} lang={lang} />)
               )}
             </div>
           </OverlayScrollArea>

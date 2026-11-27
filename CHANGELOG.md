@@ -4,6 +4,27 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+## [2.0.0] — 2026-11-27
+
+### Added
+
+- **In-app updates** — Linkly checks GitHub releases on launch and every 6 hours; one click downloads, installs and restarts.
+- **Stable code signature** — builds are signed with a fixed certificate, so Accessibility / Input Monitoring stay granted across updates (grant once more when moving to 2.0).
+- **Per-keyboard triggers** — single triggers can be scoped to one keyboard (tabs: Common + each connected keyboard). Applied below the event tap with `hidutil` per VendorID/ProductID; non-trivial bindings route through spare proxy F-keys. Keyboards with saved triggers stay listed while unplugged; device info dialog and rename.
+- **Cross-keyboard modifiers** — modifiers held on one keyboard apply to keys and clicks on another (Karabiner-style merge).
+- **Gesture triggers** — draw a shape with the cursor while a hold key is held (or between two toggle-key presses); the trail is shown on screen and the closest saved shape's action runs. Size and position do not matter. Shapes are recorded with the same keys.
+- **Accent color** — color wheel, HEX/RGB input and recommended colors (default purple). The whole palette, light and dark, follows the accent; text on the accent switches between black and white for contrast. Native overlays use it too.
+
+### Changed
+
+- Key names for Forward Delete, Home, End, Page Up/Down, Help and Clear (no more raw key codes in the UI).
+- Wider default window (980 px).
+- Input Monitoring is checked live; event taps are not re-enabled while a permission is revoked (avoids input freezes).
+
+### Fixed
+
+- Modal sizing inside sliding panels; device info button sizing and hover contrast.
+
 ## [1.5.4] — 2026-11-09
 
 ### Fixed

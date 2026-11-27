@@ -147,4 +147,6 @@ pub enum SystemCommand {
     InputSourceNext,
     /// Input menu order — previous keyboard layout.
     InputSourcePrevious,
+    /// Move the pointer to the center of the main display.
+    CenterCursor,
 }

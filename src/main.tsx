@@ -2,9 +2,10 @@ import React, { Component, type ErrorInfo, type ReactNode } from "react";
 import ReactDOM from "react-dom/client";
 import App from "./app/App";
 import "@/styles/theme.css.ts";
-import { applyFontScale, loadFontScale } from "@/utils/theme";
+import { applyAccent, applyFontScale, loadAccent, loadFontScale } from "@/utils/theme";
 
 applyFontScale(loadFontScale());
+applyAccent(loadAccent());
 
 class ErrorBoundary extends Component<
   { children: ReactNode },

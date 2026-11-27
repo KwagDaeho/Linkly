@@ -4,17 +4,29 @@ import { Row } from "@/components/ui/Row";
 import { usePrefs } from "@/hooks/prefs";
 import { useSession } from "@/hooks/session";
 import * as tauri from "@/services/tauri";
+import type { PermissionKind } from "@/services/tauri";
+import { cx } from "@/utils/cx";
 
 import * as styles from "./PermissionPanel.css";
 
-const onOff = (on: boolean): string => (on ? "ON" : "OFF");
-
 export const PermissionPanel = () => {
   const { i18n } = usePrefs();
-  const { grantAccess, permissionRestarting, permissionStatus, openAccessibilitySettings } = useSession();
+  const { requestPermission, permissionRestarting, permissionStatus } = useSession();
 
-  const axOn = permissionStatus !== null && (permissionStatus.accessibility || permissionStatus.postEvent);
-  const inputOn = permissionStatus !== null && permissionStatus.inputMonitoring;
+  const rows: { kind: PermissionKind; label: string; on: boolean }[] = [
+    {
+      kind: "accessibility",
+      label: i18n.accessibility,
+      on:
+        permissionStatus !== null &&
+        (permissionStatus.accessibility || permissionStatus.postEvent),
+    },
+    {
+      kind: "input_monitoring",
+      label: i18n.inputMonitoring,
+      on: permissionStatus !== null && permissionStatus.inputMonitoring,
+    },
+  ];
 
   return (
     <Panel variant="plain">
@@ -24,16 +36,6 @@ export const PermissionPanel = () => {
         <li>{i18n.accessibilityStep3}</li>
         <li>{i18n.accessibilityStep4}</li>
       </ol>
-      {permissionStatus !== null && (
-        <ul className={styles.permStatus}>
-          <li>
-            {i18n.accessibility}: {onOff(axOn)}
-          </li>
-          <li>
-            {i18n.inputMonitoring}: {onOff(inputOn)}
-          </li>
-        </ul>
-      )}
       {permissionRestarting ? (
         <>
           <p className={styles.permRestarting}>{i18n.accessibilityRestarting}</p>
@@ -42,12 +44,23 @@ export const PermissionPanel = () => {
           </Row>
         </>
       ) : (
-        <Row>
-          <Button onClick={() => void grantAccess()}>{i18n.grantAccess}</Button>
-          <Button variant="ghost" onClick={() => void openAccessibilitySettings()}>
-            {i18n.openSettings}
-          </Button>
-        </Row>
+        <ul className={styles.permRows}>
+          {rows.map((row) => (
+            <li key={row.kind} className={styles.permRow}>
+              <span className={styles.permName}>{row.label}</span>
+              <span className={cx(styles.permState, row.on && styles.permStateOn)}>
+                {row.on ? i18n.permissionOn : i18n.permissionOff}
+              </span>
+              <span className={styles.permActions}>
+                {row.on ? null : (
+                  <Button size="tiny" onClick={() => void requestPermission(row.kind)}>
+                    {i18n.permissionAllow}
+                  </Button>
+                )}
+              </span>
+            </li>
+          ))}
+        </ul>
       )}
     </Panel>
   );

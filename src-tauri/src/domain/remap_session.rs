@@ -58,6 +58,7 @@ impl RemapSession {
             .spawn(move || {
                 while running.load(Ordering::SeqCst) {
                     let _ = wake_rx.recv_timeout(Duration::from_millis(8));
+                    let _pool = crate::platform::autorelease::Pool::new();
                     dispatch_target.drain_os_trigger_queues();
                 }
             })
@@ -90,6 +91,8 @@ impl RemapSession {
         guard.profile = profile_snap.clone();
         guard.trigger_device = trigger_device;
         ball_scroll::sync_from_profile(profile_snap);
+        crate::domain::gesture::sync_from_profile(profile_snap);
+        crate::platform::keyboards::set_profile(profile_snap);
         custom_mapping::sync_from_profile(profile_snap, trigger_device);
         let changed = button_mapping::sync_from_profile(profile_snap, trigger_device);
         if changed {
@@ -105,6 +108,8 @@ impl RemapSession {
         let mut guard = self.inner.lock();
         guard.custom_maps.clear();
         guard.button_maps.clear();
+        // Both clears release what they track; anything still down is orphaned.
+        button_mapping::release_stray_synthetic_buttons();
     }
 
     pub fn drain_os_trigger_queues(&self) {

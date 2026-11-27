@@ -8,6 +8,7 @@ use super::action::{Action, MouseClickButton};
 use super::activator::{ButtonMappingEntry, CustomMappingEntry};
 use super::ball_scroll::BallScrollSettings;
 use super::binding::ButtonBinding;
+use super::gesture::GestureSettings;
 use super::pointer::PointerSettings;
 
 fn default_long_press_ms() -> u64 {
@@ -45,6 +46,9 @@ pub struct Profile {
     /// Ball movement → scroll while a toggle/hold activator is on.
     #[serde(default)]
     pub ball_scroll: BallScrollSettings,
+    /// Draw a shape while a hold/toggle activator is on → fire its action.
+    #[serde(default)]
+    pub gestures: GestureSettings,
     /// Modifier/key + catalog button combos with their own bindings.
     #[serde(default)]
     pub custom_mappings: Vec<CustomMappingEntry>,
@@ -89,6 +93,7 @@ impl Default for Profile {
             buttons,
             pointer: PointerSettings::default(),
             ball_scroll: BallScrollSettings::default(),
+            gestures: GestureSettings::default(),
             custom_mappings: Vec::new(),
             button_mappings: Vec::new(),
             enabled: true,

@@ -8,3 +8,5 @@ pub const PRODUCT_NAME: &str = env!("LINKLY_DISPLAY_NAME");
 pub const PROFILE_FILENAME: &str = "profile.json";
 pub const INPUT_DEVICES_FILENAME: &str = "input_devices.json";
 pub const INSTANCE_LOCK_FILENAME: &str = "instance.lock";
+/// Passed by `relaunch_app` so the new process waits for the old one's instance lock.
+pub const RELAUNCH_ARG: &str = "--relaunch";

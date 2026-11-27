@@ -17,10 +17,17 @@ pub fn save_profile(state: State<'_, AppState>, profile: Profile) -> Result<(), 
     profile_store::save_profile(&profile)?;
     state.engine.set_profile(profile.clone());
     ball_scroll::sync_from_profile(&profile);
+    crate::domain::gesture::sync_from_profile(&profile);
     custom_mapping::sync_from_profile(&profile, None);
     button_mapping::sync_from_profile(&profile, None);
     if watch::needs_os_event_watch(&profile) {
         crate::platform::capture::ensure_watch_tap();
     }
     Ok(())
+}
+
+/// Gesture draw dialog open/closed (the gesture keys record instead of firing).
+#[tauri::command]
+pub fn set_gesture_recording(active: bool) {
+    crate::domain::gesture::set_recording(active);
 }

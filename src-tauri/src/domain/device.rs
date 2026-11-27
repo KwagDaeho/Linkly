@@ -389,6 +389,15 @@ impl ButtonState {
             .collect()
     }
 
+    /// `self` with new press edges (vs `prev`) undone — keeps releases only.
+    pub fn releases_only(self, prev: Self) -> Self {
+        let mut out = self;
+        for id in self.pressed_edges(prev) {
+            out.set_down(id, false);
+        }
+        out
+    }
+
     fn set_down(&mut self, id: ButtonId, down: bool) {
         match id {
             ButtonId::Left => self.left = down,
@@ -460,7 +469,73 @@ impl CatalogButtonDebounce {
         next
     }
 
+    /// HID went quiet (reports arrive on change only): treat the idle tick as a
+    /// repeat of the last raw frame so a pending release still commits.
+    /// Returns `state` with L/R/M/Back/Forward taken from the debouncer.
+    pub fn filter_idle(&mut self, last_raw: ButtonState, state: ButtonState) -> ButtonState {
+        let pending_release = CATALOG_MOUSE_BUTTONS
+            .iter()
+            .any(|id| self.stable.is_down(*id) && !last_raw.is_down(*id));
+        if !pending_release {
+            return state;
+        }
+        let deb = self.filter(last_raw);
+        let mut out = state;
+        for id in CATALOG_MOUSE_BUTTONS {
+            out.set_down(id, deb.is_down(id));
+        }
+        out
+    }
+
     pub fn reset(&mut self) {
         *self = Self::default();
+    }
+}
+
+#[cfg(test)]
+mod debounce_tests {
+    use super::*;
+
+    #[test]
+    fn idle_tick_commits_pending_release() {
+        let mut deb = CatalogButtonDebounce::default();
+        let down = ButtonState {
+            back: true,
+            ..ButtonState::default()
+        };
+        let up = ButtonState::default();
+        assert!(deb.filter(down).back);
+        // One "up" frame alone is held through (dropout filter).
+        let state = deb.filter(up);
+        assert!(state.back);
+        // Device goes quiet — idle tick commits the release.
+        assert!(!deb.filter_idle(up, state).back);
+        // Further idle ticks are no-ops.
+        assert_eq!(deb.filter_idle(up, up), up);
+    }
+
+    #[test]
+    fn idle_tick_keeps_held_button() {
+        let mut deb = CatalogButtonDebounce::default();
+        let down = ButtonState {
+            left: true,
+            ..ButtonState::default()
+        };
+        let state = deb.filter(down);
+        assert!(deb.filter_idle(down, state).left);
+    }
+
+    #[test]
+    fn releases_only_drops_new_presses() {
+        let prev = ButtonState {
+            left: true,
+            ..ButtonState::default()
+        };
+        let state = ButtonState {
+            right: true,
+            ..ButtonState::default()
+        };
+        let out = state.releases_only(prev);
+        assert!(!out.left && !out.right);
     }
 }

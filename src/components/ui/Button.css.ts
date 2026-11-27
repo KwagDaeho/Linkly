@@ -11,6 +11,8 @@ export const ghost = style({
 globalStyle(`${ghost}:hover:not(:disabled)`, {
   background: "var(--interaction-hover-surface)",
   borderColor: "var(--interaction-hover-border)",
+  // The global button hover fills with the accent; keep text readable on it.
+  color: "var(--accent-ink)",
 });
 
 export const remove = style({
@@ -22,7 +24,7 @@ export const remove = style({
 
 globalStyle(`${remove}:hover:not(:disabled)`, {
   background: "var(--interaction-hover-button)",
-  color: "#1a121c",
+  color: "var(--accent-ink)",
 });
 
 export const tiny = style({

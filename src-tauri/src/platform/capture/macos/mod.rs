@@ -11,13 +11,35 @@ mod viewer;
 pub(crate) use combo::{emit_combo_preview, note_capture_token};
 pub use combo::{clear_combo_held, combo_held_parts};
 
+/// Trigger name the event tap reports for `code` (`Activator::Key`).
+pub fn activator_name_for_keycode(code: u16) -> String {
+    crate::domain::modifier::side_name_from_keycode(code)
+        .map(str::to_string)
+        .unwrap_or_else(|| keycodes::key_activator_name(code))
+}
+
 #[cfg(target_os = "macos")]
 pub(crate) fn refresh_combo_preview() {
     combo::emit_combo_preview();
 }
 
+/// Re-enable after macOS disabled the tap — only while still trusted. Re-enabling a tap
+/// after Accessibility was revoked wedges all keyboard/mouse input system-wide.
 #[cfg(target_os = "macos")]
 pub(crate) fn reenable_key_capture_tap() {
+    if crate::platform::permissions::tap_reenable_allowed() {
+        set_key_capture_tap_enabled(true);
+    }
+}
+
+/// Stop the watch tap from receiving events right now (no thread join).
+#[cfg(target_os = "macos")]
+pub fn disable_key_capture_tap_now() {
+    set_key_capture_tap_enabled(false);
+}
+
+#[cfg(target_os = "macos")]
+fn set_key_capture_tap_enabled(enabled: bool) {
     use core_foundation::mach_port::CFMachPortRef;
     use std::ffi::c_void;
     use std::sync::atomic::Ordering;
@@ -31,7 +53,7 @@ pub(crate) fn reenable_key_capture_tap() {
 
     let port = KEY_CAPTURE_TAP_PORT.load(Ordering::SeqCst);
     if !port.is_null() {
-        unsafe { CGEventTapEnable(port as CFMachPortRef, true) };
+        unsafe { CGEventTapEnable(port as CFMachPortRef, enabled) };
     }
 }
 
@@ -83,6 +105,10 @@ pub fn ensure_tap_thread() {
         fn CGEventTapEnable(tap: CFMachPortRef, enable: bool);
     }
 
+    // An event tap without Accessibility can stall system input.
+    if !crate::platform::permissions::event_tap_allowed() {
+        return;
+    }
     if TAP_STARTED.swap(true, Ordering::SeqCst) {
         return;
     }

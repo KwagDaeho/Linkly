@@ -247,10 +247,11 @@ unsafe extern "C" fn tap_callback(
     event: *mut std::ffi::c_void,
     _user_info: *mut std::ffi::c_void,
 ) -> *mut std::ffi::c_void {
+    let _pool = crate::platform::autorelease::Pool::new();
     if etype == 0xFFFF_FFFE || etype == 0xFFFF_FFFF {
-        let port = TAP_PORT.load(Ordering::SeqCst);
-        if !port.is_null() {
-            unsafe { CGEventTapEnable(port, true) };
+        // Never re-enable once Accessibility is gone — that wedges system input.
+        if crate::platform::permissions::tap_reenable_allowed() {
+            set_tap_enabled(true);
         }
         return event;
     }
@@ -329,6 +330,10 @@ fn event_mask() -> u64 {
 }
 
 pub fn ensure_started() {
+    // An event tap without Accessibility can stall system input.
+    if !crate::platform::permissions::event_tap_allowed() {
+        return;
+    }
     if TAP_RUNNING.swap(true, Ordering::SeqCst) {
         return;
     }
@@ -382,6 +387,19 @@ pub fn ensure_started() {
         })
         .expect("spawn suppress tap");
     *TAP_THREAD.lock() = Some(handle);
+}
+
+fn set_tap_enabled(enabled: bool) {
+    let port = TAP_PORT.load(Ordering::SeqCst);
+    if !port.is_null() {
+        unsafe { CGEventTapEnable(port, enabled) };
+    }
+}
+
+/// Stop the suppress tap from receiving events right now (no thread join).
+pub fn disable_tap_now() {
+    clear_suppress();
+    set_tap_enabled(false);
 }
 
 pub fn stop_tap_thread() {

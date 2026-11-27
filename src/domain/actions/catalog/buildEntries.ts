@@ -201,6 +201,13 @@ const navigationEntries = (): CatalogEntry[] => {
   }));
 };
 
+const numberEntries = (): CatalogEntry[] =>
+  "1234567890".split("").map((digit) => ({
+    id: `key_digit_${digit}`,
+    category: "numbers" as const,
+    action: { type: "key_stroke" as const, keys: [digit] },
+  }));
+
 const functionKeyEntries = (): CatalogEntry[] => {
   const out: CatalogEntry[] = [];
   for (let n = 1; n <= FUNCTION_KEY_CATALOG_MAX; n += 1) {
@@ -280,6 +287,8 @@ export const buildGeneratedCatalogEntries = (): CatalogEntry[] => {
     ...navigationEntries(),
     ...functionKeyEntries(),
     ...mouseEntries(),
+    // Before the kana rows, so a plain digit stroke is labelled as the digit.
+    ...numberEntries(),
     ...letterEntriesFor("en"),
     ...letterEntriesFor("ko"),
     ...letterEntriesFor("ja"),

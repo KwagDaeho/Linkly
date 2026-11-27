@@ -27,10 +27,6 @@ const RING: f64 = 44.0;
 const WHITE: f64 = 1.0;
 const PURPLE: f64 = 3.0;
 const BLACK: f64 = 1.0;
-/// App accent `#c07bc4`.
-const ACCENT_R: f64 = 192.0 / 255.0;
-const ACCENT_G: f64 = 123.0 / 255.0;
-const ACCENT_B: f64 = 196.0 / 255.0;
 
 const RING_VIEW_CLASS: &str = "LinklyBallScrollRingView";
 const PANEL_CLASS: &str = "LinklyBallScrollPanel";
@@ -86,6 +82,8 @@ unsafe fn show_on_main() {
     let view: id = msg_send![view, initWithFrame: frame];
     let _: () = msg_send![view, setWantsLayer: NO];
     win.setContentView_(view);
+    // The window retains its content view; drop our alloc/init reference.
+    let _: () = msg_send![view, release];
 
     apply_badge_shape(win);
     order_overlay_badge_front(win);
@@ -171,9 +169,8 @@ extern "C" fn draw_ring(_this: &Object, _cmd: Sel, _dirty: NSRect) {
 
 unsafe fn draw_ring_in(bounds: NSRect) {
     let white = NSColor::colorWithCalibratedRed_green_blue_alpha_(nil, 1.0, 1.0, 1.0, 1.0);
-    let purple = NSColor::colorWithCalibratedRed_green_blue_alpha_(
-        nil, ACCENT_R, ACCENT_G, ACCENT_B, 1.0,
-    );
+    let (r, g, b) = crate::platform::accent::components();
+    let purple = NSColor::colorWithCalibratedRed_green_blue_alpha_(nil, r, g, b, 1.0);
     let black = NSColor::colorWithCalibratedRed_green_blue_alpha_(nil, 0.0, 0.0, 0.0, 1.0);
     let white_mid = WHITE / 2.0;
     let purple_mid = WHITE + PURPLE / 2.0;

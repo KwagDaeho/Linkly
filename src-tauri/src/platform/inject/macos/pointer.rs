@@ -172,6 +172,14 @@ pub fn restore_cursor_active() -> bool {
     RESTORE_CURSOR.lock().is_some()
 }
 
+/// End the forced-restore window now — for when no HID reports will expire it
+/// (device gone / remap disabled), so the suppress tap stops eating motion.
+pub fn finish_restored_cursor() {
+    if restore_cursor_active() {
+        finish_restore_cursor();
+    }
+}
+
 pub fn maintain_restored_cursor() {
     if let Some((p, _)) = *RESTORE_CURSOR.lock() {
         settle_cursor_at(p);

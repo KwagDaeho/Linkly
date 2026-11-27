@@ -1,8 +1,12 @@
+pub mod accent;
 pub mod app_bus;
 pub mod apps;
+pub mod autorelease;
 pub mod capture;
 pub mod input_monitor;
 pub mod inject;
+pub mod keyboards;
+pub mod launch_agent;
 pub mod lifecycle;
 #[cfg(target_os = "macos")]
 pub mod login_item;

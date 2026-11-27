@@ -15,11 +15,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 osascript -e 'tell application "Linkly" to quit' 2>/dev/null || true
 sleep 1
 
-AGENT="$HOME/Library/LaunchAgents/Linkly.plist"
-if [[ -f "$AGENT" ]]; then
-  launchctl bootout "gui/$(id -u)" "$AGENT" 2>/dev/null || true
-  rm -f "$AGENT"
-fi
+for AGENT in "$HOME/Library/LaunchAgents/Linkly.plist" "$HOME/Library/LaunchAgents/${BUNDLE}.plist"; do
+  if [[ -f "$AGENT" ]]; then
+    launchctl bootout "gui/$(id -u)" "$AGENT" 2>/dev/null || true
+    rm -f "$AGENT"
+  fi
+done
 
 rm -rf "/Applications/Linkly.app"
 rm -rf "$HOME/Library/Application Support/linkly"

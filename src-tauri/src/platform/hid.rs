@@ -29,8 +29,23 @@ static ATTACH_CACHE: LazyLock<Mutex<HashMap<String, AttachCacheEntry>>> =
 
 const ATTACH_CACHE_MAX: usize = 96;
 
+/// Drop entries whose registry node is gone. Live entries stay: every probe is a real
+/// `open_device` (hidapi leaks native resources per open), and a registry path is stable
+/// for as long as the device stays attached.
 pub fn clear_attach_probe_cache() {
-    ATTACH_CACHE.lock().clear();
+    ATTACH_CACHE.lock().retain(|path, _| hid_path_online(path));
+}
+
+fn hid_path_online(path: &str) -> bool {
+    #[cfg(target_os = "macos")]
+    {
+        return hid_macos::registry_entry_online(path);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = path;
+        true
+    }
 }
 
 fn store_attach_cache(key: String, attached: bool) {
@@ -84,17 +99,10 @@ fn hid_device_responds(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
     }
 }
 
-fn wireless_rf_dongle_attached(api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
-    if !hid_node_online(d) {
-        return false;
-    }
-    match d.open_device(api) {
-        Ok(handle) => {
-            drop(handle);
-            true
-        }
-        Err(_) => false,
-    }
+/// Dongle presence is an IORegistry question; RF link state comes from live HID input
+/// (`rf_last_hid_input`), so never open the receiver just to check it.
+fn wireless_rf_dongle_attached(_api: &HidApi, d: &hidapi::DeviceInfo) -> bool {
+    hid_node_online(d)
 }
 
 /// Best-effort RF link (ball powered on). Idle may yield no reports; do not use for dongle presence.
@@ -131,11 +139,11 @@ fn hid_entry_attached(api: &HidApi, d: &hidapi::DeviceInfo, force_probe: bool) -
         return false;
     }
     let key = attach_cache_key(d);
-    if !force_probe {
-        if let Some(entry) = ATTACH_CACHE.lock().get(&key) {
-            if entry.probed_at.elapsed() < ATTACH_PROBE_TTL {
-                return entry.attached;
-            }
+    if let Some(entry) = ATTACH_CACHE.lock().get(&key) {
+        // Positive results hold for the path's lifetime; negatives (powered-off ghosts)
+        // are re-probed on forced scans or after the TTL.
+        if entry.attached || (!force_probe && entry.probed_at.elapsed() < ATTACH_PROBE_TTL) {
+            return entry.attached;
         }
     }
     let attached = hid_device_responds(api, d);
@@ -294,7 +302,7 @@ pub fn collect_input_snapshot(api: &HidApi, force_probe: bool) -> InputScanSnaps
         if !is_input_hid(d.usage_page(), d.usage()) {
             continue;
         }
-        if !hid_entry_attached(api, d, force_probe) {
+        if !hid_entry_attached(api, d, false) {
             continue;
         }
         let info = device_info_from_hid(&d);

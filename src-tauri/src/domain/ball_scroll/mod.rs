@@ -16,7 +16,10 @@ pub use state::{
     shutdown, sync_from_profile,
 };
 
-use state::{apply_active, logical_armed, DEACTIVATE_AT, FORCE_DEACTIVATE, QUIT_ARMED, WAS_ACTIVE};
+use state::{
+    apply_active, logical_armed, DEACTIVATE_AT, FORCE_DEACTIVATE, HOLD_DOWN, QUIT_ARMED,
+    TOGGLE_LATCH, WAS_ACTIVE,
+};
 
 /// Commit a pending off after bounce grace, and keep tray/UI in sync.
 pub fn tick() {
@@ -39,5 +42,16 @@ pub fn tick() {
     {
         // Pin on the HID worker — never from the CGEvent tap callback (deadlock on ⌘Q).
         apply_active(true);
+    }
+}
+
+/// Trackball gone or remap disabled: drop hold/latch and unpin now (no bounce grace).
+/// `tick()` only runs while the device is open, so nothing else would commit the off.
+pub fn deactivate() {
+    let armed = HOLD_DOWN.swap(false, Ordering::SeqCst) | TOGGLE_LATCH.swap(false, Ordering::SeqCst);
+    FORCE_DEACTIVATE.store(false, Ordering::SeqCst);
+    *DEACTIVATE_AT.lock() = None;
+    if armed || WAS_ACTIVE.load(Ordering::SeqCst) {
+        apply_active(false);
     }
 }

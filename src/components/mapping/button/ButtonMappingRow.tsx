@@ -12,6 +12,8 @@ import * as styles from "./ButtonMappingRow.css";
 
 interface ButtonMappingRowProps {
   entry: ButtonMappingEntry;
+  /** Device scope: re-capture the trigger on that keyboard instead of the global editor. */
+  onCaptureTrigger?: () => void;
 }
 
 const catalogButtonId = (entry: ButtonMappingEntry): ButtonId | undefined => {
@@ -43,7 +45,9 @@ export const ButtonMappingRow = (props: ButtonMappingRowProps) => {
           keys={inputKeys}
           unsetLabel={i18n.buttonMappingSetInput}
           onClick={() =>
-            setEditor(buttonMappingActivatorEditorFromEntry(entry))
+            props.onCaptureTrigger !== undefined
+              ? props.onCaptureTrigger()
+              : setEditor(buttonMappingActivatorEditorFromEntry(entry))
           }
         />
       </div>

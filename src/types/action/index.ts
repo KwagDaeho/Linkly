@@ -33,7 +33,8 @@ export type SystemCommand =
   | "move_space_left"
   | "move_space_right"
   | "input_source_next"
-  | "input_source_previous";
+  | "input_source_previous"
+  | "center_cursor";
 
 export type MacroStep =
   | { type: "key_stroke"; keys: string[] }
@@ -59,6 +60,7 @@ export type ActionCategoryId =
   | "function_keys"
   | "mouse"
   | "letters"
+  | "numbers"
   | "browser"
   | "document"
   | "display"

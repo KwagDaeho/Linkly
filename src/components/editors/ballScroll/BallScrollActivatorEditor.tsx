@@ -31,7 +31,8 @@ export const BallScrollActivatorEditor = (props: BallScrollActivatorEditorProps)
     <ActivatorCaptureModal
       title={
         <>
-          {i18n.activatorTitle} · {slotLabel}
+          {editor.target === "gesture" ? i18n.gesture : i18n.activatorTitle} ·{" "}
+          {slotLabel}
         </>
       }
       hint={hint}

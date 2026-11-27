@@ -1,6 +1,6 @@
 [package]
 name = "linkly"
-version = "1.5.4"
+version = "2.0.0"
 description = "Linkly"
 homepage = "https://github.com/KwagDaeho/Linkly"
 authors = ["kwagdaeho"]
@@ -16,7 +16,6 @@ tauri-build = { version = "2", features = [] }
 [dependencies]
 tauri = { version = "2", features = ["tray-icon", "image-png"] }
 tauri-plugin-opener = "2"
-tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
 tauri-plugin-process = "2"
 libc = "0.2"
@@ -29,6 +28,7 @@ thiserror = "2"
 log = "0.4"
 env_logger = "0.11"
 guessture = "0.1"
+tauri-plugin-updater = "2"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 core-graphics = { version = "0.24", features = ["highsierra"] }

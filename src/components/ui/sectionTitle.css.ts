@@ -95,3 +95,8 @@ export const sectionGroupFollow = style({
 export const sectionGroupTitle = style({
   padding: "4px 0 2px",
 });
+
+/** Sub-tab bar inside an accordion body (aligned with the panel content below). */
+export const segmentTabsRow = style({
+  marginBottom: 10,
+});

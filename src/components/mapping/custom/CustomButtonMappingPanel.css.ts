@@ -11,11 +11,23 @@ export const toolbar = style({
   marginBottom: 10,
 });
 
-export const addButton = style({
+/** Fixed box (border-box) so filled and outlined variants line up exactly. */
+const addButtonBox = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
   minWidth: "7.5rem",
-  padding: "0.42rem 1.35rem",
+  height: "1.9rem",
+  padding: "0 1.35rem",
   fontSize: "0.86rem",
-});
+  lineHeight: 1,
+} as const;
+
+export const addButton = style(addButtonBox);
+
+/** Bordered (ghost) twin of `addButton`: same outer size. */
+export const addButtonOutlined = style(addButtonBox);
 
 export const empty = style({
   margin: "8px 0 0",

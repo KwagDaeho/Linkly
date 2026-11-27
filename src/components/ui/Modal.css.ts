@@ -7,14 +7,14 @@ export const backdrop = style({
   display: "grid",
   placeItems: "center",
   padding: 24,
-  background: "rgba(20, 12, 24, 0.5)",
+  background: "color-mix(in srgb, var(--backdrop) 50%, transparent)",
   backdropFilter: "blur(4px)",
 });
 export const backdropPlain = style([
   backdrop,
   {
     backdropFilter: "none",
-    background: "rgba(20, 12, 24, 0.62)",
+    background: "color-mix(in srgb, var(--backdrop) 62%, transparent)",
   },
 ]);
 
@@ -25,7 +25,7 @@ export const nestedBackdrop = style({
   display: "grid",
   placeItems: "center",
   padding: 24,
-  background: "rgba(20, 12, 24, 0.45)",
+  background: "color-mix(in srgb, var(--backdrop) 45%, transparent)",
   backdropFilter: "blur(3px)",
 });
 

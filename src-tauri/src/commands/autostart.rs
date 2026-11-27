@@ -1,19 +1,17 @@
-use tauri::{AppHandle, Manager};
-use tauri_plugin_autostart::ManagerExt;
+use crate::platform::launch_agent;
 
 #[tauri::command]
-pub fn autostart_is_enabled(app: AppHandle) -> Result<bool, String> {
-    app.autolaunch().is_enabled().map_err(|e| e.to_string())
+pub fn autostart_is_enabled() -> Result<bool, String> {
+    Ok(launch_agent::is_enabled())
 }
 
+/// `async` → runs off the main thread (disable shells out to osascript / System Events).
 #[tauri::command]
-pub fn set_autostart_enabled(app: AppHandle, enabled: bool) -> Result<bool, String> {
-    let manager = app.autolaunch();
+pub async fn set_autostart_enabled(enabled: bool) -> Result<bool, String> {
     if enabled {
-        manager.enable().map_err(|e| e.to_string())?;
+        launch_agent::enable()?;
     } else {
-        manager.disable().map_err(|e| e.to_string())?;
-        crate::platform::login_item::remove_stale_login_items();
+        launch_agent::disable()?;
     }
-    manager.is_enabled().map_err(|e| e.to_string())
+    Ok(launch_agent::is_enabled())
 }

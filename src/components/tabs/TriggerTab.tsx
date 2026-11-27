@@ -1,13 +1,14 @@
+import { useState } from "react";
+
 import {
   CustomButtonMappingPanel,
   ButtonMappingPanel,
+  GesturePanel,
   LongPressTimeSetting,
 } from "@/components/mapping";
-import { Accordion, SectionGroupHeading } from "@/components/ui";
+import { Accordion } from "@/components/ui";
 import {
   deviceDisplayName,
-  deviceKeyForStatus,
-  listIndividualLinkDeviceKeys,
   scopedButtonMappingsOf,
   scopedCustomMappingsOf,
   type TriggerScope,
@@ -15,109 +16,156 @@ import {
 import { formatMappingEntryCount } from "@/i18n";
 import { TriggerScopeProvider } from "@/hooks/trigger/TriggerScopeContext";
 import { usePrefs, useProfileCtx } from "@/hooks";
-import { useInputDevices } from "@/hooks/useInputDevices";
+import { useKeyboards } from "@/hooks/useKeyboards";
+import { SegmentTabs } from "@/components/layout/SegmentTabs";
+import { SlidePages } from "@/components/layout/SlidePages";
+import type { DeviceInfoSummary } from "@/components/mapping/button/DeviceInfoModal";
 import { accordionStateId } from "@/services/accordionState";
-import { cx } from "@/utils/cx";
+import { hexPid } from "@/utils/format";
+import type { Profile } from "@/types";
 
 import * as sectionStyles from "@/components/ui/sectionTitle.css";
 
-const TriggerScopeSection = ({
-  scope,
-  heading,
-  className,
-}: {
+type ScopeTab = {
   scope: TriggerScope;
-  heading?: string;
-  className?: string;
-}) => {
+  label: string;
+  connected: boolean;
+  /** Device tabs: details for the device-info dialog. */
+  device?: DeviceInfoSummary;
+};
+
+const COMMON: TriggerScope = { kind: "common" };
+
+const singleTriggerCount = (profile: Profile, scope: TriggerScope): number =>
+  scopedButtonMappingsOf(profile, scope).filter((entry) => entry.activator !== null)
+    .length;
+
+export const TriggerTab = ({ active }: { active: boolean }) => {
   const { i18n, lang } = usePrefs();
   const { profile } = useProfileCtx();
+  const keyboards = useKeyboards(active);
+  const [selectedKey, setSelectedKey] = useState<string>("common");
+
   if (profile === null) {
     return null;
   }
-  const buttonMappingCount = scopedButtonMappingsOf(profile, scope).filter(
-    (entry) => entry.activator !== null,
-  ).length;
-  const comboCount = scopedCustomMappingsOf(profile, scope).length;
-  const scopeKey =
-    scope.kind === "common" ? "common" : scope.deviceKey.replace(/[^a-z0-9_-]/gi, "_");
+
+  const tabs: ScopeTab[] = [
+    { scope: COMMON, label: i18n.triggerScopeCommon, connected: true },
+    ...keyboards.map((k) => ({
+      scope: { kind: "device", deviceKey: k.deviceKey } as TriggerScope,
+      label: deviceDisplayName(profile, k.deviceKey, k.productName),
+      connected: true,
+      device: {
+        deviceKey: k.deviceKey,
+        productName: k.productName,
+        vendorId: k.vendorId,
+        productId: k.productId,
+        connected: true,
+      },
+    })),
+  ];
+  // Keyboards with saved device triggers stay listed while unplugged.
+  for (const [deviceKey, bundle] of Object.entries(profile.deviceTriggerOverrides ?? {})) {
+    const hasKeyRows = (bundle.buttonMappings ?? []).some(
+      (entry) => entry.activator?.type === "key",
+    );
+    if (hasKeyRows && !tabs.some((t) => t.scope.kind === "device" && t.scope.deviceKey === deviceKey)) {
+      const [vid, pid] = deviceKey.split("-").map(Number);
+      const fallback = `${hexPid(vid)}:${hexPid(pid)}`;
+      tabs.push({
+        scope: { kind: "device", deviceKey },
+        label: deviceDisplayName(profile, deviceKey, fallback),
+        connected: false,
+        device: {
+          deviceKey,
+          productName: fallback,
+          vendorId: vid,
+          productId: pid,
+          connected: false,
+        },
+      });
+    }
+  }
+  const tabKey = (scope: TriggerScope) =>
+    scope.kind === "common" ? "common" : scope.deviceKey;
+  const current = tabs.find((t) => tabKey(t.scope) === selectedKey) ?? tabs[0];
+
+  const totalSingle = tabs.reduce(
+    (sum, tab) => sum + singleTriggerCount(profile, tab.scope),
+    0,
+  );
+  const comboCount = scopedCustomMappingsOf(profile, COMMON).length;
+  const gestureCount = profile.gestures?.entries?.length ?? 0;
 
   return (
-    <TriggerScopeProvider scope={scope}>
-      <section className={className}>
-        {heading ? <SectionGroupHeading>{heading}</SectionGroupHeading> : null}
+    <TriggerScopeProvider scope={COMMON}>
+      <section className={sectionStyles.sectionGroup}>
         <div className={sectionStyles.staticSectionBody}>
           <LongPressTimeSetting />
         </div>
         <Accordion
           label={i18n.buttonMapping}
-          status={
-            buttonMappingCount > 0
-              ? formatMappingEntryCount(buttonMappingCount, lang)
-              : undefined
-          }
-          statusOn={buttonMappingCount > 0}
+          status={totalSingle > 0 ? formatMappingEntryCount(totalSingle, lang) : undefined}
+          statusOn={totalSingle > 0}
           defaultOpen={false}
-          stateKey={`${accordionStateId.triggerButtonMapping}.${scopeKey}`}
+          stateKey={`${accordionStateId.triggerButtonMapping}.common`}
         >
-          <ButtonMappingPanel />
+          <div className={sectionStyles.segmentTabsRow}>
+            <SegmentTabs
+              ariaLabel={i18n.buttonMapping}
+              active={tabKey(current.scope)}
+              onSelect={setSelectedKey}
+              items={tabs.map((tab) => {
+                const count = singleTriggerCount(profile, tab.scope);
+                return {
+                  id: tabKey(tab.scope),
+                  label: tab.label,
+                  suffix: count > 0 ? count : undefined,
+                  muted: !tab.connected,
+                };
+              })}
+            />
+          </div>
+          <SlidePages
+            ids={tabs.map((tab) => tabKey(tab.scope))}
+            active={tabKey(current.scope)}
+            renderPage={(id) => {
+              const tab = tabs.find((t) => tabKey(t.scope) === id);
+              if (tab === undefined) {
+                return null;
+              }
+              return (
+                <TriggerScopeProvider scope={tab.scope}>
+                  <ButtonMappingPanel
+                    deviceLabel={tab.label}
+                    deviceDisconnected={!tab.connected}
+                    device={tab.device}
+                  />
+                </TriggerScopeProvider>
+              );
+            }}
+          />
         </Accordion>
         <Accordion
           label={i18n.comboMapping}
-          status={
-            comboCount > 0
-              ? formatMappingEntryCount(comboCount, lang)
-              : undefined
-          }
+          status={comboCount > 0 ? formatMappingEntryCount(comboCount, lang) : undefined}
           statusOn={comboCount > 0}
           defaultOpen={false}
-          stateKey={`${accordionStateId.triggerComboMapping}.${scopeKey}`}
+          stateKey={`${accordionStateId.triggerComboMapping}.common`}
         >
           <CustomButtonMappingPanel />
         </Accordion>
+        <Accordion
+          label={i18n.gesture}
+          status={gestureCount > 0 ? formatMappingEntryCount(gestureCount, lang) : undefined}
+          statusOn={gestureCount > 0}
+          defaultOpen={false}
+          stateKey={accordionStateId.triggerGesture}
+        >
+          <GesturePanel />
+        </Accordion>
       </section>
     </TriggerScopeProvider>
-  );
-};
-
-export const TriggerTab = () => {
-  const { profile } = useProfileCtx();
-  const { devices } = useInputDevices();
-
-  if (profile === null) {
-    return null;
-  }
-
-  const deviceKeys = listIndividualLinkDeviceKeys(profile);
-  const deviceSections = deviceKeys.map((deviceKey) => {
-    const device = devices.find(
-      (row) => deviceKeyForStatus(row.vendorId, row.productId) === deviceKey,
-    );
-    const fallback = device?.productName ?? deviceKey;
-    return {
-      deviceKey,
-      title: deviceDisplayName(profile, deviceKey, fallback),
-    };
-  });
-
-  return (
-    <>
-      <TriggerScopeSection
-        scope={{ kind: "common" }}
-        className={sectionStyles.sectionGroup}
-      />
-
-      {deviceSections.map((section) => (
-        <TriggerScopeSection
-          key={section.deviceKey}
-          scope={{ kind: "device", deviceKey: section.deviceKey }}
-          heading={section.title}
-          className={cx(
-            sectionStyles.sectionGroup,
-            sectionStyles.sectionGroupFollow,
-          )}
-        />
-      ))}
-    </>
   );
 };

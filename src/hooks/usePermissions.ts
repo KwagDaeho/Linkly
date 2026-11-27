@@ -23,6 +23,9 @@ export const usePermissions = () => {
   const [permissionStatus, setPermissionStatus] = useState<PermissionStatus | null>(null);
   const [permissionRestarting, setPermissionRestarting] = useState(false);
   const sawUntrusted = useRef(false);
+  /** Relaunch only after the user acted on the permission gate in this session — a
+   * transient not-ready poll (e.g. TCC not readable yet at login) must not restart the app. */
+  const userActedOnGate = useRef(false);
   const restartScheduled = useRef(false);
   const trusted = permissionStatus !== null && permissionStatus.ready;
   const permissionGateVisible =
@@ -56,7 +59,7 @@ export const usePermissions = () => {
       sawUntrusted.current = true;
       return;
     }
-    if (sawUntrusted.current) {
+    if (sawUntrusted.current && userActedOnGate.current) {
       if (skipPermissionRelaunchInDev) {
         return;
       }
@@ -88,13 +91,19 @@ export const usePermissions = () => {
     };
   }, [refresh, permissionGateVisible]);
 
-  const grantAccess = useCallback(async () => {
-    await tauri.requestPermission("accessibility");
-    const next = await tauri.getPermissionStatus();
-    setPermissionStatus(next);
-    if (!next.ready) {
-      await tauri.openAccessibilitySettings();
-    }
+  const requestPermission = useCallback(async (kind: tauri.PermissionKind) => {
+    userActedOnGate.current = true;
+    // macOS's own prompt offers "Open System Settings"; opening Settings here as well
+    // stacks two windows. Each row's "Open Settings" covers a prompt macOS won't repeat.
+    await tauri.requestPermission(kind);
+    setPermissionStatus(await tauri.getPermissionStatus());
+  }, []);
+
+  const openPermissionSettings = useCallback((kind: tauri.PermissionKind) => {
+    userActedOnGate.current = true;
+    return kind === "accessibility"
+      ? tauri.openAccessibilitySettings()
+      : tauri.openInputMonitoringSettings();
   }, []);
 
   return {
@@ -103,8 +112,7 @@ export const usePermissions = () => {
     permissionGateVisible,
     permissionRestarting,
     refresh,
-    grantAccess,
-    openAccessibilitySettings: tauri.openAccessibilitySettings,
-    openInputMonitoringSettings: tauri.openInputMonitoringSettings,
+    requestPermission,
+    openPermissionSettings,
   };
 };

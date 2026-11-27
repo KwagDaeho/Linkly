@@ -30,3 +30,14 @@ pub fn button_catalog() -> Vec<serde_json::Value> {
         })
         .collect()
 }
+
+#[tauri::command]
+pub fn list_keyboards() -> Vec<crate::platform::keyboards::KeyboardInfo> {
+    crate::platform::keyboards::connected_keyboards()
+}
+
+/// Arm/cancel a one-shot physical key capture on `device_key` (any keyboard if `None`).
+#[tauri::command]
+pub fn set_key_remap_capture(armed: bool, device_key: Option<String>) {
+    crate::platform::keyboards::set_capture(armed, device_key);
+}

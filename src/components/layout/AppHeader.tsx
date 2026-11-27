@@ -6,6 +6,7 @@ import {
 import { usePrefs } from "@/hooks";
 import { cx } from "@/utils/cx";
 
+import { AccentColorPicker } from "./AccentColorPicker";
 import { AppBrandTitle } from "./AppBrandTitle";
 import * as styles from "./AppHeader.css";
 import { HeaderSegmentToggle } from "./HeaderSegmentToggle";
@@ -64,6 +65,7 @@ export const AppHeader = () => {
             </button>
           </div>
           <div className={styles.toolbarRow}>
+            <AccentColorPicker />
             <HeaderSegmentToggle
               groupLabel="Theme"
               value={theme}

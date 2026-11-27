@@ -19,12 +19,45 @@ export const permList = style({
   fontSize: "0.92rem",
 });
 
-export const permStatus = style({
-  margin: "4px 0 12px",
-  paddingLeft: "1.2rem",
+export const permRows = style({
+  display: "flex",
+  flexDirection: "column",
+  gap: 6,
+  margin: "4px 0 0",
+  padding: 0,
+  listStyle: "none",
+});
+
+export const permRow = style({
+  display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) auto auto",
+  alignItems: "center",
+  gap: 10,
+  padding: "0.4rem 0.5rem 0.4rem 0.75rem",
+  border: "1px solid var(--line)",
+  borderRadius: "0.5rem",
+});
+
+export const permName = style({
   color: "var(--ink)",
   fontSize: "0.88rem",
-  lineHeight: 1.5,
+  fontWeight: 650,
+});
+
+export const permState = style({
+  color: "var(--muted)",
+  fontSize: "0.78rem",
+  fontWeight: 700,
+});
+
+export const permStateOn = style({
+  color: "var(--accent)",
+});
+
+export const permActions = style({
+  display: "inline-flex",
+  justifyContent: "flex-end",
+  gap: 6,
 });
 
 export const permRestarting = style({

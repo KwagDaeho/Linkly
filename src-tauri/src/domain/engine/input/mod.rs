@@ -103,6 +103,14 @@ fn fire_action_pulse_with(
     }
 }
 
+/// One press-and-release of an action outside any button (e.g. a recognized gesture).
+pub fn fire_one_shot_action(action: &Action, pointer: &crate::domain::profile::PointerSettings) {
+    if matches!(action, Action::Disabled | Action::Default) {
+        return;
+    }
+    fire_action_pulse_with(ButtonId::Left, action, pointer, true);
+}
+
 fn action_needs_pointer_takeover(id: ButtonId, action: &Action) -> bool {
     if is_physical_mouse_button(id) {
         return !remap::action_is_native_for(id, action);
@@ -576,6 +584,7 @@ pub(crate) fn handle_button_transitions(
             continue;
         }
         if ball_scroll::is_reserved_catalog_button(id)
+            || crate::domain::gesture::is_reserved_catalog_button(id)
             || custom_mapping::is_reserved_catalog_button(id)
             || crate::domain::button_mapping::is_reserved_catalog_button(id)
         {
@@ -604,6 +613,7 @@ pub(crate) fn handle_button_transitions(
             continue;
         }
         if ball_scroll::is_reserved_catalog_button(id)
+            || crate::domain::gesture::is_reserved_catalog_button(id)
             || custom_mapping::is_reserved_catalog_button(id)
             || crate::domain::button_mapping::is_reserved_catalog_button(id)
         {

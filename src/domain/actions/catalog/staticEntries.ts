@@ -148,6 +148,11 @@ export const STATIC_CATALOG_ENTRIES: CatalogEntry[] = [
     action: { type: "system", command: "show_desktop" },
   },
   {
+    id: "center_cursor",
+    category: "mouse",
+    action: { type: "system", command: "center_cursor" },
+  },
+  {
     id: "launchpad",
     category: "display",
     action: { type: "system", command: "launchpad" },

@@ -119,8 +119,25 @@ pub(crate) fn request_chord_reeval() {
 }
 
 pub(crate) fn effective_modifiers() -> HashSet<String> {
-    let mut merged = MODIFIERS_HELD.lock().clone();
-    merged.extend(live_modifiers());
+    merge_held_and_live_modifiers(&MODIFIERS_HELD.lock(), &live_modifiers())
+}
+
+/// Tap-tracked side names (`LeftShift`) + aggregate CG flags (`Shift`).
+/// Add an aggregate name only when no side of that family is already known —
+/// otherwise `{LeftShift, Shift}` counts as two modifiers and no sided combo
+/// (e.g. ⇧(L)+⌘(L)+Fn1) can ever match.
+pub(crate) fn merge_held_and_live_modifiers(
+    held: &HashSet<String>,
+    live: &HashSet<String>,
+) -> HashSet<String> {
+    let mut merged = held.clone();
+    for name in live {
+        let side_known = modifier::legacy_sides(name)
+            .is_some_and(|[left, right]| merged.contains(left) || merged.contains(right));
+        if !side_known {
+            merged.insert(name.clone());
+        }
+    }
     merged
 }
 
@@ -213,4 +230,28 @@ pub(crate) fn sync_active_buttons(active: &std::collections::HashMap<ButtonId, S
     let mut buttons = ACTIVE_BUTTONS.lock();
     buttons.clear();
     buttons.extend(active.keys().copied());
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn set(names: &[&str]) -> HashSet<String> {
+        names.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn sided_held_suppresses_aggregate_live_flag() {
+        let merged = merge_held_and_live_modifiers(
+            &set(&["LeftShift", "LeftMeta"]),
+            &set(&["Shift", "Meta"]),
+        );
+        assert_eq!(merged, set(&["LeftShift", "LeftMeta"]));
+    }
+
+    #[test]
+    fn aggregate_kept_when_side_unknown() {
+        let merged = merge_held_and_live_modifiers(&set(&["LeftShift"]), &set(&["Shift", "Meta"]));
+        assert_eq!(merged, set(&["LeftShift", "Meta"]));
+    }
 }

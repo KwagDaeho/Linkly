@@ -1,19 +1,42 @@
 import { globalStyle } from "@vanilla-extract/css";
 
+import { ACCENT_DEFAULT } from "@/constants/accent";
+
+/**
+ * Neutrals are tinted toward the accent's hue (set from JS by `applyAccent`);
+ * `--tint` fades the tint out for greyish accents.
+ */
+const n = (l: number, c: number, alpha?: number) =>
+  `oklch(${l} calc(${c} * var(--tint)) var(--hue-n)${alpha === undefined ? "" : ` / ${alpha}`})`;
+const a = (alpha?: number) =>
+  alpha === undefined
+    ? "var(--accent-color)"
+    : `color-mix(in srgb, var(--accent-color) ${Math.round(alpha * 100)}%, transparent)`;
+
+globalStyle(":root", {
+  vars: {
+    "--accent-color": ACCENT_DEFAULT,
+    "--hue-n": "315",
+    "--tint": "1",
+    "--ink-on-accent-dark": "oklch(0.197 0.023 var(--hue-n))",
+    "--accent-ink-auto": "var(--ink-on-accent-dark)",
+  },
+});
+
 globalStyle(":root, [data-theme='light']", {
   vars: {
-    "--bg0": "#f3eef6",
-    "--bg1": "#faf7fc",
-    "--ink": "#1f1a22",
-    "--heading-h3": "#4a4154",
-    "--muted": "#6b6270",
-    "--line": "#ddd0e2",
+    "--bg0": n(0.955, 0.012),
+    "--bg1": n(0.98, 0.007),
+    "--ink": n(0.227, 0.017),
+    "--heading-h3": n(0.392, 0.034),
+    "--muted": n(0.509, 0.024),
+    "--line": n(0.873, 0.028),
     "--line-accent": "color-mix(in srgb, var(--accent) 34%, var(--line))",
     "--panel": "rgba(255, 255, 255, 0.78)",
     "--panel-solid": "#ffffff",
-    "--accent": "#c07bc4",
-    "--accent-ink": "#ffffff",
-    "--accent-soft": "rgba(192, 123, 196, 0.16)",
+    "--accent": a(),
+    "--accent-ink": "var(--accent-ink-auto)",
+    "--accent-soft": a(0.16),
     "--interaction-hover-surface":
       "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
     "--interaction-hover-border": "var(--accent)",
@@ -23,11 +46,12 @@ globalStyle(":root, [data-theme='light']", {
       "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#2f8a55",
     "--ok-glow": "rgba(47, 138, 85, 0.18)",
-    "--warn-bg": "#f8e8ff",
-    "--warn-ink": "#5a3a62",
-    "--probe-bg": "#1c1720",
-    "--probe-fg": "#e8d6ef",
-    "--shadow": "rgba(40, 20, 50, 0.12)",
+    "--warn-bg": n(0.95, 0.035),
+    "--warn-ink": n(0.402, 0.076),
+    "--probe-bg": n(0.215, 0.019),
+    "--probe-fg": n(0.898, 0.039),
+    "--shadow": n(0.235, 0.061, 0.12),
+    "--backdrop": n(0.171, 0.027),
     "--radius": "10px",
   },
   colorScheme: "light",
@@ -35,18 +59,18 @@ globalStyle(":root, [data-theme='light']", {
 
 globalStyle("[data-theme='dark']", {
   vars: {
-    "--bg0": "#161218",
-    "--bg1": "#1e1822",
-    "--ink": "#f3eaf6",
-    "--heading-h3": "#c9bdd4",
-    "--muted": "#a898b0",
-    "--line": "#3a3142",
+    "--bg0": n(0.19, 0.013),
+    "--bg1": n(0.221, 0.021),
+    "--ink": n(0.948, 0.019),
+    "--heading-h3": n(0.815, 0.034),
+    "--muted": n(0.701, 0.039),
+    "--line": n(0.33, 0.032),
     "--line-accent": "color-mix(in srgb, var(--accent) 52%, var(--line))",
-    "--panel": "rgba(36, 30, 42, 0.88)",
-    "--panel-solid": "#2a2330",
-    "--accent": "#c07bc4",
-    "--accent-ink": "#1a121c",
-    "--accent-soft": "rgba(192, 123, 196, 0.22)",
+    "--panel": n(0.247, 0.024, 0.88),
+    "--panel-solid": n(0.27, 0.026),
+    "--accent": a(),
+    "--accent-ink": "var(--accent-ink-auto)",
+    "--accent-soft": a(0.22),
     "--interaction-hover-surface":
       "color-mix(in srgb, var(--accent-soft) 55%, transparent)",
     "--interaction-hover-border": "var(--accent)",
@@ -56,10 +80,10 @@ globalStyle("[data-theme='dark']", {
       "color-mix(in srgb, var(--muted) 7%, transparent)",
     "--ok": "#5dcb87",
     "--ok-glow": "rgba(93, 203, 135, 0.2)",
-    "--warn-bg": "#3a2a42",
-    "--warn-ink": "#f0d8f5",
-    "--probe-bg": "#0e0b11",
-    "--probe-fg": "#e0cce8",
+    "--warn-bg": n(0.314, 0.047),
+    "--warn-ink": n(0.911, 0.047),
+    "--probe-bg": n(0.156, 0.013),
+    "--probe-fg": n(0.87, 0.044),
     "--shadow": "rgba(0, 0, 0, 0.45)",
   },
   colorScheme: "dark",
@@ -117,7 +141,7 @@ globalStyle("#root", {
   scrollbarWidth: "none",
   color: "var(--ink)",
   background:
-    "radial-gradient(820px 420px at 8% -12%, var(--accent-soft) 0%, transparent 55%), radial-gradient(640px 360px at 100% 0%, rgba(192, 123, 196, 0.1) 0%, transparent 50%), linear-gradient(165deg, var(--bg1), var(--bg0))",
+    "radial-gradient(820px 420px at 8% -12%, var(--accent-soft) 0%, transparent 55%), radial-gradient(640px 360px at 100% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 50%), linear-gradient(165deg, var(--bg1), var(--bg0))",
 });
 
 globalStyle("#root::-webkit-scrollbar", {

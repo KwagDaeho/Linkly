@@ -1,3 +1,4 @@
+export * from "./accent";
 export * from "./actionCategories";
 export * from "./contact";
 export * from "./pointer";

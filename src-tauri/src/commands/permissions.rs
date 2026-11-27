@@ -16,6 +16,16 @@ pub fn request_accessibility() -> bool {
 }
 
 #[tauri::command]
+pub fn request_input_monitoring() -> bool {
+    permissions::prompt_input_monitoring()
+}
+
+#[tauri::command]
+pub fn open_input_monitoring_settings() -> Result<(), String> {
+    permissions::open_input_monitoring_settings()
+}
+
+#[tauri::command]
 pub fn open_accessibility_settings() -> Result<(), String> {
     permissions::open_permission_settings()
 }

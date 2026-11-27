@@ -1,2 +1,2 @@
-export { BallScrollActivatorRow } from "./BallScrollActivatorRow";
+export { ActivatorSlotRow } from "./BallScrollActivatorRow";
 export { BallScrollPanel } from "./BallScrollPanel";

@@ -16,7 +16,8 @@ export type HoldCapturePhase = "idle" | "recognizing" | "confirmed";
 export type MappingTarget =
   | { kind: "button"; id: ButtonId }
   | { kind: "button_mapping"; id: string }
-  | { kind: "custom"; id: string };
+  | { kind: "custom"; id: string }
+  | { kind: "gesture"; id: string };
 
 export type EditorMode =
   | {
@@ -48,6 +49,8 @@ export type EditorMode =
   | {
       kind: "ball_scroll_activator";
       slot: "toggle" | "hold";
+      /** Same capture flow, assigning the gesture hold/toggle key instead. */
+      target?: "gesture";
       rejected: string | null;
     }
   | {

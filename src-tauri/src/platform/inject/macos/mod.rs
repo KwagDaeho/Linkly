@@ -7,11 +7,14 @@ mod mouse;
 mod overlay_panel;
 mod pointer;
 mod cursor_badge;
+mod gesture_overlay;
 
 pub use action::{
     default_mouse_button, press_action, press_action_forced, release_action, release_action_forced,
 };
-pub use keyboard::{keystroke_isolated, release_chord_hold};
+pub use keyboard::{
+    key_code_for_name, keystroke_isolated, mouse_button_from_token, release_chord_hold,
+};
 pub use mouse::synthetic_buttons_held;
 pub use mouse::click_at_cursor;
 pub use mouse::{left_down_at_cursor, left_drag_at_cursor, left_up_at_cursor};
@@ -20,7 +23,7 @@ pub use mouse::{left_down_at_cursor, left_drag_at_cursor, left_up_at_cursor};
 pub use mouse::{mouse_down, mouse_up};
 pub use pointer::{
     end_idle_ball_scroll, expire_post_unpin_if_due, expire_restored_cursor_if_due,
-    expire_restore_sync_if_due, finish_restore_sync, keep_pinned_cursor,
+    expire_restore_sync_if_due, finish_restore_sync, finish_restored_cursor, keep_pinned_cursor,
     maintain_post_unpin_cursor, maintain_restored_cursor, move_by, pin_cursor,
     post_unpin_active, release_ball_scroll_pin,
     release_ball_scroll_pin_for_quit, restore_cursor_active, restore_pinned_cursor,
@@ -32,6 +35,16 @@ pub use pointer::{
 pub fn tear_down_overlays_on_main() {
     pointer::release_ball_scroll_pin_for_quit();
     cursor_badge::tear_down_on_main();
+    gesture_overlay::tear_down_on_main();
+}
+
+pub use gesture_overlay::{hide as hide_gesture_trail, show as show_gesture_trail,
+    track_cursor as track_gesture_trail};
+
+/// Cursor position in global display coordinates (origin top-left of the main display).
+pub fn cursor_location() -> (f64, f64) {
+    let p = cursor_pos();
+    (p.x, p.y)
 }
 // Extra scroll helpers kept public for API parity with the former monolith.
 #[allow(unused_imports)]

@@ -6,13 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Linkly</title>
     <style>
-      html, body, #root { margin: 0; min-height: 100%; background: #f3eef6; color: #1f1a22; font-family: "Avenir Next", "Gill Sans", sans-serif; user-select: none; -webkit-user-select: none; }
-      html[data-theme="dark"], html[data-theme="dark"] body, html[data-theme="dark"] #root { background: #161218; color: #f3eaf6; }
+      :root { --hue-n: 315; --boot-accent: #c07bc4; }
+      html, body, #root { margin: 0; min-height: 100%; background: oklch(0.955 0.012 var(--hue-n)); color: oklch(0.227 0.017 var(--hue-n)); font-family: "Avenir Next", "Gill Sans", sans-serif; user-select: none; -webkit-user-select: none; }
+      html[data-theme="dark"], html[data-theme="dark"] body, html[data-theme="dark"] #root { background: oklch(0.19 0.013 var(--hue-n)); color: oklch(0.948 0.019 var(--hue-n)); }
       /* Static shell until React mounts — same layout as BootScreen (no legacy copy). */
       .boot-shell { min-height: 100vh; display: grid; place-items: center; padding: 24px; box-sizing: border-box; }
       .boot-stack { display: flex; flex-direction: column; align-items: center; gap: 32px; text-align: center; }
-      .boot-tag { margin: 0; font-size: 1.08rem; font-weight: 650; letter-spacing: 0.08em; color: #6b6270; }
-      html[data-theme="dark"] .boot-tag { color: #a898b0; }
+      .boot-tag { margin: 0; font-size: 1.08rem; font-weight: 650; letter-spacing: 0.08em; color: oklch(0.509 0.024 var(--hue-n)); }
+      html[data-theme="dark"] .boot-tag { color: oklch(0.701 0.039 var(--hue-n)); }
       .boot-brand {
         margin: 0;
         font-family: "Futura", "Avenir Next", "Gill Sans", sans-serif;
@@ -20,7 +21,7 @@
         font-size: 168px;
         line-height: 1.2;
         letter-spacing: -0.09em;
-        color: #c07bc4;
+        color: var(--boot-accent);
       }
       .boot-actions { display: none; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 8px; }
       .boot-actions.is-visible { display: flex; }
@@ -30,13 +31,13 @@
         font-weight: 650;
         padding: 8px 14px;
         border-radius: 8px;
-        border: 1px solid #c07bc4;
+        border: 1px solid var(--boot-accent);
         background: transparent;
-        color: #c07bc4;
+        color: var(--boot-accent);
         cursor: pointer;
       }
-      .boot-actions button:focus-visible { outline: 2px solid #c07bc4; outline-offset: 2px; }
-      html[data-theme="dark"] .boot-actions button { border-color: #d89adc; color: #d89adc; }
+      .boot-actions button:focus-visible { outline: 2px solid var(--boot-accent); outline-offset: 2px; }
+      html[data-theme="dark"] .boot-actions button { border-color: color-mix(in srgb, var(--boot-accent) 80%, white); color: color-mix(in srgb, var(--boot-accent) 80%, white); }
     </style>
     <script>
       (function () {
@@ -46,6 +47,8 @@
             t = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
           }
           document.documentElement.setAttribute("data-theme", t);
+          var c = localStorage.getItem("linkly-accent-color");
+          if (c && /^#[0-9a-f]{6}$/i.test(c)) document.documentElement.style.setProperty("--boot-accent", c);
         } catch (e) {}
       })();
     </script>

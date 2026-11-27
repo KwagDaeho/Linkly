@@ -1,4 +1,5 @@
 import type { Action, MouseClickButton } from "../action";
+import type { GestureSettings } from "./gesture";
 
 export type ButtonId =
   | "left"
@@ -86,6 +87,8 @@ export type Profile = {
     invertHorizontalScroll?: boolean;
   };
   ballScroll?: BallScrollSettings;
+  /** Draw a shape while the hold/toggle activator is on → fire its action. */
+  gestures?: GestureSettings;
   customMappings?: CustomMappingEntry[];
   enabled: boolean;
   /** Launch with window closed; stay in menu bar (like Cmd+W). */
@@ -97,6 +100,8 @@ export type Profile = {
   /** Per-device trigger overrides when individual link is enabled. */
   deviceTriggerOverrides?: Record<string, DeviceTriggerOverride>;
 };
+
+
 
 export type InputDeviceSettings = {
   individualLinkEnabled?: boolean;

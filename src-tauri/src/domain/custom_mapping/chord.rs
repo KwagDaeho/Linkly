@@ -206,3 +206,44 @@ pub fn note_os_up(activator: &Activator, is_repeat: bool) {
     }
     request_chord_reeval();
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::domain::custom_mapping::state::merge_held_and_live_modifiers;
+
+    fn held(sides: &[&str], live: &[&str]) -> Vec<String> {
+        let sides: HashSet<String> = sides.iter().map(|s| s.to_string()).collect();
+        let live: HashSet<String> = live.iter().map(|s| s.to_string()).collect();
+        sorted_modifiers(&merge_held_and_live_modifiers(&sides, &live))
+    }
+
+    fn combo(mods: &[&str]) -> ComboActivator {
+        ComboActivator {
+            modifiers: mods.iter().map(|s| s.to_string()).collect(),
+            keys: Vec::new(),
+            button: None,
+            trigger: None,
+        }
+    }
+
+    #[test]
+    fn sided_combo_matches_with_live_flags() {
+        let mods = held(&["LeftShift", "LeftMeta"], &["Shift", "Meta"]);
+        assert!(combo_matches(&combo(&["LeftShift", "LeftMeta"]), &mods, &[]));
+    }
+
+    #[test]
+    fn legacy_combo_matches_sided_hold() {
+        let mods = held(&["LeftShift", "RightMeta"], &["Shift", "Meta"]);
+        assert!(combo_matches(&combo(&["Shift", "Meta"]), &mods, &[]));
+    }
+
+    #[test]
+    fn wrong_side_or_extra_modifier_rejected() {
+        let right = held(&["RightShift", "LeftMeta"], &["Shift", "Meta"]);
+        assert!(!combo_matches(&combo(&["LeftShift", "LeftMeta"]), &right, &[]));
+        let extra = held(&["LeftShift", "LeftMeta", "LeftOption"], &["Shift", "Meta", "Option"]);
+        assert!(!combo_matches(&combo(&["LeftShift", "LeftMeta"]), &extra, &[]));
+    }
+}

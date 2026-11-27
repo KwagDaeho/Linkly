@@ -1,54 +1,37 @@
-import { ballScrollActivatorForSlot } from "@/domain/profile";
 import { formatActivator } from "@/i18n";
 import { Button, Muted } from "@/components/ui";
-import type {
-  BallScrollSlot,
-  Dict,
-  Lang,
-  ResolvedBallScrollSettings,
-} from "@/types";
+import type { Activator, Lang } from "@/types";
 import * as styles from "./BallScrollActivatorRow.css";
 
-interface BallScrollActivatorRowProps {
-  slot: BallScrollSlot;
-  ball: ResolvedBallScrollSettings;
+interface ActivatorSlotRowProps {
+  label: string;
+  helpText: string;
+  activator: Activator | null;
   lang: Lang;
-  i18n: Dict;
-  onOpenCapture: (slot: BallScrollSlot) => void;
-  onClear: (slot: BallScrollSlot) => void;
+  emptyLabel: string;
+  clearLabel: string;
+  onOpenCapture: () => void;
+  onClear: () => void;
 }
 
-export const BallScrollActivatorRow = (props: BallScrollActivatorRowProps) => {
-  const isToggle = props.slot === "toggle";
-  const activator = ballScrollActivatorForSlot(props.ball, props.slot);
-  const label = isToggle
-    ? props.i18n.ballScrollToggle
-    : props.i18n.ballScrollHold;
-  const helpText = isToggle
-    ? props.i18n.ballScrollToggleHelp
-    : props.i18n.ballScrollHoldHelp;
-  return (
-    <div className={styles.row}>
-      <span className={styles.label}>{label}</span>
-      <div className={styles.key}>
-        <Button size="tiny" onClick={() => props.onOpenCapture(props.slot)}>
-          {activator !== null
-            ? formatActivator(activator, props.lang)
-            : props.i18n.ballScrollKey}
+/** Hold / toggle key row (ball scroll, gestures). */
+export const ActivatorSlotRow = (props: ActivatorSlotRowProps) => (
+  <div className={styles.row}>
+    <span className={styles.label}>{props.label}</span>
+    <div className={styles.key}>
+      <Button size="tiny" onClick={props.onOpenCapture}>
+        {props.activator !== null
+          ? formatActivator(props.activator, props.lang)
+          : props.emptyLabel}
+      </Button>
+      {props.activator !== null ? (
+        <Button variant="ghost" size="tiny" onClick={props.onClear}>
+          {props.clearLabel}
         </Button>
-        {activator !== null ? (
-          <Button
-            variant="ghost"
-            size="tiny"
-            onClick={() => props.onClear(props.slot)}
-          >
-            {props.i18n.clear}
-          </Button>
-        ) : null}
-      </div>
-      <Muted as="p" className={styles.help}>
-        {helpText}
-      </Muted>
+      ) : null}
     </div>
-  );
-};
+    <Muted as="p" className={styles.help}>
+      {props.helpText}
+    </Muted>
+  </div>
+);

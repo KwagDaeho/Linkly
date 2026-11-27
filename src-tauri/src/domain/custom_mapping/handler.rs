@@ -52,10 +52,12 @@ impl Default for CustomMaps {
 
 impl CustomMaps {
     pub fn clear(&mut self) {
+        // Entry may already be gone (profile disabled / row removed) — still release.
         for (id, action) in self.held.drain() {
-            if let Some(entry) = entry_by_id(&id) {
-                inject::release_action(combo_device_button(&entry.activator), &action);
-            }
+            let button = entry_by_id(&id)
+                .map(|entry| combo_device_button(&entry.activator))
+                .unwrap_or(ButtonId::Left);
+            inject::release_action(button, &action);
         }
         self.pending.clear();
         self.scroll_repeats.clear();

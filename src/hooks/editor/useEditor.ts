@@ -10,6 +10,7 @@ import { useProfileCtx } from "@/hooks/profile";
 import { useTriggerScope } from "@/hooks/trigger/TriggerScopeContext";
 import { useTriggerScopeMutations } from "@/hooks/trigger/useTriggerScopeMutations";
 import { normalizeActivator } from "@/domain/profile/mouseButton";
+import { withGesturePatch } from "@/domain/profile/patches/gestures";
 import { publishToast } from "@/components/ui/toast/toastBus";
 import type {
   ActionSlot,
@@ -31,8 +32,12 @@ export const useEditor = (): EditorContextValue => {
 
 export const useEditorState = (): EditorContextValue => {
   const { i18n } = usePrefs();
-  const { profile, ballScroll, catalogSelection: profileCatalog } =
-    useProfileCtx();
+  const {
+    profile,
+    ballScroll,
+    catalogSelection: profileCatalog,
+    mutateProfile,
+  } = useProfileCtx();
   const scope = useTriggerScope();
   const { buttonMappings, customMappings, catalogSelection } =
     useTriggerScopeMutations(scope);
@@ -60,6 +65,15 @@ export const useEditorState = (): EditorContextValue => {
         return false;
       }
       const next = normalizeActivator(activator);
+      if (editor?.kind === "ball_scroll_activator" && editor.target === "gesture") {
+        mutateProfile((loaded) =>
+          withGesturePatch(
+            loaded,
+            slot === "toggle" ? { toggleActivator: next } : { holdActivator: next },
+          ),
+        );
+        return true;
+      }
       if (
         findScopedActivatorConflict(profile, scope, next, {
           ballScrollSlot: slot,

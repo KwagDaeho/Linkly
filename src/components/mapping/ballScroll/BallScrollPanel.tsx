@@ -1,7 +1,7 @@
-import { ballScrollOf } from "@/domain/profile";
+import { ballScrollActivatorForSlot, ballScrollOf } from "@/domain/profile";
 import { usePrefs, useProfileCtx, useEditor } from "@/hooks";
 import { Panel, SettingsList, SettingsRow, Toggle } from "@/components/ui";
-import { BallScrollActivatorRow } from "./BallScrollActivatorRow";
+import { ActivatorSlotRow } from "./BallScrollActivatorRow";
 import type { BallScrollSlot } from "@/types";
 
 export const BallScrollPanel = () => {
@@ -23,27 +23,31 @@ export const BallScrollPanel = () => {
     <Panel variant="plain">
       <SettingsList>
         <SettingsRow stack>
-          <BallScrollActivatorRow
-            slot="toggle"
-            ball={ball}
+          <ActivatorSlotRow
+            label={i18n.ballScrollToggle}
+            helpText={i18n.ballScrollToggleHelp}
+            activator={ballScrollActivatorForSlot(ball, "toggle")}
             lang={lang}
-            i18n={i18n}
-            onOpenCapture={(slot) =>
-              setEditor({ kind: "ball_scroll_activator", slot, rejected: null })
+            emptyLabel={i18n.ballScrollKey}
+            clearLabel={i18n.clear}
+            onOpenCapture={() =>
+              setEditor({ kind: "ball_scroll_activator", slot: "toggle", rejected: null })
             }
-            onClear={handleClear}
+            onClear={() => handleClear("toggle")}
           />
         </SettingsRow>
         <SettingsRow stack>
-          <BallScrollActivatorRow
-            slot="hold"
-            ball={ball}
+          <ActivatorSlotRow
+            label={i18n.ballScrollHold}
+            helpText={i18n.ballScrollHoldHelp}
+            activator={ballScrollActivatorForSlot(ball, "hold")}
             lang={lang}
-            i18n={i18n}
-            onOpenCapture={(slot) =>
-              setEditor({ kind: "ball_scroll_activator", slot, rejected: null })
+            emptyLabel={i18n.ballScrollKey}
+            clearLabel={i18n.clear}
+            onOpenCapture={() =>
+              setEditor({ kind: "ball_scroll_activator", slot: "hold", rejected: null })
             }
-            onClear={handleClear}
+            onClear={() => handleClear("hold")}
           />
         </SettingsRow>
         <SettingsRow>

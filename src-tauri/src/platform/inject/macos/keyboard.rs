@@ -23,6 +23,18 @@ extern "C" {
     fn CFRelease(cf: *mut std::ffi::c_void);
 }
 
+/// Key-stroke / trigger key name → macOS keycode (incl. side modifiers).
+pub fn key_code_for_name(name: &str) -> Option<u16> {
+    const MODIFIER_CODES: [u16; 8] = [0x3b, 0x3e, 0x3a, 0x3d, 0x38, 0x3c, 0x37, 0x36];
+    if let Some(code) = MODIFIER_CODES
+        .into_iter()
+        .find(|code| crate::domain::modifier::side_name_from_keycode(*code) == Some(name))
+    {
+        return Some(code);
+    }
+    key_code(name)
+}
+
 fn key_code(name: &str) -> Option<u16> {
     let lower = name.to_ascii_lowercase();
     if let Some(rest) = lower.strip_prefix("keycode_") {
@@ -255,7 +267,8 @@ pub(super) fn tap_key_with_modifier_plist(key_code: u16, mod_plist: u32) {
     }
 }
 
-fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
+/// `MouseLeft` … / Karabiner-style `ButtonN` key-stroke token → mouse button.
+pub fn mouse_button_from_token(name: &str) -> Option<MouseClickButton> {
     match name {
         "MouseLeft" => Some(MouseClickButton::Left),
         "MouseRight" => Some(MouseClickButton::Right),

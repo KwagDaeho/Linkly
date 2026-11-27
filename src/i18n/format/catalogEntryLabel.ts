@@ -31,6 +31,9 @@ export const resolveGeneratedEntryLabel = (
   if (id.startsWith("mod_")) {
     return null;
   }
+  if (id.startsWith("key_digit_")) {
+    return id.slice("key_digit_".length);
+  }
   if (id.startsWith("key_en_")) {
     return id.slice("key_en_".length).toUpperCase();
   }

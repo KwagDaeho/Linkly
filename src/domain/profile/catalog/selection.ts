@@ -20,6 +20,11 @@ const bindingForTarget = (profile: Profile | null, target: MappingTarget) => {
   if (target.kind === "button") {
     return asBinding(profile.buttons[target.id]);
   }
+  if (target.kind === "gesture") {
+    return asBinding(
+      profile.gestures?.entries?.find((entry) => entry.id === target.id),
+    );
+  }
   if (target.kind === "button_mapping") {
     const row = buttonMappingsOf(profile).find(
       (mapping) => mapping.id === target.id,
